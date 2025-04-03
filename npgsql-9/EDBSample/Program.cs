@@ -122,7 +122,7 @@ namespace EDBSample
                     callable_command.Parameters[1].Value = 7369;
 
                     await using var result = await callable_command.ExecuteReaderAsync();
-                    for (int i = 0; i < callable_command.Parameters.Count; i++)
+                    for (var i = 0; i < callable_command.Parameters.Count; i++)
                         Console.WriteLine($"Parameter[\"{callable_command.Parameters[i].ParameterName}\"]={callable_command.Parameters[i].Value}");
 
                     if (await result.ReadAsync())

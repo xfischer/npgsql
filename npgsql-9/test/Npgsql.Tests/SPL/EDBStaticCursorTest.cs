@@ -274,7 +274,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 0));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -298,7 +298,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 0));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -373,20 +373,20 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             cstmt.CommandType = CommandType.StoredProcedure;
 
             cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Boolean, 10, "param1",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Boolean, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Boolean, 10, "param3",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
 
-            Assert.AreEqual(false, cstmt.Parameters["param1"].Value);
-            Assert.AreEqual(true, cstmt.Parameters["param2"].Value);
-            Assert.AreEqual(false, cstmt.Parameters["param3"].Value);
+            Assert.IsFalse((bool)cstmt.Parameters["param1"].Value!);
+            Assert.IsTrue((bool)cstmt.Parameters["param2"].Value!);
+            Assert.IsFalse((bool)cstmt.Parameters["param3"].Value!);
         }
 
         [Test]
@@ -475,7 +475,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             cstmt.CommandType = CommandType.StoredProcedure;
 
             cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();

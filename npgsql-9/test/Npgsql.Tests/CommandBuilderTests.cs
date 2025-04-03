@@ -312,7 +312,7 @@ INSERT INTO {table} VALUES('key1', 'description', '2018-07-03', '2018-07-03 07:0
         daDataAdapter.DeleteCommand = cbCommandBuilder.GetDeleteCommand();
 
         // EnterpriseDB Team
-        EDBDbType timeStampType = (TestUtil.IsEPASRedwood(conn) ?? false) ? EDBDbType.Timestamp : EDBDbType.Date;
+        var timeStampType = (TestUtil.IsEPASRedwood(conn) ?? false) ? EDBDbType.Timestamp : EDBDbType.Date;
 
         Assert.That(daDataAdapter.UpdateCommand.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Varchar));
         Assert.That(daDataAdapter.UpdateCommand.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Varchar));

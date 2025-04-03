@@ -123,11 +123,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             var count = (int)cstmt.Parameters[0].Value!;
             Assert.AreEqual(5, count);
-            List<object> arr = (List<object>)cstmt.Parameters[1].Value!;
+            var arr = (List<object>)cstmt.Parameters[1].Value!;
             Assert.AreEqual(5, arr.Count);
-            for (int i = 0; i < arr.Count; i++)
+            for (var i = 0; i < arr.Count; i++)
             {
-                decimal value = (decimal)arr[i];
+                var value = (decimal)arr[i];
                 Assert.AreEqual(MULTI_UNION_RESULT[i], (int)value);
             }
 
@@ -216,13 +216,13 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
             Assert.AreEqual("mulundispkg.int_arr_typ", cstmt.Parameters[1].DataTypeName);
 
-            int count = (int)cstmt.Parameters[0].Value!;
+            var count = (int)cstmt.Parameters[0].Value!;
             Assert.AreEqual(4, count);
-            List<object>  arr = (List<object>)cstmt.Parameters[1].Value!;
+            var  arr = (List<object>)cstmt.Parameters[1].Value!;
             Assert.AreEqual(4, arr.Count);
-            for(int i = 0; i < arr.Count; i++)
+            for(var i = 0; i < arr.Count; i++)
             {
-                decimal value = (decimal)arr[i];
+                var value = (decimal)arr[i];
                 Assert.AreEqual(MULTI_UNION_DISTINCT_RESULT[i], (int)value);
             }
 
@@ -310,13 +310,13 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
             Assert.AreEqual("mulundispkg02.int_arr_typ", cstmt.Parameters[1].DataTypeName);
 
-            int count = (int)cstmt.Parameters[0].Value!;
+            var count = (int)cstmt.Parameters[0].Value!;
             Assert.AreEqual(5, count);
-            List<object> arr = (List<object>)cstmt.Parameters[1].Value!;
+            var arr = (List<object>)cstmt.Parameters[1].Value!;
             Assert.AreEqual(5, arr.Count);
-            for (int i = 0; i < arr.Count; i++)
+            for (var i = 0; i < arr.Count; i++)
             {
-                decimal value = (decimal)arr[i];
+                var value = (decimal)arr[i];
                 Assert.AreEqual(MULTI_UNION_DISTINCT_RESULT02[i], (int)value);
             }
 

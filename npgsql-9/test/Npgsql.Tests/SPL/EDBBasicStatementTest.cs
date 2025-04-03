@@ -349,16 +349,16 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1001));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Date, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar, 10, "param3",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
             cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
             cstmt.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Numeric, 10, "param5",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
             cstmt.Parameters.Add(new EDBParameter("param6", EDBTypes.EDBDbType.Numeric, 10, "param6",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -395,7 +395,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1001));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -418,7 +418,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1002));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -535,25 +535,25 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 110000));
 
             cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 10, "param5",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param6", EDBTypes.EDBDbType.Varchar, 10, "param6",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param7", EDBTypes.EDBDbType.Numeric, 10, "param7",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param8", EDBTypes.EDBDbType.Numeric, 10, "param8",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param9", EDBTypes.EDBDbType.Integer, 10, "param9",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param10", EDBTypes.EDBDbType.Varchar, 10, "param10",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -594,25 +594,25 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 110000));
 
             cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 10, "param5",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param6", EDBTypes.EDBDbType.Varchar, 10, "param6",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param7", EDBTypes.EDBDbType.Numeric, 10, "param7",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param8", EDBTypes.EDBDbType.Numeric, 10, "param8",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param9", EDBTypes.EDBDbType.Integer, 10, "param9",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param10", EDBTypes.EDBDbType.Varchar, 10, "param10",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -783,10 +783,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 31));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar, 10, "param3",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -809,10 +809,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 41));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar, 10, "param3",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -842,7 +842,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 210000));
 
             cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Varchar, 10, "param4",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -882,7 +882,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 210000));
 
             cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Varchar, 10, "param4",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -904,13 +904,13 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 41));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar, 10, "param3",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Varchar, 10, "param4",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -937,13 +937,13 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 42));
 
             cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Numeric, 10, "param2",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar, 10, "param3",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Varchar, 10, "param4",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();

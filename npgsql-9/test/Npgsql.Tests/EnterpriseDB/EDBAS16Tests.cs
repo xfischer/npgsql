@@ -17,7 +17,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     [NonParallelizable]
     internal class EDBAS16Tests : EPASTestBase
     {
-        private async Task<int> Execute(EDBConnection conn, string query, bool ignoreResult)
+        private static async Task<int> Execute(EDBConnection conn, string query, bool ignoreResult)
         {
             try
             {
@@ -67,7 +67,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         //Simple select returning single value
-        private async Task<object> ExecuteSimpleReader(EDBConnection conn, string query)
+        private static async Task<object?> ExecuteSimpleReader(EDBConnection conn, string query)
         {
             object? val = null;
             try
@@ -77,15 +77,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandType = CommandType.Text;
 
                     com.CommandText = query;
-                    EDBDataReader reader = await com.ExecuteReaderAsync();
+                    var reader = await com.ExecuteReaderAsync();
 
-                    Assert.AreEqual(true, reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
 
-                    if (reader.Read())
+                    if (await reader.ReadAsync())
                     {
                         val = reader.GetValue(0);
                     }
-                    reader.Close();
+                    await reader.CloseAsync();
                 }
             }
             catch (Exception ex)
@@ -95,7 +95,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             return val;
         }
 
-        private async Task<DateTime?> ExecuteDateTimeReader(EDBConnection conn, string query)
+        private static async Task<DateTime?> ExecuteDateTimeReader(EDBConnection conn, string query)
         {
             DateTime? val = null;
             try
@@ -105,15 +105,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandType = CommandType.Text;
 
                     com.CommandText = query;
-                    EDBDataReader reader = await com.ExecuteReaderAsync();
+                    var reader = await com.ExecuteReaderAsync();
 
-                    Assert.AreEqual(true, reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
 
-                    if (reader.Read())
+                    if (await reader.ReadAsync())
                     {
                         val = reader.GetDateTime(0);
                     }
-                    reader.Close();
+                    await reader.CloseAsync();
                 }
             }
             catch (Exception ex)
@@ -125,7 +125,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         //Executes a stored procedure with no arguments
         //If there are any messages from dbms_output.put_line, they are retured as a list.
-        public async Task<List<string>> ExecuteProcNotice(EDBConnection conn, string sqlStr)
+        public static async Task<List<string>> ExecuteProcNotice(EDBConnection conn, string sqlStr)
         {
             var messages = new List<string>();
 
@@ -145,7 +145,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 {
                     cstmt.CommandType = CommandType.StoredProcedure;
 
-                    cstmt.Prepare();
+                    await cstmt.PrepareAsync();
                     await cstmt.ExecuteNonQueryAsync();
                 }
                 mre.WaitOne(5000);
@@ -423,18 +423,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 com.CommandType = CommandType.Text;
 
                 com.CommandText = query1;
-                EDBDataReader reader = await com.ExecuteReaderAsync();
+                var reader = await com.ExecuteReaderAsync();
 
-                Assert.AreEqual(true, reader.HasRows);
+                Assert.IsTrue(reader.HasRows);
 
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
                     Assert.AreEqual(124346, reader.GetDouble(0));
                     Assert.AreEqual(2, reader.GetDouble(1));
                     Assert.AreEqual(124346, reader.GetDouble(2));
                     Assert.AreEqual(124346, reader.GetDouble(3));
                 }
-                reader.Close();
+                await reader.CloseAsync();
             }
 
             var query2 = "SELECT nanvl('NaN', 1::numeric), nanvl(124346, 2::numeric), nanvl('NaN', 'NaN'::numeric);";
@@ -443,17 +443,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 com.CommandType = CommandType.Text;
 
                 com.CommandText = query2;
-                EDBDataReader reader = await com.ExecuteReaderAsync();
+                var reader = await com.ExecuteReaderAsync();
 
-                Assert.AreEqual(true, reader.HasRows);
+                Assert.IsTrue(reader.HasRows);
 
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
                     Assert.AreEqual(1, reader.GetDouble(0));
                     Assert.AreEqual(124346, reader.GetDouble(1));
                     Assert.AreEqual(double.NaN, reader.GetDouble(2));
                 }
-                reader.Close();
+                await reader.CloseAsync();
             }
         }
 
@@ -489,15 +489,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 com.CommandType = CommandType.Text;
 
                 com.CommandText = query1;
-                EDBDataReader reader = await com.ExecuteReaderAsync();
+                var reader = await com.ExecuteReaderAsync();
 
-                Assert.AreEqual(true, reader.HasRows);
+                Assert.IsTrue(reader.HasRows);
 
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
-                    Assert.AreEqual(true, reader.GetBoolean(0));
+                    Assert.IsTrue(reader.GetBoolean(0));
                 }
-                reader.Close();
+                await reader.CloseAsync();
             }
 
             await Execute(conn, "DROP TABLE t1", true);
@@ -510,29 +510,29 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 com.CommandType = CommandType.Text;
 
                 com.CommandText = query2;
-                EDBDataReader reader = await com.ExecuteReaderAsync();
+                var reader = await com.ExecuteReaderAsync();
 
-                Assert.AreEqual(true, reader.HasRows);
+                Assert.IsTrue(reader.HasRows);
 
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
                     Assert.AreEqual(1, reader.GetInt32(0));
                     Assert.AreEqual(1, reader.GetInt32(1));
                 }
 
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
                     Assert.AreEqual(2, reader.GetInt32(0));
                     Assert.AreEqual(2, reader.GetInt32(1));
                 }
 
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
                     Assert.AreEqual(10, reader.GetInt32(0));
                     var obj = reader.GetValue(1);
                     Assert.AreEqual(string.Empty, obj.ToString());
                 }
-                reader.Close();
+                await reader.CloseAsync();
             }
         }
 
@@ -632,11 +632,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 {
                     cstmt.CommandType = CommandType.Text;
 
-                    EDBDataReader reader = await cstmt.ExecuteReaderAsync();
+                    var reader = await cstmt.ExecuteReaderAsync();
 
-                    Assert.AreEqual(true, reader.HasRows);
+                    Assert.IsTrue(reader.HasRows);
 
-                    if (reader.Read())
+                    if (await reader.ReadAsync())
                     {
                         Assert.AreEqual("Done", reader.GetString(0));
                     }
@@ -944,6 +944,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var val4 = await ExecuteSimpleReader(conn, "SELECT db2155_syn.var;");
             Assert.IsNotNull(val4);
             Assert.AreEqual("10", val4.ToString());
+
         }
 
         //--DB-1706 : Implement UTL_FILE Subprograms Not Currently Implemented in Advanced Server
@@ -1084,12 +1085,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
 
-        private async Task SetUpXMLType(EDBConnection conn)
+        private static async Task SetUpXMLType(EDBConnection conn)
         {
             await Execute(conn, "drop procedure xml_funcs_proc;", true);
             await Execute(conn, "drop table person_xmltype;", true);
 
-            string tblSql = """
+            var tblSql = """
                 CREATE TABLE person_xmltype
                 (
                     person_id   integer,
@@ -1098,7 +1099,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 """;
             await Execute(conn, tblSql, false);
 
-            string insSql = """
+            var insSql = """
                                 INSERT INTO person_xmltype
                                 (person_id, person_data)
                                 VALUES
@@ -1110,7 +1111,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 """;
             await Execute(conn, insSql, false);
 
-            string procSql = "CREATE OR REPLACE PROCEDURE xml_funcs_proc()\n"
+            var procSql = "CREATE OR REPLACE PROCEDURE xml_funcs_proc()\n"
         + "IS\n"
         + "    xmltype_data XMLTYPE;\n"
         + "BEGIN\n"
@@ -1124,7 +1125,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await Execute(conn, procSql, false);
         }
 
-        private async Task RunQueryAndVerifyResultAsync(EDBConnection conn, string query, string[] expected)
+        private static async Task RunQueryAndVerifyResultAsync(EDBConnection conn, string query, string[] expected)
         {
             try
             {
@@ -1133,11 +1134,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandType = CommandType.Text;
 
                     com.CommandText = query;
-                    EDBDataReader reader = await com.ExecuteReaderAsync();
+                    var reader = await com.ExecuteReaderAsync();
 
                     Assert.IsTrue(reader.HasRows);
 
-                    int i = 0;
+                    var i = 0;
                     while (await reader.ReadAsync())
                     {
                         Assert.AreEqual(expected[i], reader.GetString(0));

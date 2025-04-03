@@ -91,9 +91,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select * from funcB()", con);
+            var command = new EDBCommand("select * from funcB()", con);
 
-            EDBDataReader reader = command.ExecuteReader();
+            var reader = command.ExecuteReader();
             Assert.IsNotNull(reader);
 
         }
@@ -103,9 +103,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select count(*) from tablea", con);
+            var command = new EDBCommand("select count(*) from tablea", con);
 
-            Object result = command.ExecuteScalar();
+            var result = command.ExecuteScalar();
 
             Assert.AreEqual(5, result);
 
@@ -117,18 +117,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:p0)", con);
+            var command = new EDBCommand("INSERT INTO tablea(field_text) values (:p0)", con);
 
             command.Parameters.Add(new EDBParameter("p0", EDBDbType.Text));
 
             command.Parameters["p0"].Value = @"\test";
 
-            object result = command.ExecuteNonQuery();
+            object? result = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, result);
 
 
-            EDBCommand command2 = new EDBCommand("select field_text from tablea where field_serial = (select max(field_serial) from tablea)", con);
+            var command2 = new EDBCommand("select field_text from tablea where field_serial = (select max(field_serial) from tablea)", con);
 
 
             result = command2.ExecuteScalar();
@@ -183,28 +183,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0)", con);
+            var command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0)", con);
 
             command.Parameters.Add(new EDBParameter("p0", 5));
 
-            Assert.AreEqual(command.Parameters[0].EDBDbType, EDBDbType.Integer);
-            Assert.AreEqual(command.Parameters[0].DbType, DbType.Int32);
+            Assert.AreEqual(EDBDbType.Integer, command.Parameters[0].EDBDbType);
+            Assert.AreEqual(DbType.Int32, command.Parameters[0].DbType);
 
-            object result = command.ExecuteNonQuery();
+            object? result = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, result);
 
-            EDBCommand command2 = new EDBCommand("select field_int4 from tablea where field_serial = (select max(field_serial) from tablea)", con);
+            var command2 = new EDBCommand("select field_int4 from tablea where field_serial = (select max(field_serial) from tablea)", con);
 
             result = command2.ExecuteScalar();
 
             new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea)", con).ExecuteNonQuery();
 
             Assert.AreEqual(5, result);
-
-
-
-            //reader.FieldCount
 
         }
 
@@ -214,20 +210,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0)", con);
+            var command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0)", con);
 
             command.Parameters.Add(new EDBParameter("p0", 5));
 
-            Assert.AreEqual(command.Parameters[0].EDBDbType, EDBDbType.Integer);
-            Assert.AreEqual(command.Parameters[0].DbType, DbType.Int32);
+            Assert.AreEqual(EDBDbType.Integer, command.Parameters[0].EDBDbType);
+            Assert.AreEqual(DbType.Int32, command.Parameters[0].DbType);
 
-
-            object result = command.ExecuteNonQuery();
+            object? result = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, result);
 
 
-            EDBCommand command2 = new EDBCommand("select field_int4 from tablea where field_serial = (select max(field_serial) from tablea)", con);
+            var command2 = new EDBCommand("select field_int4 from tablea where field_serial = (select max(field_serial) from tablea)", con);
 
 
             result = command2.ExecuteScalar();
@@ -251,12 +246,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandText = "funcC";
 
             command.CommandType = CommandType.StoredProcedure;
 
-            EDBDataReader result = command.ExecuteReader();
+            var result = command.ExecuteReader();
 
             Assert.True(result.Read());
             Assert.AreEqual(1, result.FieldCount);
@@ -269,10 +264,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("funcC", con);
+            var command = new EDBCommand("funcC", con);
             command.CommandType = CommandType.StoredProcedure;
 
-            Object result = command.ExecuteScalar();
+            var result = command.ExecuteScalar();
 
             Assert.AreEqual(5, result);
 
@@ -283,7 +278,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("public.funcC(:a)", con);
+            var command = new EDBCommand("public.funcC(:a)", con);
             command.CommandType = CommandType.StoredProcedure;
 
             //command.Parameters.Add(new EDBParameter("a", DbType.Int32));
@@ -293,7 +288,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.Parameters[0].Value = 4;
 
-            Int64 result = (long)command.ExecuteScalar();
+            var result = (long)command.ExecuteScalar()!;
 
             Assert.AreEqual(1, result);
 
@@ -304,14 +299,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("funcC(:a)", con);
+            var command = new EDBCommand("funcC(:a)", con);
             command.CommandType = CommandType.StoredProcedure;
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Integer));
             command.Prepare();
             command.Parameters[0].Value = 4;
 
-            Int64 result = (long)command.ExecuteScalar();
+            var result = (long)command.ExecuteScalar()!;
 
             Assert.AreEqual(1, result);
 
@@ -373,12 +368,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select * from funcb()", con);
+            var command = new EDBCommand("select * from funcb()", con);
             command.CommandType = CommandType.Text;
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             Assert.AreEqual(5, dr.FieldCount);
-            for (int i = 0; i < 5; i++)
+            for (var i = 0; i < 5; i++)
             {
                 Assert.True(dr.Read());
             }
@@ -391,11 +386,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea;", con);
+            var command = new EDBCommand("select * from tablea;", con);
 
             command.Prepare();
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
 
         }
 
@@ -405,7 +400,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values (:p0);", con);
+            var command = new EDBCommand("INSERT INTO tablea(field_text) values (:p0);", con);
             command.Parameters.Add(new EDBParameter("p0", EDBDbType.Text));
             command.Parameters["p0"].Value = "test";
 
@@ -413,7 +408,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Prepare();
 
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             dr.Close();
             new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea);", con).ExecuteNonQuery();
 
@@ -425,7 +420,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0);", con);
+            var command = new EDBCommand("INSERT INTO tablea(field_int4) values (:p0);", con);
             command.Parameters.Add(new EDBParameter("p0", EDBDbType.Integer));
             command.Parameters["p0"].Value = DBNull.Value;
 
@@ -433,7 +428,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Prepare();
 
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             dr.Close();
             new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea);", con).ExecuteNonQuery();
 
@@ -446,7 +441,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea where field_int4 = :a and field_int8 = :b;", con);
+            var command = new EDBCommand("select * from tablea where field_int4 = :a and field_int8 = :b;", con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Int32));
             command.Parameters.Add(new EDBParameter("b", DbType.Int64));
@@ -460,7 +455,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters[0].Value = 3;
             command.Parameters[1].Value = 5;
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
 
         }
 
@@ -469,7 +464,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select * from tablea where field_int4 = :a and field_int8 = :b;", con);
+            var command = new EDBCommand("select * from tablea where field_int4 = :a and field_int8 = :b;", con);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Integer));
             command.Parameters.Add(new EDBParameter("b", EDBDbType.Bigint));
@@ -483,7 +478,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters[0].Value = 3;
             command.Parameters[1].Value = 5;
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
 
         }
 
@@ -498,13 +493,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
+            var command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Byte));
 
             command.Parameters[0].Value = 2;
 
-            Int32 rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, rowsAdded);
 
@@ -522,14 +517,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
+            var command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
 
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Integer));
 
             command.Parameters[0].Value = 0;
 
 
-            Int32 rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, rowsAdded);
 
@@ -543,13 +538,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_timestamp from tableb where field_serial = 2;", con);
-            DateTime d = (DateTime)command.ExecuteScalar();
+            var command = new EDBCommand("select field_timestamp from tableb where field_serial = 2;", con);
+            var d = (DateTime)command.ExecuteScalar()!;
             Assert.AreEqual("2002-02-02 09:00:23Z", d.ToString("u"));
 
-            DateTimeFormatInfo culture = new DateTimeFormatInfo();
+            var culture = new DateTimeFormatInfo();
             culture.TimeSeparator = ":";
-            DateTime dt = System.DateTime.Parse("2004-06-04 09:48:00", culture);
+            var dt = System.DateTime.Parse("2004-06-04 09:48:00", culture);
 
             command.CommandText = "INSERT INTO tableb(field_timestamp) values (:a);delete from tableb where field_serial > 4;";
             command.Parameters.Add(new EDBParameter("a", DbType.DateTime));
@@ -565,16 +560,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_timestamp from tableb where field_serial = 2;", con);
+            var command = new EDBCommand("select field_timestamp from tableb where field_serial = 2;", con);
 
-            DateTime d = (DateTime)command.ExecuteScalar();
+            var d = (DateTime)command.ExecuteScalar()!;
 
 
             Assert.AreEqual("2002-02-02 09:00:23Z", d.ToString("u"));
 
-            DateTimeFormatInfo culture = new DateTimeFormatInfo();
+            var culture = new DateTimeFormatInfo();
             culture.TimeSeparator = ":";
-            DateTime dt = System.DateTime.Parse("2004-06-04 09:48:00", culture);
+            var dt = System.DateTime.Parse("2004-06-04 09:48:00", culture);
 
             command.CommandText = "INSERT INTO tableb(field_timestamp) values (:a);delete from tableb where field_serial > 4;";
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Timestamp));
@@ -589,9 +584,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_date from tablec where field_serial = 1;", con);
+            var command = new EDBCommand("select field_date from tablec where field_serial = 1;", con);
 
-            DateTime d = (DateTime)command.ExecuteScalar();
+            var d = (DateTime)command.ExecuteScalar()!;
 
 
             Assert.AreEqual("2002-03-04", d.ToString("yyyy-MM-dd"));
@@ -603,10 +598,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_time from tablec where field_serial = 2;", con);
+            var command = new EDBCommand("select field_time from tablec where field_serial = 2;", con);
 
             //   DateTime d = command.ExecuteScalar();
-            TimeSpan tm = (TimeSpan)command.ExecuteScalar();
+            var tm = (TimeSpan)command.ExecuteScalar()!;
 
             Console.WriteLine(tm.ToString());
 
@@ -621,22 +616,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", con);
+            var command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", con);
             command.Parameters.Add(new EDBParameter("a", DbType.Decimal));
 
             command.Parameters[0].Value = 7.4M;
 
-            Int32 rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, rowsAdded);
 
             command.CommandText = "select * from tableb where field_numeric = :a";
 
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             dr.Read();
 
-            Decimal result = dr.GetDecimal(3);
+            var result = dr.GetDecimal(3);
 
             dr.Close();
             command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
@@ -653,22 +648,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", con);
+            var command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", con);
             command.Parameters.Add(new EDBParameter("a", EDBDbType.Numeric));
 
             command.Parameters[0].Value = 7.4M;
 
-            Int32 rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, rowsAdded);
 
             command.CommandText = "select * from tableb where field_numeric = :a";
 
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             dr.Read();
 
-            Decimal result = dr.GetDecimal(3);
+            var result = dr.GetDecimal(3);
             dr.Close();
 
             command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
@@ -690,22 +685,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float4) values (:a)", con);
+            var command = new EDBCommand("INSERT INTO tabled(field_float4) values (:a)", con);
             command.Parameters.Add(new EDBParameter(":a", DbType.Single));
 
             command.Parameters[0].Value = 7.4F;
 
-            Int32 rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, rowsAdded);
 
             command.CommandText = "select * from tabled where field_float4 = :a";
 
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             dr.Read();
 
-            Single result = dr.GetFloat(1);
+            var result = dr.GetFloat(1);
             dr.Close();
 
             command.CommandText = "delete from tabled where field_serial > 2;";
@@ -724,22 +719,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("INSERT INTO tabled(field_float4) values (:a)", con);
+            var command = new EDBCommand("INSERT INTO tabled(field_float4) values (:a)", con);
             command.Parameters.Add(new EDBParameter(":a", EDBDbType.Real));
 
             command.Parameters[0].Value = 7.4F;
 
-            Int32 rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
 
             Assert.AreEqual(1, rowsAdded);
 
             command.CommandText = "select * from tabled where field_float4 = :a";
 
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             dr.Read();
 
-            Single result = dr.GetFloat(1);
+            var result = dr.GetFloat(1);
 
             dr.Close();
             command.CommandText = "delete from tabled where field_serial > 2;";
@@ -757,13 +752,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("select * from tableb where field_serial = 4", con);
+            var command = new EDBCommand("select * from tableb where field_serial = 4", con);
 
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             dr.Read();
 
-            Decimal result = dr.GetDecimal(3);
+            var result = dr.GetDecimal(3);
 
             Assert.AreEqual(-4.3000000M, result);
 
@@ -776,13 +771,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("select * from tableb where field_serial = 4", con);
+            var command = new EDBCommand("select * from tableb where field_serial = 4", con);
 
 
-            EDBDataReader dr = command.ExecuteReader();
+            var dr = command.ExecuteReader();
             dr.Read();
 
-            Decimal result = dr.GetDecimal(3);
+            var result = dr.GetDecimal(3);
 
             Assert.AreEqual(-4.3000000M, (decimal)result);
             //Assert.AreEqual(11, result.Precision);
@@ -795,9 +790,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand command = new EDBCommand("INSERT INTO tablea(field_text) values ('a'); select count(*) from tablea;", con);
+            var command = new EDBCommand("INSERT INTO tablea(field_text) values ('a'); select count(*) from tablea;", con);
 
-            Object result = command.ExecuteScalar();
+            var result = command.ExecuteScalar();
 
 
             command.CommandText = "delete from tablea where field_serial > 5";
@@ -815,9 +810,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void ConnectionStringWithInvalidParameters()
         {
-            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
+            var conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
-            EDBCommand command = new EDBCommand("select * from tablea", conn);
+            var command = new EDBCommand("select * from tablea", conn);
 
             Assert.Throws<PostgresException>(() => command.Connection.Open());
 
@@ -826,9 +821,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void InvalidConnectionString()
         {
-            EDBConnection conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
+            var conn = new EDBConnection("Server=127.0.0.1;User Id=EDB_tests;Password=j");
 
-            EDBCommand command = new EDBCommand("select * from tablea", conn);
+            var command = new EDBCommand("select * from tablea", conn);
             Assert.Throws<PostgresException>(() => command.Connection.Open());
 
             //     Assert("Either password must be specified or IntegratedSecurity must be on",);
@@ -878,18 +873,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            string sql = @"select * from tablea where
+            var sql = @"select * from tablea where
                          field_serial = :a
                          ";
 
 
-            EDBCommand command = new EDBCommand(sql, con);
+            var command = new EDBCommand(sql, con);
 
             command.Parameters.Add(new EDBParameter("a", DbType.Int32));
 
             command.Parameters[0].Value = 2;
 
-            Int32 rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
 
         }
 
@@ -899,9 +894,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_point from tablee where field_serial = 1", con);
+            var command = new EDBCommand("select field_point from tablee where field_serial = 1", con);
 
-            EDBPoint p = (EDBPoint)command.ExecuteScalar();
+            var p = (EDBPoint)command.ExecuteScalar()!;
 
             Assert.AreEqual(4, p.X);
             Assert.AreEqual(3, p.Y);
@@ -914,9 +909,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_box from tablee where field_serial = 2", con);
+            var command = new EDBCommand("select field_box from tablee where field_serial = 2", con);
 
-            EDBBox box = (EDBBox)command.ExecuteScalar();
+            var box = (EDBBox)command.ExecuteScalar()!;
 
             Assert.AreEqual(5, box.UpperRight.X);
             Assert.AreEqual(4, box.UpperRight.Y);
@@ -932,9 +927,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_lseg from tablee where field_serial = 3", con);
+            var command = new EDBCommand("select field_lseg from tablee where field_serial = 3", con);
 
-            EDBLSeg lseg = (EDBLSeg)command.ExecuteScalar();
+            var lseg = (EDBLSeg)command.ExecuteScalar()!;
 
             Assert.AreEqual(4, lseg.Start.X);
             Assert.AreEqual(3, lseg.Start.Y);
@@ -950,11 +945,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_path from tablee where field_serial = 4", con);
+            var command = new EDBCommand("select field_path from tablee where field_serial = 4", con);
 
-            EDBPath path = (EDBPath)command.ExecuteScalar();
+            var path = (EDBPath)command.ExecuteScalar()!;
 
-            Assert.AreEqual(false, path.Open);
+            Assert.IsFalse( path.Open);
             Assert.AreEqual(2, path.Count);
             Assert.AreEqual(4, path[0].X);
             Assert.AreEqual(3, path[0].Y);
@@ -970,11 +965,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_path from tablee where field_serial = 5", con);
+            var command = new EDBCommand("select field_path from tablee where field_serial = 5", con);
 
-            EDBPath path = (EDBPath)command.ExecuteScalar();
+            var path = (EDBPath)command.ExecuteScalar()!;
 
-            Assert.AreEqual(true, path.Open);
+            Assert.IsTrue( path.Open);
             Assert.AreEqual(2, path.Count);
             Assert.AreEqual(4, path[0].X);
             Assert.AreEqual(3, path[0].Y);
@@ -992,9 +987,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_polygon from tablee where field_serial = 6", con);
+            var command = new EDBCommand("select field_polygon from tablee where field_serial = 6", con);
 
-            EDBPolygon polygon = (EDBPolygon)command.ExecuteScalar();
+            var polygon = (EDBPolygon)command.ExecuteScalar()!;
 
             Assert.AreEqual(2, polygon.Count);
             Assert.AreEqual(4, polygon[0].X);
@@ -1012,9 +1007,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("select field_circle from tablee where field_serial = 7", con);
+            var command = new EDBCommand("select field_circle from tablee where field_serial = 7", con);
 
-            EDBCircle circle = (EDBCircle)command.ExecuteScalar();
+            var circle = (EDBCircle)command.ExecuteScalar()!;
 
             Assert.AreEqual(4, circle.Center.X);
             Assert.AreEqual(3, circle.Center.Y);
@@ -1030,7 +1025,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE INET_TBL ( i inet);", con);
+            var command = new EDBCommand("CREATE TABLE INET_TBL ( i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO INET_TBL (i) VALUES ('10.90.1.226/32');";
             command.ExecuteNonQuery();
@@ -1039,7 +1034,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select * from INET_TBL";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
             try
             {
@@ -1068,7 +1063,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE IF NOT EXISTS CIDR_TBL (c cidr);", con);
+            var command = new EDBCommand("CREATE TABLE IF NOT EXISTS CIDR_TBL (c cidr);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO CIDR_TBL  VALUES ('192.168.1');";
             command.ExecuteNonQuery();
@@ -1077,7 +1072,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select * from CIDR_TBL";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
             try
             {
@@ -1107,7 +1102,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE NETADD_TBL (c cidr, i inet);", con);
+            var command = new EDBCommand("CREATE TABLE NETADD_TBL (c cidr, i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO NETADD_TBL (c, i) VALUES ('192.168.1', '192.168.1.255/24');";
             command.ExecuteNonQuery();
@@ -1122,7 +1117,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select * from NETADD_TBL";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1158,7 +1153,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE NW_HOST (i inet);", con);
+            var command = new EDBCommand("CREATE TABLE NW_HOST (i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO NW_HOST (i) VALUES ('192.168.1.226');";
             command.ExecuteNonQuery();
@@ -1167,7 +1162,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT host(i) from NW_HOST;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1200,7 +1195,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE NW_FAMILY (i inet);", con);
+            var command = new EDBCommand("CREATE TABLE NW_FAMILY (i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO NW_FAMILY (i) VALUES ('10.90.1.145');";
             command.ExecuteNonQuery();
@@ -1209,7 +1204,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT family(i) from NW_FAMILY;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1243,7 +1238,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE NWK_BROADCAST (c cidr);", con);
+            var command = new EDBCommand("CREATE TABLE NWK_BROADCAST (c cidr);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO NWK_BROADCAST (c) VALUES ('10.90.1.145/32');";
             command.ExecuteNonQuery();
@@ -1252,7 +1247,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT BROADCAST(c) from NWK_BROADCAST;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1284,7 +1279,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE NETADD_MASKLEN (c cidr, i inet);", con);
+            var command = new EDBCommand("CREATE TABLE NETADD_MASKLEN (c cidr, i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO NETADD_MASKLEN (c, i) VALUES ('192.168.1', '192.168.1.255/24');";
             command.ExecuteNonQuery();
@@ -1299,7 +1294,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT masklen(c) from NETADD_MASKLEN;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1338,7 +1333,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE NET_TEXT (c cidr, i inet);", con);
+            var command = new EDBCommand("CREATE TABLE NET_TEXT (c cidr, i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO NET_TEXT (c, i) VALUES ('192.168.1', '192.168.1.255/24');";
             command.ExecuteNonQuery();
@@ -1353,7 +1348,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT text(c) from NET_TEXT;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1392,7 +1387,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE tbl_setmasklen (c cidr, i inet);", con);
+            var command = new EDBCommand("CREATE TABLE tbl_setmasklen (c cidr, i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO tbl_setmasklen (c, i) VALUES ('192.168.1', '192.168.1.255/24');;";
             command.ExecuteNonQuery();
@@ -1407,7 +1402,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT set_masklen(inet(text(i)), 24) from tbl_setmasklen;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1446,7 +1441,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE tbl_network (c cidr, i inet);", con);
+            var command = new EDBCommand("CREATE TABLE tbl_network (c cidr, i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO tbl_network (c, i) VALUES ('192.168.1', '192.168.1.255/24');";
             command.ExecuteNonQuery();
@@ -1461,7 +1456,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT network(c),network (i) from tbl_network;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1502,7 +1497,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE tbl_net(c cidr, i inet);", con);
+            var command = new EDBCommand("CREATE TABLE tbl_net(c cidr, i inet);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO tbl_net (c, i) VALUES ('10:23::8000/113', '10:23::ffff');";
             command.ExecuteNonQuery();
@@ -1511,7 +1506,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT text(c),text(i) from tbl_net;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
             try
             {
@@ -1541,14 +1536,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE tbl_mac(mac macaddr);", con);
+            var command = new EDBCommand("CREATE TABLE tbl_mac(mac macaddr);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO tbl_mac VALUES ('08002b:010203');";
             command.ExecuteNonQuery();
 
             command.CommandText = "SELECT * from tbl_mac;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1579,7 +1574,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE tbl_macadd(m macaddr);", con);
+            var command = new EDBCommand("CREATE TABLE tbl_macadd(m macaddr);", con);
             command.ExecuteNonQuery();
             command.CommandText = "INSERT INTO tbl_macadd VALUES ('0800.2b01.0203');";
             command.ExecuteNonQuery();
@@ -1588,7 +1583,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT * from tbl_macadd;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1621,14 +1616,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
             EDBInet[] a = { new EDBInet("10.90.1.226/24"), new EDBInet("192.168.1.255/25"), new EDBInet("9.1.2.3/8") };
-            EDBCommand command = new EDBCommand("CREATE TABLE tbl_inet_arr ( i inet[]);", con);
+            var command = new EDBCommand("CREATE TABLE tbl_inet_arr ( i inet[]);", con);
             command.ExecuteNonQuery();
             command.CommandText = " INSERT INTO tbl_inet_arr (i)  VALUES ( '{10.90.1.226/24, 192.168.1.255/25,9.1.2.3/8}');";
             command.ExecuteNonQuery();
 
             command.CommandText = "SELECT * from tbl_inet_arr;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1658,14 +1653,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE tbl_cidr_arr ( c cidr[]);", con);
+            var command = new EDBCommand("CREATE TABLE tbl_cidr_arr ( c cidr[]);", con);
             command.ExecuteNonQuery();
             command.CommandText = " INSERT INTO tbl_cidr_arr (c)  VALUES ( '{192.168.1.0/26, 10.1.2.3,20.2.3.164}');";
             command.ExecuteNonQuery();
 
             command.CommandText = "SELECT * from tbl_cidr_arr;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1695,7 +1690,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             con.Open();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE inhx (xx text DEFAULT 'text');", con);
+            var command = new EDBCommand("CREATE TABLE inhx (xx text DEFAULT 'text');", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS);", con);
             command.ExecuteNonQuery();
@@ -1704,7 +1699,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT * FROM inhf;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1736,7 +1731,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
             //EDBTransaction tran=_conn.BeginTransaction();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE p1(ff1 int);", con);
+            var command = new EDBCommand("CREATE TABLE p1(ff1 int);", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("CREATE TABLE p2(f1 text);", con);
             command.ExecuteNonQuery();
@@ -1750,7 +1745,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "SELECT * FROM c1;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1786,7 +1781,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
             //EDBTransaction tran=_conn.BeginTransaction();
 
-            EDBCommand command = new EDBCommand("create temp table foo(f1 int, f2 int);", con);
+            var command = new EDBCommand("create temp table foo(f1 int, f2 int);", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("INSERT INTO foo values(1,1);INSERT INTO foo values(3,3);", con);
             command.ExecuteNonQuery();
@@ -1800,7 +1795,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select * from bar";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1840,7 +1835,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
             //EDBTransaction tran=_conn.BeginTransaction();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE base (i varchar);", con);
+            var command = new EDBCommand("CREATE TABLE base (i varchar);", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("CREATE TABLE derived() inherits (base);", con);
             command.ExecuteNonQuery();
@@ -1850,7 +1845,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             /*ZK: refer to http://www.EDB.org/doc/faq.html for details*/
             command.CommandText = "select derived::TEXT from derived ;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1886,7 +1881,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                EDBCommand command = new EDBCommand("", con);
+                var command = new EDBCommand("", con);
                 command.CommandText = "DROP TABLE on_hand;";
                 command.ExecuteNonQuery();
                 command.CommandText = "drop TYPE inventory_item;";
@@ -1906,7 +1901,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             DropType();
 
 
-            EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
+            var command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", con);
             command.ExecuteNonQuery();
@@ -1916,7 +1911,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select * from on_hand;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -1953,7 +1948,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
             DropType();
 
-            EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
+            var command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", con);
             command.ExecuteNonQuery();
@@ -1963,7 +1958,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select (item).name from on_hand where (item).price=1.99;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -2003,7 +1998,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
             DropType();
 
-            EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
+            var command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", con);
             command.ExecuteNonQuery();
@@ -2020,7 +2015,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select (on_hand.item).name  from on_hand where (on_hand.item).price=( select (on_hand2.item).price from on_hand2 where (on_hand.item).name='fuzzy dice')";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -2062,7 +2057,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             DropType();
 
 
-            EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
+            var command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", con);
             command.ExecuteNonQuery();
@@ -2075,7 +2070,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select (item).name from on_hand where count=1000;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
 
@@ -2117,7 +2112,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
             DropType();
 
-            EDBCommand command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
+            var command = new EDBCommand("CREATE TYPE inventory_item AS ( name  text,supplier_id     integer,  price numeric);", con);
             command.ExecuteNonQuery();
             command = new EDBCommand("CREATE TABLE on_hand (item  inventory_item,count     integer);", con);
             command.ExecuteNonQuery();
@@ -2130,7 +2125,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "select * from on_hand where count=1000;";
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
 
             Assert.IsFalse(Reader.HasRows);
@@ -2155,7 +2150,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE TABLE TAB1(A INT4)", con);
+            var command = new EDBCommand("CREATE TABLE TAB1(A INT4)", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand(" DROP TABLE TAB1", con);
@@ -2173,7 +2168,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE TABLE TAB1(A INT4)", con);
+            var command = new EDBCommand("CREATE TABLE TAB1(A INT4)", con);
             command.ExecuteScalar();
 
             command = new EDBCommand(" DROP TABLE TAB1", con);
@@ -2191,8 +2186,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE TABLE TAB1read(A INT4)", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE TABLE TAB1read(A INT4)", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand(" DROP TABLE TAB1read", con);
             command.ExecuteReader();
@@ -2208,17 +2203,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE TABLE TAB1(A INT4)", con);
+            var command = new EDBCommand("CREATE TABLE TAB1(A INT4)", con);
             command.ExecuteNonQuery();
 
-            EDBCommand command1 = new EDBCommand("CREATE TABLE TAB2(A INT4)", con);
+            var command1 = new EDBCommand("CREATE TABLE TAB2(A INT4)", con);
             command1.ExecuteNonQuery();
 
 
             command = new EDBCommand("DROP TABLE TAB1", con);
             command.ExecuteNonQuery();
 
-            EDBCommand command2 = new EDBCommand("DROP TABLE TAB2", con);
+            var command2 = new EDBCommand("DROP TABLE TAB2", con);
             command2.ExecuteNonQuery();
 
             con.Close();
@@ -2232,7 +2227,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4)", con);
+            var command = new EDBCommand("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4)", con);
             command.ExecuteScalar();
 
             command = new EDBCommand(" DROP TABLE TAB1;DROP TABLE TAB2", con);
@@ -2250,7 +2245,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4)", con);
+            var command = new EDBCommand("CREATE TABLE TAB1(A INT4);CREATE TABLE TAB2(A INT4)", con);
             command.ExecuteReader();
 
             command = new EDBCommand("DROP TABLE TAB1;DROP TABLE TAB2", con);
@@ -2268,7 +2263,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
+            var command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand(" DROP VIEW vista", con);
@@ -2286,7 +2281,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
+            var command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP VIEW vista", con);
@@ -2304,8 +2299,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand("DROP VIEW vista", con);
             command.ExecuteReader();
@@ -2321,18 +2316,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
+            var command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
             command.ExecuteNonQuery();
 
 
-            EDBCommand command1 = new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;", con);
+            var command1 = new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;", con);
             command1.ExecuteNonQuery();
 
 
             command = new EDBCommand(" DROP VIEW vista", con);
             command.ExecuteNonQuery();
 
-            EDBCommand command2 = new EDBCommand("DROP VIEW vistb", con);
+            var command2 = new EDBCommand("DROP VIEW vistb", con);
             command2.ExecuteNonQuery();
 
 
@@ -2347,7 +2342,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;", con);
+            var command = new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;", con);
             command.ExecuteScalar();
 
 
@@ -2372,7 +2367,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;", con);
+            var command = new EDBCommand("CREATE VIEW vistb AS SELECT text 'Hi Man' AS hi;", con);
             command.ExecuteReader();
             command = new EDBCommand("CREATE VIEW vista AS SELECT text 'Hello World' AS hello;", con);
             command.ExecuteReader();
@@ -2392,7 +2387,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE SEQUENCE seq1 START 10;", con);
+            var command = new EDBCommand("CREATE SEQUENCE seq1 START 10;", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand(" DROP SEQUENCE seq1", con);
@@ -2410,7 +2405,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE SEQUENCE seq1 START 10;", con);
+            var command = new EDBCommand("CREATE SEQUENCE seq1 START 10;", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP SEQUENCE seq1", con);
@@ -2428,8 +2423,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE SEQUENCE seq1 START 10;", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE SEQUENCE seq1 START 10;", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand("DROP SEQUENCE seq1", con);
             command.ExecuteReader();
@@ -2446,7 +2441,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE SEQUENCE seq22 START 1;", con);
+            var command = new EDBCommand("CREATE SEQUENCE seq22 START 1;", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("CREATE SEQUENCE seq11 START 10;", con);
@@ -2468,7 +2463,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE SEQUENCE seq_2 START 1;", con);
+            var command = new EDBCommand("CREATE SEQUENCE seq_2 START 1;", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("CREATE SEQUENCE seq_1 START 10;", con);
@@ -2492,8 +2487,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE SEQUENCE seq_22 START 1;", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE SEQUENCE seq_22 START 1;", con);
+            var dr = command.ExecuteReader();
             dr.Close();
 
             command = new EDBCommand("CREATE SEQUENCE seq_11 START 10;", con);
@@ -2518,7 +2513,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL; END;", con);
+            var command = new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL; END;", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("DROP PROCEDURE p1", con);
@@ -2536,7 +2531,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL;END;", con);
+            var command = new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL;END;", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP PROCEDURE p1", con);
@@ -2554,8 +2549,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL;END;", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE PROCEDURE P1 AS BEGIN NULL;END;", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand("DROP PROCEDURE p1", con);
             command.ExecuteReader();
@@ -2572,7 +2567,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE PROCEDURE P1 IS BEGIN NULL;END;CREATE PROCEDURE P2 AS BEGIN NULL;END;", con);
+            var command = new EDBCommand("CREATE PROCEDURE P1 IS BEGIN NULL;END;CREATE PROCEDURE P2 AS BEGIN NULL;END;", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand(" DROP PROCEDURE p1;DROP PROCEDURE p2", con);
@@ -2590,7 +2585,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE PROCEDURE P1 IS BEGIN NULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;", con);
+            var command = new EDBCommand("CREATE PROCEDURE P1 IS BEGIN NULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP PROCEDURE p1;DROP PROCEDURE p2", con);
@@ -2608,7 +2603,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE PROCEDURE P1 IS \rBEGIN\rNULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;", con);
+            var command = new EDBCommand("CREATE PROCEDURE P1 IS \rBEGIN\rNULL;\rEND;CREATE PROCEDURE P2 AS \rBEGIN\rNULL;\rEND;", con);
             command.ExecuteReader();
 
             command = new EDBCommand("DROP PROCEDURE p1;DROP PROCEDURE p2", con);
@@ -2625,7 +2620,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;", con);
+            var command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("DROP FUNCTION p1", con);
@@ -2643,7 +2638,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;", con);
+            var command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP FUNCTION p1", con);
@@ -2661,8 +2656,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;END;", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand("DROP FUNCTION p1", con);
             dr = command.ExecuteReader();
@@ -2679,7 +2674,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;", con);
+            var command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
@@ -2697,7 +2692,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;", con);
+            var command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS \rBEGIN\rNULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
@@ -2715,7 +2710,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;", con);
+            var command = new EDBCommand("CREATE FUNCTION P1 RETURN VOID AS BEGIN NULL;\rEND;CREATE FUNCTION P2 RETURN VOID AS \rBEGIN\rNULL;\rEND;", con);
             command.ExecuteReader();
 
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
@@ -2733,7 +2728,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL; END;' language 'plpgsql';", con);
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL; END;' language 'plpgsql';", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("DROP FUNCTION p1", con);
@@ -2751,7 +2746,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL; END;' language 'plpgsql';", con);
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL; END;' language 'plpgsql';", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP FUNCTION p1", con);
@@ -2769,8 +2764,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand("DROP FUNCTION p1", con);
             command.ExecuteReader();
@@ -2787,7 +2782,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL;END;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';", con);
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' BEGIN NULL;END;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
@@ -2805,7 +2800,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';", con);
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
@@ -2823,8 +2818,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS' \rBEGIN\rNULL;\rEND;' language 'plpgsql';", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
             command.ExecuteReader();
@@ -2840,7 +2835,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';", con);
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("DROP FUNCTION p1", con);
@@ -2858,7 +2853,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';", con);
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP FUNCTION p1", con);
@@ -2876,8 +2871,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND; $$ language 'plpgsql';", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand("DROP FUNCTION p1", con);
             command.ExecuteReader();
@@ -2894,7 +2889,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';", con);
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
@@ -2912,7 +2907,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';", con);
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
@@ -2930,8 +2925,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';", con);
-            EDBDataReader dr = command.ExecuteReader();
+            var command = new EDBCommand("CREATE FUNCTION P1() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';CREATE FUNCTION P2() RETURNS VOID AS $$ \rBEGIN\rNULL;\rEND;$$ language 'plpgsql';", con);
+            var dr = command.ExecuteReader();
             dr.Close();
             command = new EDBCommand("DROP FUNCTION p1;DROP FUNCTION p2", con);
             command.ExecuteReader();
@@ -2948,7 +2943,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -2984,7 +2979,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3021,7 +3016,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3058,7 +3053,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS A INT4:=23;FUNCTION TESTFUNC1 RETURN INT4; FUNCTION TESTFUNC2 RETURN INT4;  END PKG_TEST;", con);
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS A INT4:=23;FUNCTION TESTFUNC1 RETURN INT4; FUNCTION TESTFUNC2 RETURN INT4;  END PKG_TEST;", con);
             command.ExecuteNonQuery();
 
             command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST IS FUNCTION TESTFUNC1 RETURN INT4 AS BEGIN DBMS_OUTPUT.PUT_LINE('HI MAN'); RETURN 34; END; FUNCTION TESTFUNC2 RETURN INT4 AS BEGIN DBMS_OUTPUT.PUT_LINE('HI MAN'); RETURN A; END; END;", con);
@@ -3079,7 +3074,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS A INT4:=23; FUNCTION TESTFUNC1 RETURN INT4; FUNCTION TESTFUNC2 RETURN INT4; END PKG_TEST;", con);
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS A INT4:=23; FUNCTION TESTFUNC1 RETURN INT4; FUNCTION TESTFUNC2 RETURN INT4; END PKG_TEST;", con);
             command.ExecuteScalar();
 
             command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY PKG_TEST IS FUNCTION TESTFUNC1 RETURN INT4 AS BEGIN DBMS_OUTPUT.PUT_LINE('HI MAN'); RETURN 34; END;FUNCTION TESTFUNC2 RETURN INT4 AS BEGIN DBMS_OUTPUT.PUT_LINE('HI MAN'); RETURN A; END; END;", con);
@@ -3099,7 +3094,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3131,7 +3126,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3169,7 +3164,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3208,7 +3203,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3247,7 +3242,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3281,7 +3276,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3314,7 +3309,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	IS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3346,7 +3341,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3382,7 +3377,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3419,7 +3414,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3456,7 +3451,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3488,7 +3483,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3519,7 +3514,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
                 "\r	FUNCTION TESTFUNC2 RETURN INT4;" +
@@ -3551,7 +3546,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3589,7 +3584,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3628,7 +3623,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3667,7 +3662,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3701,7 +3696,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +
@@ -3734,7 +3729,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             con.Open();
 
 
-            EDBCommand command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
+            var command = new EDBCommand("CREATE OR REPLACE PACKAGE PKG_TEST " +
                 "\r	AS" +
                 "\r	A INT4:=23;" +
                 "\r	FUNCTION TESTFUNC1 RETURN INT4;" +

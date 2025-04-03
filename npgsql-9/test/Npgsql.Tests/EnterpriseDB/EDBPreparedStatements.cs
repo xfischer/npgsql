@@ -34,9 +34,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{
-				string updateQuery  = "update emp set ename = :Name where empno = :ID";
+				var updateQuery  = "update emp set ename = :Name where empno = :ID";
 				
-				EDBCommand Prepared_command = new EDBCommand(updateQuery, con);
+				var Prepared_command = new EDBCommand(updateQuery, con);
 				Prepared_command.CommandType = CommandType.Text;
 			
 				Prepared_command.Parameters.Add(new EDBParameter("ID", EDBTypes.EDBDbType.Integer));
@@ -49,9 +49,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 				
 				Prepared_command.ExecuteNonQuery();
 
-				string updateQuery1  = "update emp set ename = :Name where empno = :ID";
+				var updateQuery1  = "update emp set ename = :Name where empno = :ID";
 				
-				EDBCommand Prepared_command1 = new EDBCommand(updateQuery1, con);
+				var Prepared_command1 = new EDBCommand(updateQuery1, con);
 				Prepared_command1.CommandType = CommandType.Text;
 			
 				Prepared_command1.Parameters.Add(new EDBParameter("ID", EDBTypes.EDBDbType.Integer));
@@ -78,16 +78,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
 			try
 			{
-				string updateQuery  = "select ename from emp where  empno = :ID";
+				var updateQuery  = "select ename from emp where  empno = :ID";
 							
-				EDBCommand Prepared_command = new EDBCommand(updateQuery, con);
+				var Prepared_command = new EDBCommand(updateQuery, con);
 				Prepared_command.CommandType = CommandType.Text;
 			
 				Prepared_command.Parameters.Add(new EDBParameter("ID", EDBTypes.EDBDbType.Integer));
 				Prepared_command.Prepare();
 			
 				Prepared_command.Parameters[0].Value = 7369;
-				EDBDataReader reader = Prepared_command.ExecuteReader();
+				var reader = Prepared_command.ExecuteReader();
 				while(reader.Read())
 				{
 					Assert.AreEqual("SMITH",reader.GetValue(0).ToString().ToUpper());
@@ -110,16 +110,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{			
-				string updateQuery  = "select * from emp where  empno = :ID";
+				var updateQuery  = "select * from emp where  empno = :ID";
 							
-				EDBCommand Prepared_command = new EDBCommand(updateQuery, con);
+				var Prepared_command = new EDBCommand(updateQuery, con);
 				Prepared_command.CommandType = CommandType.Text;
 			
 				Prepared_command.Parameters.Add(new EDBParameter("ID", EDBTypes.EDBDbType.Integer));
 				Prepared_command.Prepare();
 			
 				Prepared_command.Parameters[0].Value = 7369;
-				EDBDataReader reader = Prepared_command.ExecuteReader();
+				var reader = Prepared_command.ExecuteReader();
 				reader.Read();
 
 				Assert.AreEqual("7369",reader.GetValue(0).ToString());
@@ -144,16 +144,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			try
 			{
 				
-				string updateQuery  = "select * from emp ,dept  where dept.deptno = emp.deptno and empno = :ID";
+				var updateQuery  = "select * from emp ,dept  where dept.deptno = emp.deptno and empno = :ID";
 				
-				EDBCommand Prepared_command = new EDBCommand(updateQuery, con);
+				var Prepared_command = new EDBCommand(updateQuery, con);
 				Prepared_command.CommandType = CommandType.Text;
 			
 				Prepared_command.Parameters.Add(new EDBParameter("ID", EDBTypes.EDBDbType.Integer));
 				Prepared_command.Prepare();
 			
 				Prepared_command.Parameters[0].Value = 7369;
-				EDBDataReader reader = Prepared_command.ExecuteReader();
+				var reader = Prepared_command.ExecuteReader();
 				reader.Read();			
 			
 				Assert.AreEqual("7369",reader.GetValue(0).ToString());
@@ -182,9 +182,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{
-				string updateQuery  = "select * from emp ,dept  where dept.deptno = emp.deptno and empno = :ID and dept.deptno = :deptno";
+				var updateQuery  = "select * from emp ,dept  where dept.deptno = emp.deptno and empno = :ID and dept.deptno = :deptno";
 							
-				EDBCommand Prepared_command = new EDBCommand(updateQuery, con);
+				var Prepared_command = new EDBCommand(updateQuery, con);
 				Prepared_command.CommandType = CommandType.Text;
 			
 				Prepared_command.Parameters.Add(new EDBParameter("ID", EDBTypes.EDBDbType.Integer));
@@ -193,7 +193,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			
 				Prepared_command.Parameters[0].Value = 7369;
 				Prepared_command.Parameters[1].Value = 20;
-				EDBDataReader reader = Prepared_command.ExecuteReader();
+				var reader = Prepared_command.ExecuteReader();
 				reader.Read();
 				
 				Assert.AreEqual("7369",reader.GetValue(0).ToString());
@@ -218,9 +218,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		
 			try
 			{
-				string updateQuery  = "select * from emp ,dept  where dept.deptno = emp.deptno and empno = :ID and dept.deptno = :deptno and dname = :dname";
+				var updateQuery  = "select * from emp ,dept  where dept.deptno = emp.deptno and empno = :ID and dept.deptno = :deptno and dname = :dname";
 							
-				EDBCommand Prepared_command = new EDBCommand(updateQuery, con);
+				var Prepared_command = new EDBCommand(updateQuery, con);
 				Prepared_command.CommandType = CommandType.Text;
 			
 				Prepared_command.Parameters.Add(new EDBParameter("ID", EDBTypes.EDBDbType.Integer));
@@ -232,7 +232,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 				Prepared_command.Parameters[1].Value = 20;
 				Prepared_command.Parameters[2].Value = "RESEARCH";
 				
-				EDBDataReader reader = Prepared_command.ExecuteReader();
+				var reader = Prepared_command.ExecuteReader();
 				reader.Read();
 				Assert.AreEqual("7369",reader.GetValue(0).ToString());
 				Assert.AreEqual("SMITH",reader.GetValue(1).ToString().ToUpper());
@@ -254,8 +254,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testmultiple_statemant1()
 		{
-			string CreateTableQuery  = "create table test1 (a varchar);create table test2(a varchar);create table test3(a varchar)";
-			EDBCommand createcommand = new EDBCommand();
+			var CreateTableQuery  = "create table test1 (a varchar);create table test2(a varchar);create table test3(a varchar)";
+			var createcommand = new EDBCommand();
 			createcommand.CommandType = CommandType.Text;
 			createcommand.CommandText = CreateTableQuery;
 			createcommand.Connection = con;
@@ -266,8 +266,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{		
-				string InsertTableQuery  = "insert into  test1 values('EnterpriseDB');insert into test2 values ('Islamabad');insert into test3 values('Pakistan');";				
-				EDBCommand createcommand = new EDBCommand();
+				var InsertTableQuery  = "insert into  test1 values('EnterpriseDB');insert into test2 values ('Islamabad');insert into test3 values('Pakistan');";				
+				var createcommand = new EDBCommand();
 				createcommand.CommandType = CommandType.Text;
 				createcommand.CommandText = InsertTableQuery;
 				createcommand.Connection = con;
@@ -287,8 +287,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try
 			{
-				string CreateTableQuery  = "drop table test1;drop table test2;drop table test3;";
-				EDBCommand createcommand = new EDBCommand();
+				var CreateTableQuery  = "drop table test1;drop table test2;drop table test3;";
+				var createcommand = new EDBCommand();
 				createcommand.CommandType = CommandType.Text;
 				createcommand.CommandText = CreateTableQuery;
 				createcommand.Connection = con;

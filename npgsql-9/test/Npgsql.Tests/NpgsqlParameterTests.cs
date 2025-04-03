@@ -222,14 +222,14 @@ public class EDBParameterTest : TestBase
             DataRowVersion.Original, "foo");
         Assert.AreEqual(DbType.String, p1.DbType, "DbType");
         Assert.AreEqual(ParameterDirection.InputOutput, p1.Direction, "Direction");
-        Assert.AreEqual(false, p1.IsNullable, "IsNullable");
+        Assert.IsFalse( p1.IsNullable, "IsNullable");
         //Assert.AreEqual (999, p1.LocaleId, "#");
         Assert.AreEqual("p1Name", p1.ParameterName, "ParameterName");
         Assert.AreEqual(0, p1.Precision, "Precision");
         Assert.AreEqual(0, p1.Scale, "Scale");
         Assert.AreEqual(20, p1.Size, "Size");
         Assert.AreEqual("srcCol", p1.SourceColumn, "SourceColumn");
-        Assert.AreEqual(false, p1.SourceColumnNullMapping, "SourceColumnNullMapping");
+        Assert.IsFalse( p1.SourceColumnNullMapping, "SourceColumnNullMapping");
         Assert.AreEqual(DataRowVersion.Original, p1.SourceVersion, "SourceVersion");
         Assert.AreEqual(EDBDbType.Varchar, p1.EDBDbType, "EDBDbType");
         //Assert.AreEqual (3210, p1.EDBValue, "#");

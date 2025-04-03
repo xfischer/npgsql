@@ -30,25 +30,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
 
                 //create the table
-                string create="CREATE TABLE NewTable AS Select * From emp";
-                EDBCommand Command = new EDBCommand("",con);
+                var create="CREATE TABLE NewTable AS Select * From emp";
+                var Command = new EDBCommand("",con);
 				Command.CommandText=create;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
 				//test the existence of the new table
 
-				string Select="SELECT * FROM NewTable";
+				var Select="SELECT * FROM NewTable";
 				Command=new EDBCommand("",con);
 				Command.CommandText=Select;
 				Command.CommandType=CommandType.Text;
 
-				EDBDataReader Reader=Command.ExecuteReader();
+				var Reader=Command.ExecuteReader();
 
 				Assert.IsTrue(Reader.Read(),"No data returned from Select");
 
                 Reader.Close();
-				string DropTable="Drop TABLE NewTable";
+				var DropTable="Drop TABLE NewTable";
 				Command=new EDBCommand("",con);
 				Command.CommandText=DropTable;
 				Command.CommandType=CommandType.Text;
@@ -71,35 +71,35 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			try
             {
 
-                string createTable="CREATE TABLE TableForView AS Select * From dept";
-                EDBCommand Command = new EDBCommand("",con);
+                var createTable="CREATE TABLE TableForView AS Select * From dept";
+                var Command = new EDBCommand("",con);
 				Command.CommandText=createTable;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
-				string CreateView="CREATE OR REPLACE VIEW ImportedSchemaView AS Select * From TableForView";
+				var CreateView="CREATE OR REPLACE VIEW ImportedSchemaView AS Select * From TableForView";
 				Command=new EDBCommand("",con);
 				Command.CommandText=CreateView;
 				Command.ExecuteNonQuery();
 
-				string Select="SELECT * FROM ImportedSchemaView";
+				var Select="SELECT * FROM ImportedSchemaView";
 				Command=new EDBCommand("",con);
 				Command.CommandText=Select;
 				Command.CommandType=CommandType.Text;
 
-				EDBDataReader Reader=Command.ExecuteReader();
+				var Reader=Command.ExecuteReader();
 
 				//Assert.IsTrue(Reader.Read(),"No data returned from Select");
 
                 Reader.Close();
 				
-				string DropView ="Drop View ImportedSchemaView";
+				var DropView ="Drop View ImportedSchemaView";
 				Command=new EDBCommand("",con);
 				Command.CommandText=DropView;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
-				string Drop="Drop TABLE TableForView";
+				var Drop="Drop TABLE TableForView";
 				Command=new EDBCommand("",con);
 				Command.CommandText=Drop;
 				Command.CommandType=CommandType.Text;
@@ -128,25 +128,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			{
 
                 //create the table
-                string create="CREATE TABLE NewTable AS Select * From emp";
-                EDBCommand Command = new EDBCommand("",con);
+                var create="CREATE TABLE NewTable AS Select * From emp";
+                var Command = new EDBCommand("",con);
 				Command.CommandText=create;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
 				//test the existence of the new table
 
-				string Select="SELECT * FROM NewTable";
+				var Select="SELECT * FROM NewTable";
 				Command=new EDBCommand("",con);
 				Command.CommandText=Select;
 				Command.CommandType=CommandType.Text;
 
-				EDBDataReader Reader=Command.ExecuteReader();
+				var Reader=Command.ExecuteReader();
 
 				Assert.IsTrue(Reader.Read(),"No data returned from Select");
                 Reader.Close();
 
-				string DropTable="Drop TABLE NewTable";
+				var DropTable="Drop TABLE NewTable";
 				Command=new EDBCommand("",con);
 				Command.CommandText=DropTable;
 				Command.CommandType=CommandType.Text;
@@ -167,21 +167,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try 
 			{
-				string create="CREATE TABLE DeleteTable AS Select * From emp";
-				EDBCommand Command=new EDBCommand("",con);
+				var create="CREATE TABLE DeleteTable AS Select * From emp";
+				var Command=new EDBCommand("",con);
 				Command.CommandText=create;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
 				//test the existence of the new table
 
-				string Select="Delete  FROM DeleteTable where empno=10";
+				var Select="Delete  FROM DeleteTable where empno=10";
 				Command=new EDBCommand("",con);
 				Command.CommandText=Select;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
-				string DropTable="Drop TABLE DeleteTable";
+				var DropTable="Drop TABLE DeleteTable";
 				Command=new EDBCommand("",con);
 				Command.CommandText=DropTable;
 				Command.CommandType=CommandType.Text;
@@ -203,21 +203,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			try 
 			{
                 TestUtil.dropTable(con, "InsertTable");
-                string create="CREATE TABLE InsertTable AS Select * From dept";
-				EDBCommand Command=new EDBCommand("",con);
+                var create="CREATE TABLE InsertTable AS Select * From dept";
+				var Command=new EDBCommand("",con);
 				Command.CommandText=create;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
 				//test the existence of the new table
 
-				string Select="INSERT INTO InsertTable VALUES(80,'Documentation','Hamburg')";
+				var Select="INSERT INTO InsertTable VALUES(80,'Documentation','Hamburg')";
 				Command=new EDBCommand("",con);
 				Command.CommandText=Select;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
-				string DropTable="Drop TABLE InsertTable";
+				var DropTable="Drop TABLE InsertTable";
 				Command=new EDBCommand("",con);
 				Command.CommandText=DropTable;
 				Command.CommandType=CommandType.Text;
@@ -238,21 +238,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try 
 			{
-				string create="CREATE TABLE UpdateTable AS Select * From dept";
-				EDBCommand Command=new EDBCommand("",con);
+				var create="CREATE TABLE UpdateTable AS Select * From dept";
+				var Command=new EDBCommand("",con);
 				Command.CommandText=create;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
 				//test the existence of the new table
 
-				string Select="UPDATE UpdateTable SET loc='ISBD' WHERE deptno=20";
+				var Select="UPDATE UpdateTable SET loc='ISBD' WHERE deptno=20";
 				Command=new EDBCommand("",con);
 				Command.CommandText=Select;
 				Command.CommandType=CommandType.Text;
 				Command.ExecuteNonQuery();
 
-				string DropTable="Drop TABLE UpdateTable";
+				var DropTable="Drop TABLE UpdateTable";
 				Command=new EDBCommand("",con);
 				Command.CommandText=DropTable;
 				Command.CommandType=CommandType.Text;

@@ -26,8 +26,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             //write setup for following test cases
             con = OpenConnection();
 
-            EDBCommand command = new EDBCommand("CREATE TABLE LOTest(id serial, f1 oid);", con);
-            int result = command.ExecuteNonQuery();
+            var command = new EDBCommand("CREATE TABLE LOTest(id serial, f1 oid);", con);
+            var result = command.ExecuteNonQuery();
             Console.WriteLine("CREATE TABLE returned " + result);
         }
 
@@ -38,14 +38,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var manager = new EDBLargeObjectManager(con);
 
             // Create a new empty file, returning the identifier to later access it
-            uint oid = manager.Create();
-            EDBCommand command = new EDBCommand("INSERT INTO LOTest VALUES(1, " + oid.ToString() + "); ", con);
+            var oid = manager.Create();
+            var command = new EDBCommand("INSERT INTO LOTest VALUES(1, " + oid.ToString() + "); ", con);
 
-            int rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
             Assert.AreEqual(1, rowsAdded);
 
             command = new EDBCommand("select f1 from LOTest;", con);
-            uint oid2 = (uint)command.ExecuteScalar();
+            var oid2 = (uint)command.ExecuteScalar();
             Assert.True(0 != oid, "Invalid OID value");
         }
 
@@ -57,13 +57,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             // Create a new empty file, returning the identifier to later access it
             //uint oid = manager.Create();
-            EDBCommand command = new EDBCommand("INSERT INTO LOTest VALUES(1, lo_import('" + testPath + "')); ", con);
+            var command = new EDBCommand("INSERT INTO LOTest VALUES(1, lo_import('" + testPath + "')); ", con);
 
-            int rowsAdded = command.ExecuteNonQuery();
+            var rowsAdded = command.ExecuteNonQuery();
             Assert.AreEqual(1, rowsAdded);
 
             command = new EDBCommand("select f1 from LOTest;", con);
-            uint oid = (uint)command.ExecuteScalar();
+            var oid = (uint)command.ExecuteScalar();
             Assert.True(0 != oid, "Invalid OID value");
         }
 
@@ -76,7 +76,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 var manager = new EDBLargeObjectManager(con);
 
                 // Create a new empty file, returning the identifier to later access it
-                uint oid = manager.Create();
+                var oid = manager.Create();
 
                 // Reading and writing Large Objects requires the use of a transaction
                 using (var transaction = con.BeginTransaction())
@@ -107,8 +107,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            EDBCommand command = new EDBCommand("DROP TABLE LOTest;", con);
-            int result = command.ExecuteNonQuery();
+            var command = new EDBCommand("DROP TABLE LOTest;", con);
+            var result = command.ExecuteNonQuery();
             Console.WriteLine("DROP TABLE returned " + result);
 
             TestUtil.closeDB(con);

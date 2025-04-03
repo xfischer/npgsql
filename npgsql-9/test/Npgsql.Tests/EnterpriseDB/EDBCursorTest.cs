@@ -19,10 +19,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con = OpenConnection();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PROCEDURE CUR_TEST(v_id OUT NUMERIC)\n"
+            var strSql = "CREATE OR REPLACE PROCEDURE CUR_TEST(v_id OUT NUMERIC)\n"
                             + "IS\n"
                             //							+ "v_id number;\n"
                             + "v_name varchar2(20);\n"
@@ -42,7 +42,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandType = CommandType.Text;
 
             com.CommandText = "DROP PROCEDURE CUR_TEST;";
@@ -54,7 +54,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void testSelect() //Have to change the dependancy on emp table
         {
-            EDBCommand command = new EDBCommand("CUR_TEST(:v_id)", con);
+            var command = new EDBCommand("CUR_TEST(:v_id)", con);
             command.CommandType = CommandType.StoredProcedure;
 
             command.Parameters.Add(new EDBParameter("v_id",
@@ -65,7 +65,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Prepare();
             command.ExecuteNonQuery();
 
-            Assert.AreEqual(7521, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.AreEqual(7521, int.Parse(command.Parameters[0].Value!.ToString()));
         }
     }
 #pragma warning restore CS8604

@@ -200,7 +200,7 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(DEPT_TOTAL, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(string));
 
-            for (int i = 0; i < DEPT_TOTAL; i++)
+            for (var i = 0; i < DEPT_TOTAL; i++)
             {
                 Assert.AreEqual(deptNames[i], arrayList[i]);
             }
@@ -278,7 +278,7 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(EMP_TOTAL, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(int));
 
-            for (int i = 0; i < EMP_TOTAL; i++)
+            for (var i = 0; i < EMP_TOTAL; i++)
             {
                 Assert.AreEqual(arrayList[i].GetType(), typeof(int));
                 Assert.AreEqual(empnos[i], arrayList[i]);
@@ -367,9 +367,9 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(10, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(emp_rec_typ));
 
-            for (int i = 0; i < arrayList.Count; i++)
+            for (var i = 0; i < arrayList.Count; i++)
             {
-                emp_rec_typ tuple = (emp_rec_typ)arrayList[i]!;
+                var tuple = (emp_rec_typ)arrayList[i]!;
 
                 Assert.AreEqual(empnos[i], tuple.empno);
                 Assert.AreEqual(enames[i], tuple.ename);
@@ -544,9 +544,9 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(10, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
 
-            for (int i = 0; i < arrayList.Count; i++)
+            for (var i = 0; i < arrayList.Count; i++)
             {
-                List<object> tuple = (List<object>)arrayList[i]!;
+                var tuple = (List<object>)arrayList[i]!;
 
                 Assert.AreEqual(2, tuple.Count);
 
@@ -636,9 +636,9 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(10, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
 
-            for (int i = 0; i < arrayList.Count; i++)
+            for (var i = 0; i < arrayList.Count; i++)
             {
-                List<object> tuple = (List<object>)arrayList[i]!;
+                var tuple = (List<object>)arrayList[i]!;
 
                 Assert.AreEqual(2, tuple.Count);
 
@@ -753,9 +753,9 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(10, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
 
-            for (int i = 0; i < arrayList.Count; i++)
+            for (var i = 0; i < arrayList.Count; i++)
             {
-                List<object> tuple = (List<object>)arrayList[i]!;
+                var tuple = (List<object>)arrayList[i]!;
 
                 Assert.AreEqual(2, tuple.Count);
 
@@ -870,7 +870,7 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(10, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(emp_rec_typ));
 
-            for (int i = 0; i < arrayList.Count; i++)
+            for (var i = 0; i < arrayList.Count; i++)
             {
                 var tuple = (emp_rec_typ)arrayList[i]!;
 
@@ -962,10 +962,10 @@ internal class EDBNestedTableTest : EPASTestBase
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
 
 
-            for (int i = 0; i < DEPT_TOTAL; i++)
+            for (var i = 0; i < DEPT_TOTAL; i++)
             {
 
-                List<object> tuple = (List<object>)arrayList[i]!;
+                var tuple = (List<object>)arrayList[i]!;
                 Assert.AreEqual(2, tuple.Count);
 
                 Assert.AreEqual(tuple[0].GetType(), typeof(string));
@@ -1044,10 +1044,10 @@ internal class EDBNestedTableTest : EPASTestBase
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(dept_obj_typ));
 
 
-            for (int i = 0; i < DEPT_TOTAL; i++)
+            for (var i = 0; i < DEPT_TOTAL; i++)
             {
 
-                dept_obj_typ tuple = (dept_obj_typ)arrayList[i]!;
+                var tuple = (dept_obj_typ)arrayList[i]!;
 
                 Assert.AreEqual(deptNames[i], tuple.dname);
                 Assert.AreEqual(deptLocs[i], tuple.loc);
@@ -1132,12 +1132,12 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(EMP_TOTAL * DEPT_TOTAL, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
 
-            int arrayIndex = 0;
-            for (int empIndex = 0; empIndex < EMP_TOTAL; empIndex++)
+            var arrayIndex = 0;
+            for (var empIndex = 0; empIndex < EMP_TOTAL; empIndex++)
             {
-                for (int depIndex = 0; depIndex < DEPT_TOTAL; depIndex++)
+                for (var depIndex = 0; depIndex < DEPT_TOTAL; depIndex++)
                 {
-                    List<object> tuple = (List<object>)arrayList[arrayIndex++]!;
+                    var tuple = (List<object>)arrayList[arrayIndex++]!;
 
                     Assert.AreEqual(2, tuple.Count);
                     CollectionAssert.AllItemsAreInstancesOfType(tuple, typeof(List<object>));
@@ -1233,9 +1233,9 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.AreEqual(DEPT_TOTAL * EMP_TOTAL, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(JointComposite));
 
-            for (int i = 0; i < DEPT_TOTAL * EMP_TOTAL; i++)
+            for (var i = 0; i < DEPT_TOTAL * EMP_TOTAL; i++)
             {
-                JointComposite tuple = (JointComposite)arrayList[i]!;
+                var tuple = (JointComposite)arrayList[i]!;
 
                 Assert.IsInstanceOf(typeof(emp_rec_typ), tuple.emp);
                 Assert.AreEqual(empnos[i / DEPT_TOTAL], tuple.emp.empno);
@@ -1732,14 +1732,14 @@ internal class EDBNestedTableTest : EPASTestBase
 
             if (expectedResults != null)
             {
-                for (int i = 0; i < expectedResults.Length; i++)
+                for (var i = 0; i < expectedResults.Length; i++)
                 {
                     Assert.AreEqual(expectedResults[i], arrayList[i]);
                 }
             }
             else
             {
-                for (int i = 0; i < values.Length; i++)
+                for (var i = 0; i < values.Length; i++)
                 {
                     Assert.AreEqual(values[i], arrayList[i]);
                 }
@@ -1821,7 +1821,7 @@ internal class EDBNestedTableTest : EPASTestBase
         if (typeof(T) == typeof(EDBInterval))
             return values.Select(v =>
             {
-                EDBInterval? i = v as EDBInterval?;
+                var i = v as EDBInterval?;
                 return $"'{i.Value.Months} months {i.Value.Days} days {i.Value.Time / 1000} milliseconds'::interval";
             }).ToArray();
 
@@ -1846,11 +1846,11 @@ internal class EDBNestedTableTest : EPASTestBase
             {
                 return values.Select(v =>
                 {
-                    BitArray? i = v as BitArray;
+                    var i = v as BitArray;
                     if (i is null) ThrowHelper.ThrowArgumentNullException("bitarray");
 
                     var result = "";
-                    for (int idx = 0; idx < i.Length; idx++)
+                    for (var idx = 0; idx < i.Length; idx++)
                     {
                         result += i[idx] ? "1" : "0";
                     }
@@ -1861,11 +1861,11 @@ internal class EDBNestedTableTest : EPASTestBase
             {
                 return values.Select(v =>
                 {
-                    BitArray? i = v as BitArray;
+                    var i = v as BitArray;
                     if (i is null) ThrowHelper.ThrowArgumentNullException("bitarray");
 
                     var result = "";
-                    for (int idx = 0; idx < i.Length; idx++)
+                    for (var idx = 0; idx < i.Length; idx++)
                     {
                         result += i[idx] ? "1" : "0";
                     }
@@ -1878,7 +1878,7 @@ internal class EDBNestedTableTest : EPASTestBase
         {
             return values.Select(v =>
             {
-                Dictionary<string, string>? i = v as Dictionary<string, string>;
+                var i = v as Dictionary<string, string>;
                 if (i is null) ThrowHelper.ThrowArgumentNullException("hstore");
 
                 var result = string.Join(",", i.Select(kvp =>
@@ -1971,7 +1971,7 @@ internal class EDBNestedTableTest : EPASTestBase
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(TExpected));
 
 
-            for (int i = 0; i < expectedResults.Length; i++)
+            for (var i = 0; i < expectedResults.Length; i++)
             {
                 Assert.AreEqual(expectedResults[i], arrayList[i]);
             }

@@ -63,11 +63,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar));
             com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -82,7 +82,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -90,7 +90,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             com.CommandText = "select id from Quote where b= :No";
             com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar));
             com.Parameters[0].Value = "t";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -107,11 +107,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, 4));
             com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -126,7 +126,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -134,7 +134,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             com.CommandText = "select id from Quote where b= :No";
             com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, 1));
             com.Parameters[0].Value = "t";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -151,11 +151,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, 5));
             com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -171,7 +171,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -202,7 +202,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -242,7 +242,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -281,7 +281,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -322,7 +322,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, -4));
             com.Parameters[0].Value = "SMITH";
@@ -352,11 +352,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, -4));
             com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -371,7 +371,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -379,7 +379,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             com.CommandText = "select id from Quote where b= :No";
             com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, -1));
             com.Parameters[0].Value = "t";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -397,7 +397,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, -4));
             com.Parameters[0].Value = "SMITH";
@@ -427,7 +427,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -466,7 +466,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -507,7 +507,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, 4));
             com.Parameters[0].Value = "SMITH";
@@ -537,11 +537,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, 4));
             com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -556,7 +556,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";
@@ -564,7 +564,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             com.CommandText = "select id from Quote where b= :No";
             com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, 0));
             com.Parameters[0].Value = "t";
-            EDBDataReader Reader = com.ExecuteReader();
+            var Reader = com.ExecuteReader();
 
             while (Reader.Read())
             {
@@ -582,7 +582,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "select empno from emp where ename= :Name";
             com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, 4));
             com.Parameters[0].Value = "SMITH";
@@ -612,7 +612,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con.Open();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandText = "CREATE TABLE Quote(id int4, b char)";
             com.ExecuteNonQuery();
             com.CommandText = "INSERT INTO Quote values(1, 't')";

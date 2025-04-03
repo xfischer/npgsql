@@ -264,7 +264,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             Execute(sqlStr);
 
-            EDBTransaction trans = conn.BeginTransaction();
+            var trans = conn.BeginTransaction();
             using (var cstmt = new EDBCommand(insertSql, conn))
             {
                 cstmt.Transaction = trans;
@@ -377,7 +377,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             Execute(sqlStr);
 
-            EDBTransaction trans = conn.BeginTransaction();
+            var trans = conn.BeginTransaction();
             using (var cstmt = new EDBCommand(insertSql, conn))
             {
                 cstmt.Transaction = trans;
@@ -446,7 +446,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             Execute(sqlStr);
 
-            EDBTransaction trans = conn.BeginTransaction();
+            var trans = conn.BeginTransaction();
             using (var cstmt = new EDBCommand(insertSql, conn))
             {
                 cstmt.Transaction = trans;
@@ -495,7 +495,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             Execute(sqlStr);
 
-            EDBTransaction trans = conn.BeginTransaction();
+            var trans = conn.BeginTransaction();
             using (var cstmt = new EDBCommand(insertSql, conn))
             {
                 cstmt.Transaction = trans;
@@ -535,7 +535,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                          + "INSERT INTO emp1 VALUES \n"
                          + "(9002,'JONES','CLERK',7782,SYSDATE,NULL,NULL,10);";
 
-            EDBTransaction trans = conn.BeginTransaction();
+            var trans = conn.BeginTransaction();
             using (var cstmt = new EDBCommand(insertSql, conn))
             {
                 cstmt.Transaction = trans;
@@ -575,7 +575,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
             Execute(sqlStr);
 
-            EDBTransaction trans = conn.BeginTransaction();
+            var trans = conn.BeginTransaction();
 
             using (var cstmt = new EDBCommand("AutonomousTransactionObjectTypeMethod_SP", conn))
             {

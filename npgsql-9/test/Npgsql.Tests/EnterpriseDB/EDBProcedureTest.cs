@@ -499,12 +499,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			var i = 0;
             await using var con = await OpenConnectionAsync();
 
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 			var command = new EDBCommand("declare te cursor for select * from tablea;", con);
 			await command.ExecuteNonQueryAsync();
 
 			command.CommandText = "fetch forward 3 in te;";
-			EDBDataReader dr = command.ExecuteReader();
+			var dr = command.ExecuteReader();
 
 			while (dr.Read())
 			{
@@ -2173,7 +2173,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command = new EDBCommand("set edb_stmt_level_tx to on;", con);
                 await command.ExecuteNonQueryAsync();
                 command.Dispose();
-                EDBTransaction tran = con.BeginTransaction();
+                var tran = con.BeginTransaction();
 
                 try
                 {
@@ -2192,8 +2192,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 //REFCUSOR CommandBehavior.SequentialAccess
 
-                command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.Refcursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.Refcursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.Refcursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.Refcursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
                 command.Prepare();
                 await command.ExecuteNonQueryAsync();
 
@@ -2202,7 +2202,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 rst.Read();
 
@@ -2258,7 +2258,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 await command.ExecuteNonQueryAsync();
                 command.Dispose();
 
-                EDBTransaction tran = con.BeginTransaction();
+                var tran = con.BeginTransaction();
                 try
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
@@ -2273,9 +2273,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.CommandType = CommandType.StoredProcedure;
                 command.Transaction = tran;
 
-                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.Parameters[0].Value = 7369;
@@ -2288,7 +2288,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 reader.Read();
                 reader.Read();
@@ -2361,7 +2361,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command = new EDBCommand("TestProcWithNumericOutputParamOnly_ShouldBeClrType(:p_out)", con);
                 command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("p_out", EDBTypes.EDBDbType.Numeric, 20, "p_out", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("p_out", EDBTypes.EDBDbType.Numeric, 20, "p_out", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 await command.PrepareAsync();
                 await command.ExecuteNonQueryAsync();
@@ -2430,8 +2430,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 //command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
                 command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
                 //command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
-                command.Parameters.Add(new EDBParameter("p_out", EDBTypes.EDBDbType.Numeric, 20, "p_out", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                //Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Date, 200, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("p_out", EDBTypes.EDBDbType.Numeric, 20, "p_out", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                //Parameters.Add(new EDBParameter("v_out", EDBTypes.EDBDbType.Date, 200, "v_out", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
 
                 await command.PrepareAsync();
                 await command.ExecuteNonQueryAsync();

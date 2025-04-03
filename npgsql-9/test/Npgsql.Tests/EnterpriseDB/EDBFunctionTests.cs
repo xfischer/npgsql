@@ -249,7 +249,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters[2].Value = 30;
 
 
-            using EDBDataReader result = command.ExecuteReader();
+            using var result = command.ExecuteReader();
             while (result.Read())
             { }
             result.Close();
@@ -281,7 +281,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters[2].Value = 30;
 
 
-            EDBDataReader result = command.ExecuteReader();
+            var result = command.ExecuteReader();
 
             Assert.IsTrue(result.Read());
 
@@ -341,7 +341,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters["paramInOut"].Value = 10;
             command.Parameters["paramIn"].Value = 25;
 
-            EDBDataReader reader = command.ExecuteReader();
+            var reader = command.ExecuteReader();
             Assert.IsTrue(reader.HasRows);
             Assert.AreEqual(20m, command.Parameters["paramInOut"].Value);
             Assert.AreEqual(25m, command.Parameters["paramOut"].Value);
@@ -352,11 +352,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.IsTrue(reader.Read());
 
 
-            object[] values = new object[reader.FieldCount];
+            var values = new object[reader.FieldCount];
             reader.GetValues(values);
 
             int[] expected = [20, 25, 24];
-            for (int i = 0; i < expected.Length; i++)
+            for (var i = 0; i < expected.Length; i++)
             {
                 Assert.AreEqual(expected[i], values[i]);
             }
@@ -396,7 +396,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters["paramInOut"].Value = 10;
             command.Parameters["paramIn"].Value = 25;
 
-            EDBDataReader reader = command.ExecuteReader();
+            var reader = command.ExecuteReader();
             Assert.IsTrue(reader.HasRows);
             Assert.AreEqual(DBNull.Value, command.Parameters["paramInOut"].Value);
             Assert.AreEqual(25m, command.Parameters["paramOut"].Value);
@@ -408,11 +408,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             Assert.IsTrue(reader.IsDBNull("paramInOut"));
 
-            object[] values = new object[reader.FieldCount];
+            var values = new object[reader.FieldCount];
             reader.GetValues(values);
 
             object[] expected = [DBNull.Value, 25, 24];
-            for (int i = 0; i < expected.Length; i++)
+            for (var i = 0; i < expected.Length; i++)
             {
                 Assert.AreEqual(expected[i], values[i]);
             }
@@ -447,7 +447,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters["paramInOut"].Value = 10;
             command.Parameters["paramIn"].Value = 25;
 
-            EDBDataReader reader = await command.ExecuteReaderAsync();
+            var reader = await command.ExecuteReaderAsync();
             Assert.IsTrue(reader.HasRows);
             Assert.AreEqual(DBNull.Value, command.Parameters["paramInOut"].Value);
             Assert.AreEqual(25m, command.Parameters["paramOut"].Value);
@@ -494,7 +494,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.Prepare();
 
-            EDBDataReader reader = command.ExecuteReader();
+            var reader = command.ExecuteReader();
             Assert.IsTrue(reader.HasRows);
             Assert.AreEqual(10, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
 
@@ -503,11 +503,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.IsTrue(reader.Read());
 
 
-            object[] values = new object[reader.FieldCount];
+            var values = new object[reader.FieldCount];
             reader.GetValues(values);
 
             int[] expected = [10];
-            for (int i = 0; i < expected.Length; i++)
+            for (var i = 0; i < expected.Length; i++)
             {
                 Assert.AreEqual(expected[i], values[i]);
             }
@@ -1710,10 +1710,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.ExecuteNonQuery();
 
-            Assert.AreEqual(true, command.Parameters["v_in"].Value);
-            Assert.AreEqual(true, command.Parameters["v_inout"].Value);
-            Assert.AreEqual(false, command.Parameters["v_out"].Value);
-            Assert.AreEqual(true, command.Parameters["v_ret"].Value);
+            Assert.IsTrue((bool)command.Parameters["v_in"].Value);
+            Assert.IsTrue((bool)command.Parameters["v_inout"].Value);
+            Assert.IsFalse((bool)command.Parameters["v_out"].Value);
+            Assert.IsTrue((bool)command.Parameters["v_ret"].Value);
 
             //////////tear down
             command.Dispose();
@@ -1747,7 +1747,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Prepare();
             command.ExecuteNonQuery();
 
-            Assert.AreEqual(true, bool.Parse(command.Parameters[0].Value.ToString()));
+            Assert.IsTrue(bool.Parse(command.Parameters[0].Value.ToString()));
             Assert.AreEqual("True", command.Parameters[1].Value.ToString());
             var p_out = false;
             Assert.AreEqual(p_out, command.Parameters[2].Value);
@@ -2277,7 +2277,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 var paramValue = i.ToString();
                 var paramName = "param" + (i + 1).ToString();
-                ParameterDirection direction = ParameterDirection.Output;
+                var direction = ParameterDirection.Output;
                 if (i % 3 == 2)
                     direction = ParameterDirection.InputOutput;
                 if (i % 3 == 2)
@@ -2444,7 +2444,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.Parameters[0].Value = 3;
 
-            EDBDataReader result = command.ExecuteReader();
+            var result = command.ExecuteReader();
 
             while (result.Read())
             { }
@@ -2565,7 +2565,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters[2].Value = 3;
             command.Parameters[3].Value = null;
 
-            EDBDataReader result = command.ExecuteReader();
+            var result = command.ExecuteReader();
             while (result.Read())
             { }
 
@@ -2625,7 +2625,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             com.ExecuteNonQuery();
             com.Dispose();
 
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             try
             {
                 com = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
@@ -2639,7 +2639,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var command = new EDBCommand("RefCursorsOUT(:v_id)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor, 0, "v_id", ParameterDirection.Output, false, 10, 10, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor, 0, "v_id", ParameterDirection.Output, false, 10, 10, System.Data.DataRowVersion.Current, null!));
             command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
             command.Prepare();
 
@@ -2648,11 +2648,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             cur.Read();
             Assert.AreEqual(1, cur[0]);
-            Assert.AreEqual(false, cur[1]);
+            Assert.IsFalse((bool)cur[1]);
             Assert.IsInstanceOf(typeof(byte[]), cur[2]);
             Assert.AreEqual("a", cur[3]);
             Assert.AreEqual(new DateTime(2006, 1, 1), cur[4]);
@@ -2668,7 +2668,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             cur.Read();
             Assert.AreEqual(2, cur[0]);
-            Assert.AreEqual(true, cur[1]);
+            Assert.IsTrue((bool)cur[1]);
             Assert.IsInstanceOf(typeof(byte[]), cur[2]);
             Assert.AreEqual("b", cur[3]);
             Assert.AreEqual(new DateTime(2007, 10, 10), cur[4]);
@@ -2684,7 +2684,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             cur.Read();
             Assert.AreEqual(3, cur[0]);
-            Assert.AreEqual(true, cur[1]);
+            Assert.IsTrue((bool)cur[1]);
             Assert.IsInstanceOf(typeof(byte[]), cur[2]);
             Assert.AreEqual("c", cur[3]);
             Assert.AreEqual(new DateTime(2007, 11, 1), cur[4]);
@@ -2700,7 +2700,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             cur.Read();
             Assert.AreEqual(4, cur[0]);
-            Assert.AreEqual(false, cur[1]);
+            Assert.IsFalse((bool)cur[1]);
             Assert.IsInstanceOf(typeof(byte[]), cur[2]);
             Assert.AreEqual("d", cur[3]);
             Assert.AreEqual(new DateTime(1997, 2, 3), cur[4]);
@@ -2733,7 +2733,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.ExecuteNonQuery();
             command.Dispose();
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             command = new EDBCommand("CREATE OR REPLACE function refcur_callee2_func( c_1 OUT numeric, " +
                                     "                                           c_2 IN OUT refcursor, " +
@@ -2761,10 +2761,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.CommandType = CommandType.StoredProcedure;
 
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
             command.Prepare();
             command.Parameters[0].Value = 7369;
             command.ExecuteNonQuery();
@@ -2778,7 +2778,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             reader.Read();
             reader.Read();
@@ -2841,7 +2841,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Prepare();
 
             command.Parameters[0].Value = 3;
-            EDBDataReader result = command.ExecuteReader();
+            var result = command.ExecuteReader();
             while (result.Read())
             { }
 

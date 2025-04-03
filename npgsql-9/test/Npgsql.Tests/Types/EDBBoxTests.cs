@@ -23,8 +23,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			//write setup for following test cases
 			con = OpenConnection();
 
-			EDBCommand command = new EDBCommand("create table EDBBoxTest(id serial, f1 box);", con);
-			int result = command.ExecuteNonQuery();
+			var command = new EDBCommand("create table EDBBoxTest(id serial, f1 box);", con);
+			var result = command.ExecuteNonQuery();
 			Console.WriteLine("create table returned " + result);
 		}
 
@@ -39,21 +39,21 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringInt()
 		{
-			EDBBox box = EDBBox.Parse("(4,3),(5,4)");
+			var box = EDBBox.Parse("(4,3),(5,4)");
 			Check(box, 5, 4, 4, 3);
 		}
 
 		[Test]
 		public void CreateFromStringNegativeInt()
 		{
-			EDBBox box = EDBBox.Parse("(-4,3),(5,-4)");
+			var box = EDBBox.Parse("(-4,3),(5,-4)");
 			Check(box, 5, 3, -4, -4);
 		}
 
 		[Test]
 		public void CreateFromStringDouble()
 		{
-			EDBBox box = EDBBox.Parse("(4.0,3.0),(5.0,4.0)");
+			var box = EDBBox.Parse("(4.0,3.0),(5.0,4.0)");
 			Check(box, 5, 4, 4, 3);
 		}
 
@@ -67,7 +67,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringEmpty()
 		{
-			EDBBox box = EDBBox.Parse("(4.0,3.0),(4.0,4.0)");
+			var box = EDBBox.Parse("(4.0,3.0),(4.0,4.0)");
 			Check(box, 4, 4, 4, 3);
 
 			Assert.True(box.IsEmpty);
@@ -76,7 +76,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromTwoPoint()
 		{
-			EDBBox box = new EDBBox(new EDBPoint(4.0, 3.0), new EDBPoint(4.0, 13.0));
+			var box = new EDBBox(new EDBPoint(4.0, 3.0), new EDBPoint(4.0, 13.0));
 			Check(box, 4, 13, 4, 3);
 
 			Assert.AreEqual(13, box.Top);
@@ -90,7 +90,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromFourPoint()
 		{
-			EDBBox box = new EDBBox(4.0,3.0,4.0,13.0);
+			var box = new EDBBox(4.0,3.0,4.0,13.0);
 			Check(box, 13, 4, 3, 4);
 
 			Assert.AreEqual(4, box.Top);
@@ -104,9 +104,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void TestEqual()
 		{
-			EDBBox box1 = new EDBBox(4.0, 3.0, 4.0, 13.0);
-			EDBBox box2 = new EDBBox(4.0, 3.0, 4.0, 13.0);
-			EDBBox box3 = new EDBBox(4.0, 3.0, 5.0, 13.0);
+			var box1 = new EDBBox(4.0, 3.0, 4.0, 13.0);
+			var box2 = new EDBBox(4.0, 3.0, 4.0, 13.0);
+			var box3 = new EDBBox(4.0, 3.0, 5.0, 13.0);
 
 			Assert.True(box1 == box2);
 			Assert.True(box1.Equals(box2));
@@ -115,7 +115,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			Assert.False(box1 == box3);
 			Assert.True(box1 != box3);
 
-			String s = "Hello";
+			var s = "Hello";
 			Assert.False(box1.Equals((object)s));
 
 		}
@@ -124,20 +124,20 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void TestInsert()
 		{
-			EDBBox box1 = new EDBBox(4.0, 3.0, 4.0, 3.0);
-			EDBCommand command = new EDBCommand("insert into EDBBoxTest values (1, :b)", con);
+			var box1 = new EDBBox(4.0, 3.0, 4.0, 3.0);
+			var command = new EDBCommand("insert into EDBBoxTest values (1, :b)", con);
 
 			command.Parameters.Add(new EDBParameter("b", EDBDbType.Box));
 			command.Parameters[0].Value = box1;
 
 
-			Int32 rowsAdded = command.ExecuteNonQuery();
+			var rowsAdded = command.ExecuteNonQuery();
 
 			Assert.AreEqual(1, rowsAdded);
 
 			command = new EDBCommand("select f1 from EDBBoxTest;", con);
 			
-			EDBBox box = (EDBBox)command.ExecuteScalar();
+			var box = (EDBBox)command.ExecuteScalar();
 			Check(box, 3, 4, 3, 4);
 
 			// Update
@@ -166,8 +166,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[TearDown] 
 		public void Dispose()
 		{
-			EDBCommand command = new EDBCommand("drop table EDBBoxTest;", con);
-			int result = command.ExecuteNonQuery();
+			var command = new EDBCommand("drop table EDBBoxTest;", con);
+			var result = command.ExecuteNonQuery();
 			Console.WriteLine("drop table returned " + result);
 			TestUtil.closeDB(con);
 		}

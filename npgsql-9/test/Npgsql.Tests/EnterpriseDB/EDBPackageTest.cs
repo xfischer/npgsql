@@ -24,10 +24,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             con = OpenConnection();
 
-            EDBCommand com = new EDBCommand("", con);
+            var com = new EDBCommand("", con);
             com.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE PKG_INVOKE_exec_pro IS\n"
+            var strSql = "CREATE OR REPLACE PACKAGE PKG_INVOKE_exec_pro IS\n"
                                 + "PROCEDURE exec_pro(namein IN VARCHAR2,nameout OUT VARCHAR2);\n"
                                 + "END PKG_INVOKE_exec_pro;\n";
             com.CommandText = strSql;
@@ -93,11 +93,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageWithoutBody()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
             try
             {
-                string strSql = "CREATE TABLE Test_Table( c1 CHAR(10))";///////";
+                var strSql = "CREATE TABLE Test_Table( c1 CHAR(10))";///////";
                 command.CommandText = strSql;
                 command.ExecuteNonQuery();
                 strSql = "INSERT INTO Test_Table VALUES ('Sarim');INSERT INTO Test_Table VALUES ('IS');INSERT INTO Test_Table VALUES ('Testing');INSERT INTO Test_Table VALUES ('Something')";///////";
@@ -135,10 +135,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureINTWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePI1  IS  procedure get_c1(p_in in int,p_inout inout int,p_out out int) ;   END check_packagePI1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePI1  IS  procedure get_c1(p_in in int,p_inout inout int,p_out out int) ;   END check_packagePI1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -184,10 +184,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureINT4WithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePI2  IS  procedure get_c1(p_in in int4,p_inout inout int4,p_out out int4) ;   END check_packagePI2; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePI2  IS  procedure get_c1(p_in in int4,p_inout inout int4,p_out out int4) ;   END check_packagePI2; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -232,10 +232,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureINT8WithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePI3  IS  procedure get_c1(p_in in int8,p_inout inout int8,p_out out int8) ;   END check_packagePI3; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePI3  IS  procedure get_c1(p_in in int8,p_inout inout int8,p_out out int8) ;   END check_packagePI3; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -283,10 +283,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureNUMERICWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePN1  IS  procedure get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) ;   END check_packagePN1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePN1  IS  procedure get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) ;   END check_packagePN1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -335,10 +335,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureFLOATWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePF1  IS  procedure get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) ;   END check_packagePF1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePF1  IS  procedure get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) ;   END check_packagePF1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -382,10 +382,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureREALWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePR1  IS  procedure get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) ;   END check_packagePR1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePR1  IS  procedure get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) ;   END check_packagePR1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -430,10 +430,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureCHARWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePC1  IS  procedure get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) ;   END check_packagePC1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePC1  IS  procedure get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) ;   END check_packagePC1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -479,10 +479,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureCHARACTERWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE PackageProcedureCharacter  IS  procedure get_c1(p_in in CHARACTER,p_inout inout CHARACTER,p_out out CHARACTER) ;   END PackageProcedureCharacter; ";
+            var strSql = "CREATE OR REPLACE PACKAGE PackageProcedureCharacter  IS  procedure get_c1(p_in in CHARACTER,p_inout inout CHARACTER,p_out out CHARACTER) ;   END PackageProcedureCharacter; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -531,10 +531,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureVARCHARWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePVC1  IS  procedure get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) ;   END check_packagePVC1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePVC1  IS  procedure get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) ;   END check_packagePVC1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -579,10 +579,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageProcedureTEXTCHARWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packagePTC1  IS  procedure get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) ;   END check_packagePTC1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packagePTC1  IS  procedure get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) ;   END check_packagePTC1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -632,10 +632,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionINTWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageI3  IS  Function get_c1(p_in in int,p_inout inout int,p_out out int) return int;   END check_packageI3; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageI3  IS  Function get_c1(p_in in int,p_inout inout int,p_out out int) return int;   END check_packageI3; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -684,10 +684,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionINT4WithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageI2  IS  function get_c1(p_in in int4,p_inout inout int4,p_out out int4) return int4;   END check_packageI2; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageI2  IS  function get_c1(p_in in int4,p_inout inout int4,p_out out int4) return int4;   END check_packageI2; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -734,10 +734,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionINT8WithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageI1  IS  function get_c1(p_in in int8,p_inout inout int8,p_out out int8) return int8;   END check_packageI1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageI1  IS  function get_c1(p_in in int8,p_inout inout int8,p_out out int8) return int8;   END check_packageI1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -784,9 +784,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionNUMERICWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageN1  IS  function get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) return NUMERIC;   END check_packageN1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageN1  IS  function get_c1(p_in in NUMERIC,p_inout inout NUMERIC,p_out out NUMERIC) return NUMERIC;   END check_packageN1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -836,9 +836,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionFLOATWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageF1  IS  function get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) return FLOAT;   END check_packageF1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageF1  IS  function get_c1(p_in in FLOAT,p_inout inout FLOAT,p_out out FLOAT) return FLOAT;   END check_packageF1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -887,10 +887,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionREALWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageR1  IS  function get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) return REAL;   END check_packageR1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageR1  IS  function get_c1(p_in in REAL,p_inout inout REAL,p_out out REAL) return REAL;   END check_packageR1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -940,10 +940,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionCHARWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageC1  IS  function get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) return CHAR;   END check_packageC1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageC1  IS  function get_c1(p_in in CHAR,p_inout inout CHAR,p_out out CHAR) return CHAR;   END check_packageC1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -993,10 +993,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionVARCHARWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageVC1  IS  function get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) return VARCHAR;   END check_packageVC1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageVC1  IS  function get_c1(p_in in VARCHAR,p_inout inout VARCHAR,p_out out VARCHAR) return VARCHAR;   END check_packageVC1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -1047,10 +1047,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testPackageFunctionTEXTWithInInoutOut()
         {
             //////prereq
-            EDBCommand command = new EDBCommand("", con);
+            var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
 
-            string strSql = "CREATE OR REPLACE PACKAGE check_packageT1  IS  function get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) return TEXT;   END check_packageT1; ";
+            var strSql = "CREATE OR REPLACE PACKAGE check_packageT1  IS  function get_c1(p_in in TEXT,p_inout inout TEXT,p_out out TEXT) return TEXT;   END check_packageT1; ";
             command.CommandText = strSql;
             command.ExecuteNonQuery();
 
@@ -1441,7 +1441,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                EDBTransaction tran = con.BeginTransaction();
+                var tran = con.BeginTransaction();
 
                 command = new EDBCommand("create or replace package terse_pkg4 is " +
                                          "  procedure cursortest2(c_1 OUT refcursor,c_2 OUT refcursor ); " +
@@ -1482,17 +1482,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 //REFCUSOR CommandBehavior.SequentialAccess
 
-                command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.Refcursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.Refcursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("cur1", EDBTypes.EDBDbType.Refcursor, 10, "cur1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("cur2", EDBTypes.EDBDbType.Refcursor, 10, "cur2", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.ExecuteNonQuery();
-                string? cursorName1 = command.Parameters[0].Value.ToString();
-                string? cursorName2 = command.Parameters[1].Value.ToString();
+                var cursorName1 = command.Parameters[0].Value.ToString();
+                var cursorName2 = command.Parameters[1].Value.ToString();
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
 
                 rst.Read();
@@ -1555,7 +1555,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                EDBTransaction tran = con.BeginTransaction();
+                var tran = con.BeginTransaction();
                 command = new EDBCommand("create or replace package terse_pkg5 is " +
                                          "  procedure refcur_callee2(c_1 OUT numeric, c_2 IN OUT refcursor, c_3 IN OUT refcursor); " +
                                          "end terse_pkg5;", con);
@@ -1589,9 +1589,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.CommandType = CommandType.StoredProcedure;
                 command.Transaction = tran;
 
-                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.Parameters[0].Value = 7369;
@@ -1599,12 +1599,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
 
-                string? cursorName1 = command.Parameters[1].Value.ToString();
-                string? cursorName2 = command.Parameters[2].Value.ToString();
+                var cursorName1 = command.Parameters[1].Value.ToString();
+                var cursorName2 = command.Parameters[2].Value.ToString();
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 reader.Read();
                 reader.Read();
@@ -1898,17 +1898,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 Command.Parameters[1].Direction = ParameterDirection.Output;
 
                 //Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 //Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 //Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer));
 
                 //Command.Parameters[2].Direction = ParameterDirection.ReturnValue;
 
                 Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 10, "v_ret",
-                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 Command.Prepare();
 
@@ -2004,7 +2004,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 
                 Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 Command.Prepare();
 
@@ -2097,13 +2097,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 Command.Parameters[1].Direction = ParameterDirection.Output;
 
                 //Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 //Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 Command.Prepare();
 
@@ -2224,10 +2224,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                EDBCommand com = new EDBCommand("", con);
+                var com = new EDBCommand("", con);
                 com.CommandType = CommandType.Text;
 
-                string CursorTable = "CREATE TABLE IF NOT EXISTS TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
+                var CursorTable = "CREATE TABLE IF NOT EXISTS TestCursorTable (c1 BIGINT,c2 BOOLEAN,c3 BYTEA,c4 CHAR,c5 DATE,c6 DOUBLE PRECISION,c7 INTEGER,c8 NUMERIC,c9 NUMERIC(10,2),c10 REAL,c11 SMALLINT,c12 TEXT,c13 TIMESTAMP,c14 VARCHAR(10));";
                 com.CommandText = CursorTable;
                 com.ExecuteNonQuery();
                 CursorTable = "CREATE OR REPLACE package terse_pkg10 is " +
@@ -2245,23 +2245,23 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 com.CommandText = CursorTable;
                 com.ExecuteNonQuery();
-                string CursorInsert1 = "INSERT INTO TestCursorTable VALUES(1, false, '\\001', 'a', '2006-01-01', 1.1, 1,1, 2.2, 2.2, 1, 'Shehzad', '2006-01-01', 'Hashim');";
+                var CursorInsert1 = "INSERT INTO TestCursorTable VALUES(1, false, '\\001', 'a', '2006-01-01', 1.1, 1,1, 2.2, 2.2, 1, 'Shehzad', '2006-01-01', 'Hashim');";
                 com.CommandText = CursorInsert1;
                 com.ExecuteNonQuery();
-                string CursorInsert2 = "INSERT INTO TestCursorTable VALUES(2, TRUE, '\\004', 'b', '2007-10-10', 1.2, 2,2, 3.3, 3.3, 2, 'EnterpriseDB', '2005-02-03', 'Great');";
+                var CursorInsert2 = "INSERT INTO TestCursorTable VALUES(2, TRUE, '\\004', 'b', '2007-10-10', 1.2, 2,2, 3.3, 3.3, 2, 'EnterpriseDB', '2005-02-03', 'Great');";
                 com.CommandText = CursorInsert2;
                 com.ExecuteNonQuery();
-                string CursorInsert3 = "INSERT INTO TestCursorTable VALUES(3, TRUE, '\\005', 'c', '2007-11-1', 1.3, 3,3, 2.1, 2.2, 1, 'Islamabad', '2006-01-01', 'Sirsyed');";
+                var CursorInsert3 = "INSERT INTO TestCursorTable VALUES(3, TRUE, '\\005', 'c', '2007-11-1', 1.3, 3,3, 2.1, 2.2, 1, 'Islamabad', '2006-01-01', 'Sirsyed');";
                 com.CommandText = CursorInsert3;
                 com.ExecuteNonQuery();
-                string CursorInsert4 = "INSERT INTO TestCursorTable VALUES(4, false, '\\003', 'd', '1997-02-03', 1.4, 4,5, 2.2, 2.2, 1, 'Pakistan', '2006-01-01', 'Endnews');";
+                var CursorInsert4 = "INSERT INTO TestCursorTable VALUES(4, false, '\\003', 'd', '1997-02-03', 1.4, 4,5, 2.2, 2.2, 1, 'Pakistan', '2006-01-01', 'Endnews');";
                 com.CommandText = CursorInsert4;
                 com.ExecuteNonQuery();
                 com = new EDBCommand("set edb_stmt_level_tx to on;", con);
                 com.ExecuteNonQuery();
                 com.Dispose();
 
-                EDBTransaction tran = con.BeginTransaction();
+                var tran = con.BeginTransaction();
 
                 try
                 {
@@ -2273,29 +2273,29 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 {
                 }
 
-                EDBCommand command = new EDBCommand("terse_pkg10.RefCursorsOUT(:v_id)", con);
+                var command = new EDBCommand("terse_pkg10.RefCursorsOUT(:v_id)", con);
 
                 command.CommandType = CommandType.StoredProcedure;
 
                 command.Transaction = tran;
 
-                command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor, 0, "v_id", ParameterDirection.Output, false, 10, 10, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("v_id", EDBTypes.EDBDbType.Refcursor, 0, "v_id", ParameterDirection.Output, false, 10, 10, System.Data.DataRowVersion.Current, null!));
 
                 command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Numeric, 10, "v_ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 100));
 
                 command.Prepare();
                 command.ExecuteNonQuery();
 
-                string? cursorName = command.Parameters[0].Value.ToString();
+                var cursorName = command.Parameters[0].Value.ToString();
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 cur.Read();
 
                 Assert.AreEqual(1, cur[0]);
-                Assert.AreEqual(false, cur[1]);
+                Assert.IsFalse((bool)cur[1]);
                 Assert.IsInstanceOf(typeof(byte[]), cur[2]);
                 Assert.AreEqual("a", cur[3]);
                 Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0), cur[4]);
@@ -2321,7 +2321,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual(2, cur[0]);
 
-                Assert.AreEqual(true, cur[1]);
+                Assert.IsTrue((bool)cur[1]);
 
                 Assert.IsInstanceOf(typeof(byte[]), cur[2]);
 
@@ -2351,7 +2351,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual(3, cur[0]);
 
-                Assert.AreEqual(true, cur[1]);
+                Assert.IsTrue((bool)cur[1]);
 
                 Assert.IsInstanceOf(typeof(byte[]), cur[2]);
 
@@ -2381,7 +2381,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual(4, cur[0]);
 
-                Assert.AreEqual(false, cur[1]);
+                Assert.IsFalse((bool)cur[1]);
 
                 Assert.IsInstanceOf(typeof(byte[]), cur[2]);
 
@@ -2418,7 +2418,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             catch (EDBException e)
             {
-                EDBCommand command = new EDBCommand("DROP TABLE IF EXISTS TestCursorTable;", con);
+                var command = new EDBCommand("DROP TABLE IF EXISTS TestCursorTable;", con);
                 command.ExecuteNonQuery();
                 throw new Exception(e.ToString());
             }
@@ -2436,7 +2436,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                EDBTransaction tran = con.BeginTransaction();
+                var tran = con.BeginTransaction();
 
                 command = new EDBCommand("create or replace package terse_pkg11 is " +
                                          "  Function refcur_callee2_func( c_1 OUT numeric, " +
@@ -2478,10 +2478,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.CommandType = CommandType.StoredProcedure;
                 command.Transaction = tran;
 
-                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Numeric, 10, "b", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Refcursor, 10, "a", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("c", EDBTypes.EDBDbType.Refcursor, 10, "c", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Numeric, 10, "ret", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.Parameters[0].Value = 7369;
@@ -2491,12 +2491,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
                 Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
 
-                string? cursorName1 = command.Parameters[1].Value.ToString();
-                string? cursorName2 = command.Parameters[2].Value.ToString();
+                var cursorName1 = command.Parameters[1].Value.ToString();
+                var cursorName2 = command.Parameters[2].Value.ToString();
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 reader.Read();
                 reader.Read();

@@ -234,7 +234,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             {
                 cstmt.CommandType = CommandType.StoredProcedure;
                 cstmt.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Integer, 10, "ret",
-                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Prepare();
                 cstmt.ExecuteNonQuery();
@@ -254,16 +254,16 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             {
                 cstmt.CommandType = CommandType.StoredProcedure;
                 cstmt.Parameters.Add(new EDBParameter("exists10", EDBTypes.EDBDbType.Boolean, 10, "exists10",
-                    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Parameters.Add(new EDBParameter("exists20", EDBTypes.EDBDbType.Boolean, 10, "exists20",
-                    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Prepare();
                 cstmt.ExecuteNonQuery();                
 
-                Assert.AreEqual(true, cstmt.Parameters["exists10"].Value);
-                Assert.AreEqual(false, cstmt.Parameters["exists20"].Value);
+                Assert.IsTrue((bool)cstmt.Parameters["exists10"].Value!);
+                Assert.IsFalse((bool)cstmt.Parameters["exists20"].Value!);
             }
         }
 
@@ -276,7 +276,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             {
                 cstmt.CommandType = CommandType.StoredProcedure;
                 cstmt.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Integer, 10, "ret",
-                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Prepare();
                 cstmt.ExecuteNonQuery();
@@ -296,7 +296,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             {
                 cstmt.CommandType = CommandType.StoredProcedure;
                 cstmt.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Integer, 10, "ret",
-                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Prepare();
                 cstmt.ExecuteNonQuery();
@@ -326,10 +326,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             {
                 cstmt.CommandType = CommandType.StoredProcedure;
                 cstmt.Parameters.Add(new EDBParameter("v_limit", EDBTypes.EDBDbType.Integer, 10, "v_limit",
-                    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Parameters.Add(new EDBParameter("v_count", EDBTypes.EDBDbType.Integer, 10, "v_count",
-                    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Prepare();
                 cstmt.ExecuteNonQuery();
@@ -351,7 +351,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             {
                 cstmt.CommandType = CommandType.StoredProcedure;
                 cstmt.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Integer, 10, "ret",
-                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Prepare();
                 cstmt.ExecuteNonQuery();
@@ -371,7 +371,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             {
                 cstmt.CommandType = CommandType.StoredProcedure;
                 cstmt.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Integer, 10, "ret",
-                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 cstmt.Prepare();
                 cstmt.ExecuteNonQuery();

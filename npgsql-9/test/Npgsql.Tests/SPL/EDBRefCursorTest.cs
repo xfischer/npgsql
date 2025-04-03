@@ -361,7 +361,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             using var conn = OpenConnection();
 
             //conn.setAutoCommit(false);                    //JDBC does this.
-            EDBTransaction tran = conn.BeginTransaction();   //.NET does this.
+            var tran = conn.BeginTransaction();   //.NET does this.
             var command = "emp_by_job(:param1)";
 
             var cstmt = new EDBCommand(command, conn);
@@ -372,7 +372,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, "SALESMAN"));
 
             cstmt.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Refcursor, 10, "ret",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -380,7 +380,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var cursorName = cstmt.Parameters[1].Value.ToString();
             cstmt.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             cstmt.CommandType = CommandType.Text;
-            EDBDataReader rst = cstmt.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = cstmt.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
 
@@ -465,7 +465,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         {
             using var conn = OpenConnection();
             //conn.setAutoCommit(false);                    //JDBC does this.
-            EDBTransaction tran = conn.BeginTransaction();   //.NET does this.
+            var tran = conn.BeginTransaction();   //.NET does this.
             var command = "dept_query(:param1)";
 
             var cstmt = new EDBCommand(command, conn);
@@ -481,7 +481,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var cursorName = cstmt.Parameters[0].Value.ToString();
             cstmt.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             cstmt.CommandType = CommandType.Text;
-            EDBDataReader rst = cstmt.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = cstmt.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
 

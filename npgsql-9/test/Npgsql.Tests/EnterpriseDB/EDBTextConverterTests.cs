@@ -13,7 +13,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TestCaseSource("BackendDataCases")]
         public void TestArrayParsing(string data, int numRows, int numTupleColumns)
         {
-            List<object> result = ArrayBackendToNativeTypeConverter.ToList(data, null, null);
+            var result = ArrayBackendToNativeTypeConverter.ToList(data, null, null);
 
             Assert.IsNotNull(result);
             Assert.AreEqual(numRows, result.Count);
@@ -50,12 +50,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TestCaseSource(nameof(BackendMoneyCases))]
         public void MoneyParsingTests(string data, decimal expected)
         {
-            decimal value = StringToNativeConverter.ParseMoney(data);
+            var value = StringToNativeConverter.ParseMoney(data);
             Assert.AreEqual(expected, value);
 
             foreach (var culture in CultureInfo.GetCultures(CultureTypes.AllCultures))
             {
-                string localized = expected.ToString(culture);
+                var localized = expected.ToString(culture);
                 value = StringToNativeConverter.ParseMoney(localized);
                 Assert.AreEqual(expected, value);
             }

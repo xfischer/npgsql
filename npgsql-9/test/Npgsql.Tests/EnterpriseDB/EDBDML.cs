@@ -29,8 +29,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try 
 			{
-				string strInsertSql = "Insert INTO dml_TestTable1(RecNo,Name) Values (1234, 'EDB')";
-				EDBCommand cmdInsert = new EDBCommand(strInsertSql,con);
+				var strInsertSql = "Insert INTO dml_TestTable1(RecNo,Name) Values (1234, 'EDB')";
+				var cmdInsert = new EDBCommand(strInsertSql,con);
 				cmdInsert.ExecuteNonQuery();
 			}
 			catch(EDBException e)
@@ -44,8 +44,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try 
 			{
-				string strUpdateSql = "Update dml_TestTable1 SET Name = 'not-EDB' where RecNo = 1234";
-				EDBCommand cmdUpdate = new EDBCommand(strUpdateSql,con);
+				var strUpdateSql = "Update dml_TestTable1 SET Name = 'not-EDB' where RecNo = 1234";
+				var cmdUpdate = new EDBCommand(strUpdateSql,con);
 				cmdUpdate.ExecuteNonQuery();
 			}
 			catch(EDBException e)
@@ -58,8 +58,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			try 
 			{
-				string strDeleteSql = "Delete FROM dml_TestTable1 WHERE RecNo=1234";
-				EDBCommand cmdDelete = new EDBCommand(strDeleteSql,con);
+				var strDeleteSql = "Delete FROM dml_TestTable1 WHERE RecNo=1234";
+				var cmdDelete = new EDBCommand(strDeleteSql,con);
 				cmdDelete.ExecuteNonQuery();
 			}
 			catch(EDBException e)

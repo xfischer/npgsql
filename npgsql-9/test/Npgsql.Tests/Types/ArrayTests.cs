@@ -62,9 +62,11 @@ public class ArrayTests(MultiplexingMode multiplexingMode) : MultiplexingTestBas
         await conn.OpenAsync();
         await using var cmd = new EDBCommand("SELECT 1", conn);
         cmd.Parameters.AddWithValue("p", new int[1, 1, 1, 1, 1, 1, 1, 1, 1]); // 9 dimensions
+
+        // EnterpriseDB: message differs between .NET Framework and .NET. Replaced equals by starts with
         Assert.That(
             () => cmd.ExecuteScalarAsync(),
-            Throws.Exception.TypeOf<ArgumentException>().With.Message.EqualTo("Postgres arrays can have at most 8 dimensions. (Parameter 'values')"));
+            Throws.Exception.TypeOf<ArgumentException>().With.Message.StartsWith("Postgres arrays can have at most 8 dimensions."));
     }
 
     [Test, Description("Checks that PG arrays containing nulls are returned as set via ValueTypeArrayMode.")]

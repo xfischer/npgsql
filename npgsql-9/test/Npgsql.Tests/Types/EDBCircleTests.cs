@@ -23,8 +23,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			//write setup for following test cases
 			con = OpenConnection();
 
-			EDBCommand command = new EDBCommand("create table EDBCircleTest(id serial, f1 circle);", con);
-			int result = command.ExecuteNonQuery();
+			var command = new EDBCommand("create table EDBCircleTest(id serial, f1 circle);", con);
+			var result = command.ExecuteNonQuery();
 			Console.WriteLine("create table returned " + result);
 		}
 
@@ -38,14 +38,14 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringInt()
 		{
-			EDBCircle circle = EDBCircle.Parse("<(4,3),5>");
+			var circle = EDBCircle.Parse("<(4,3),5>");
 			Check(circle, 4, 3, 5);
 		}
 
 		[Test]
 		public void CreateFromStringNegativeInt()
 		{
-			EDBCircle circle = EDBCircle.Parse("<(-4,3),5>");
+			var circle = EDBCircle.Parse("<(-4,3),5>");
 			Check(circle, -4, 3, 5);
 		}
 
@@ -59,37 +59,37 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringDouble()
 		{
-			EDBCircle circle = EDBCircle.Parse("<(4.0,3.2),5.12>");
+			var circle = EDBCircle.Parse("<(4.0,3.2),5.12>");
 			Check(circle, 4, 3.2, 5.12);
 		}
 
 		[Test]
 		public void CreateFromInt()
 		{
-			EDBCircle circle = new EDBCircle(4, 3, 5);
+			var circle = new EDBCircle(4, 3, 5);
 			Check(circle, 4, 3, 5);
 		}
 
 		[Test]
 		public void CreateFromDouble()
 		{
-			EDBCircle circle = new EDBCircle(4.2, 3.3, 5.4);
+			var circle = new EDBCircle(4.2, 3.3, 5.4);
 			Check(circle, 4.2, 3.3, 5.4);
 		}
 
 		[Test]
 		public void CreateFromCenterPoint()
 		{
-			EDBCircle circle = new EDBCircle(new EDBPoint(4,3),5);
+			var circle = new EDBCircle(new EDBPoint(4,3),5);
 			Check(circle, 4, 3, 5);
-			EDBLine line = new EDBLine(1, 3, 4);
+			var line = new EDBLine(1, 3, 4);
 			Console.WriteLine(line.ToString());
 		}
 
 		[Test]
 		public void TestToString()
 		{
-			EDBCircle circle = new EDBCircle(4, 3, 5);
+			var circle = new EDBCircle(4, 3, 5);
 			Assert.AreEqual("<(4,3),5>", circle.ToString());
 
 			circle = new EDBCircle(-4, 3, 5);
@@ -102,9 +102,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void TestEqual()
 		{
-			EDBCircle c1 = new EDBCircle(new EDBPoint(4, 3), 5);
-			EDBCircle c2 = new EDBCircle(new EDBPoint(4, 3), 5);
-			EDBCircle c3 = new EDBCircle(new EDBPoint(4, 3.2), 6);
+			var c1 = new EDBCircle(new EDBPoint(4, 3), 5);
+			var c2 = new EDBCircle(new EDBPoint(4, 3), 5);
+			var c3 = new EDBCircle(new EDBPoint(4, 3.2), 6);
 
 			Assert.True(c1 == c2);
 			Assert.True(c1.Equals(c2));
@@ -113,7 +113,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			Assert.False(c1 == c3);
 			Assert.True(c1 != c3);
 
-			String s = "Hello";
+			var s = "Hello";
 			Assert.False(c1.Equals((object)s));
 		}
 
@@ -121,17 +121,17 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		public void TestCRUD()
 		{
 			// Create 
-			EDBCircle inCircle = new EDBCircle(4.0, 3.0, 15);
-			EDBCommand command = new EDBCommand("insert into EDBCircleTest values (1, :b)", con);
+			var inCircle = new EDBCircle(4.0, 3.0, 15);
+			var command = new EDBCommand("insert into EDBCircleTest values (1, :b)", con);
 			command.Parameters.Add(new EDBParameter("b", EDBDbType.Circle));
 			command.Parameters[0].Value = inCircle;
 
-			Int32 rowsAdded = command.ExecuteNonQuery();
+			var rowsAdded = command.ExecuteNonQuery();
 			Assert.AreEqual(1, rowsAdded);
 
 			// Retrieve
 			command = new EDBCommand("select f1 from EDBCircleTest;", con);
-			EDBCircle circle = (EDBCircle)command.ExecuteScalar();
+			var circle = (EDBCircle)command.ExecuteScalar()!;
 			Check(circle, 4, 3, 15);
 
 			// Update
@@ -144,7 +144,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			Assert.AreEqual(1, rowsAdded);
 
 			command = new EDBCommand("select f1 from EDBCircleTest;", con);
-			circle = (EDBCircle)command.ExecuteScalar();
+			circle = (EDBCircle)command.ExecuteScalar()!;
 			Check(circle, 4, 33, 1);
 
 			// Delete
@@ -160,8 +160,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[TearDown] 
 		public void Dispose()
 		{
-			EDBCommand command = new EDBCommand("drop table EDBCircleTest;", con);
-			int result = command.ExecuteNonQuery();
+			var command = new EDBCommand("drop table EDBCircleTest;", con);
+			var result = command.ExecuteNonQuery();
 			Console.WriteLine("drop table returned " + result);
 			TestUtil.closeDB(con);
 		}

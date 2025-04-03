@@ -40,7 +40,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 		public void testNumericDataValid_3_0() 
 		 {
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,0))";
 			Command.ExecuteNonQuery();
 
@@ -54,7 +54,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataNegative_Valid_3_0()
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,0))";
 			Command.ExecuteNonQuery();
 
@@ -67,7 +67,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataInValid_3_0() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,0))";
 			Command.ExecuteNonQuery();
 
@@ -93,7 +93,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 		
 	
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,2))";
 			Command.ExecuteNonQuery();
 
@@ -108,7 +108,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataNegative_Valid_3_2()
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,2))";
 			Command.ExecuteNonQuery();
 
@@ -122,7 +122,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataInValid_3_2() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,2))";
 			Command.ExecuteNonQuery();
 
@@ -145,7 +145,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataValid_3_3()
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,3))";
 			Command.ExecuteNonQuery();
 
@@ -160,7 +160,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataNegative_Valid_3_3()
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,3))";
 			Command.ExecuteNonQuery();
 
@@ -173,7 +173,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataInValid_3_3()
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(3,3))";
 			Command.ExecuteNonQuery();
 			try
@@ -198,7 +198,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
   		public void testNumericDataValid_4_4() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(4,4))";
 			Command.ExecuteNonQuery();
 
@@ -214,7 +214,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     	public void testNumericDataNegative_Valid_4_4()
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(4,4))";
 			Command.ExecuteNonQuery();
 
@@ -230,7 +230,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 
   
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(4,4))";
 			Command.ExecuteNonQuery();
 			try
@@ -259,7 +259,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
  
  
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(8,0))";
 			Command.ExecuteNonQuery();
 
@@ -274,7 +274,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataNegative_Valid_8_0()
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(8,0))";
 			Command.ExecuteNonQuery();
 
@@ -290,7 +290,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(8,0))";
 			Command.ExecuteNonQuery();
 
@@ -316,7 +316,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataValid_8_7() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(8,7))";
 			Command.ExecuteNonQuery();
 
@@ -334,7 +334,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataNegative_Valid_8_7() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(8,7))";
 			Command.ExecuteNonQuery();
 
@@ -348,7 +348,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test] 
 		public void testNumericDataInValid_8_7() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(8,7))";
 			Command.ExecuteNonQuery();
 
@@ -375,7 +375,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataValid_18_0() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(18,0))";
 			Command.ExecuteNonQuery();
 
@@ -389,7 +389,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataNegative_Valid_18_0()
 		{	
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(18,0))";
 			Command.ExecuteNonQuery();
 
@@ -403,7 +403,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataInValid_18_0() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(18,0))";
 			Command.ExecuteNonQuery();
 
@@ -429,7 +429,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataValid_18_7() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(18,7))";
 			Command.ExecuteNonQuery();
 
@@ -444,7 +444,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataNegative_Valid_18_7() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(18,7))";
 			Command.ExecuteNonQuery();
 
@@ -458,7 +458,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataInValid_18_7() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(18,7))";
 			Command.ExecuteNonQuery();
 
@@ -484,7 +484,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataValid_19_0() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,0))";
 			Command.ExecuteNonQuery();
 
@@ -497,7 +497,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataNegativeValid_19_0() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,0))";
 			Command.ExecuteNonQuery();
 
@@ -510,7 +510,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test] 	
 		public void testNumericDataInValid_19_0() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,0))";
 			Command.ExecuteNonQuery();
     	
@@ -535,7 +535,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataValid_19_9() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,9))";
 			Command.ExecuteNonQuery();
 
@@ -551,7 +551,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataNegativeValid_19_9() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,9))";
 			Command.ExecuteNonQuery();
 
@@ -565,7 +565,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataInValid_19_9() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,9))";
 			Command.ExecuteNonQuery();
     	
@@ -589,7 +589,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataValid_19_19() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,19))";
 			Command.ExecuteNonQuery();
 
@@ -605,7 +605,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataNegative_Valid_19_19()
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,19))";
 			Command.ExecuteNonQuery();
 
@@ -619,7 +619,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void testNumericDataInValid_19_19() 
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric(19,19))";
 			Command.ExecuteNonQuery();
 
@@ -645,7 +645,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataValid() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric)";
 			Command.ExecuteNonQuery();
 
@@ -660,7 +660,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataNegative_Valid() 
 		{
 
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric)";
 			Command.ExecuteNonQuery();
 
@@ -674,7 +674,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testNumericDataGreaterThan1000Digits() 
    
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 			Command.CommandText="CREATE TABLE NumericTAB(A Numeric)";
 			Command.ExecuteNonQuery();
 
@@ -703,7 +703,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testCreateTableWithZeroZero() 
     
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
     	
 			try
 			{
@@ -728,7 +728,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testCreateTableWithNegativeZero()
     
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
     	
 			try
 			{
@@ -751,7 +751,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testCreateTableWithNegativeNegative() 
  
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
     	
 			try
 			{
@@ -775,7 +775,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void testCreateTableWithZeroNegative() 
  
 		{
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
     	
 			try
 			{

@@ -389,13 +389,13 @@ public class CommandTests(MultiplexingMode multiplexingMode) : MultiplexingTestB
             .WriteReadyForQuery(TransactionStatus.InTransactionBlock)
             .FlushAsync();
 
-         Assert.That((await postmasterMock.WaitForCancellationRequest()).ProcessId,
-            Is.EqualTo(processId));
+        Assert.That((await postmasterMock.WaitForCancellationRequest()).ProcessId,
+           Is.EqualTo(processId));
 
-         await server
-             .WriteErrorResponse(PostgresErrorCodes.QueryCanceled)
-             .WriteReadyForQuery()
-             .FlushAsync();
+        await server
+            .WriteErrorResponse(PostgresErrorCodes.QueryCanceled)
+            .WriteReadyForQuery()
+            .FlushAsync();
 
         var exception = Assert.ThrowsAsync<OperationCanceledException>(async () => await t)!;
         Assert.That(exception.InnerException,
@@ -709,7 +709,7 @@ public class CommandTests(MultiplexingMode multiplexingMode) : MultiplexingTestB
         //Without parenthesis the meaning of [, . and potentially other characters is
         //a syntax error. See comment in EDBCommand.GetClearCommandText() on "usually-redundant parenthesis".
         await using var command = new EDBCommand("select :arr[2]", conn);
-        command.Parameters.AddWithValue(":arr", new int[] {5, 4, 3, 2, 1});
+        command.Parameters.AddWithValue(":arr", new int[] { 5, 4, 3, 2, 1 });
         await using var rdr = await command.ExecuteReaderAsync();
         rdr.Read();
         Assert.AreEqual(rdr.GetInt32(0), 4);
@@ -742,7 +742,7 @@ public class CommandTests(MultiplexingMode multiplexingMode) : MultiplexingTestB
 
     [Test]
     [TestCase(CommandBehavior.Default)]
-	[TestCase(CommandBehavior.SequentialAccess), EDBExplicit("Not working in v7")]
+    [TestCase(CommandBehavior.SequentialAccess), EDBExplicit("Not working in v7")]
     public async Task Statement_mapped_output_parameters(CommandBehavior behavior)
     {
         await using var conn = await OpenConnectionAsync();
@@ -805,7 +805,7 @@ $$ LANGUAGE plpgsql;";
         _ = await command.ExecuteScalarAsync();
 
         Assert.AreEqual(3, command.Parameters[0].Value);
-        Assert.AreEqual(true, command.Parameters[1].Value);
+        Assert.IsTrue((bool)command.Parameters[1].Value!);
     }
 
     [Test]
@@ -1031,7 +1031,7 @@ $$ LANGUAGE plpgsql;";
     public async Task Multirange_overflow_message_length_throws()
     {
         await using var adminConnection = await OpenConnectionAsync();
-		MinimumPgVersion(adminConnection, "14.0", "Multirange types were introduced in PostgreSQL 14");
+        MinimumPgVersion(adminConnection, "14.0", "Multirange types were introduced in PostgreSQL 14");
         var type = await GetTempTypeName(adminConnection);
         var rangeType = await GetTempTypeName(adminConnection);
 

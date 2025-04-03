@@ -66,7 +66,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var command = "select jobno from job order by jobno";
 
             var seletCommand = new EDBCommand(command, conn);
-            EDBDataReader selectResult = seletCommand.ExecuteReader();
+            var selectResult = seletCommand.ExecuteReader();
             while (selectResult.Read())
             {
                 list.Add(selectResult.GetInt32(0));

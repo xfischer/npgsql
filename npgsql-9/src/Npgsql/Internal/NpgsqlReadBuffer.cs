@@ -434,10 +434,10 @@ sealed partial class EDBReadBuffer : IDisposable
                         // If we should attempt PostgreSQL cancellation, do it the first time we get a timeout.
                         // TODO: As an optimization, we can still attempt to send a cancellation request, but after
                         // that immediately break the connection
-                        if (connector.AttemptPostgresCancellation &&
+                        if (!isStreamBroken 
+							&& connector.AttemptPostgresCancellation &&
                             !connector.PostgresCancellationPerformed &&
-                            connector.PerformPostgresCancellation() &&
-                            !isStreamBroken)
+                            connector.PerformPostgresCancellation())
                         {
                             // Note that if the cancellation timeout is negative, we flow down and break the
                             // connection immediately.

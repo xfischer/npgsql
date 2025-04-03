@@ -65,7 +65,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         //For DB_2021_RowVarMultipleItemINTOListTest because Composite type functionality has changed.
-        private async Task<int> Execute(EDBConnection? con, string query)
+        private static async Task<int> Execute(EDBConnection? con, string query)
         {
             try
             {
@@ -75,10 +75,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     return await com.ExecuteNonQueryAsync();
                 }
             }
-            catch
-            {
-            }
-
+            catch { }
             return 0;
         }
 
@@ -176,7 +173,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand(query, con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     //SELECT count(*) FROM emp1 e, dept1 d, jobhist1 j                                                                 
                     //WHERE j.dept1no BETWEEN d.dept1no(+) AND e.dept1no(+);
@@ -224,7 +221,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand(query, con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     //test=# EXPLAIN (COSTS OFF) SELECT /*+ INDEX(s t_1384_pkey) */ * FROM t_1384 s
                     //test-#         WHERE col2 = 10;
@@ -315,7 +312,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             //await connection.OpenAsync();
 
-            connection.ReloadTypes();
+            await connection.ReloadTypesAsync();
 
             //Close and reopen the connection so that custom types are reloaded.
             //TestUtil.closeDB(conn);
@@ -328,7 +325,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 await using var callProc = new EDBCommand("db2021_fn2", connection);
                 callProc.CommandType = CommandType.StoredProcedure;
                 EDBCommandBuilder.DeriveParameters(callProc);
-                callProc.Prepare();
+                await callProc.PrepareAsync();
                 await callProc.ExecuteNonQueryAsync();
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
@@ -337,8 +334,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 Assert.AreEqual(20, obj1!.y);
 
                 var obj2 = (ct3)callProc.Parameters[1].Value;
-                Assert.AreEqual("ten", obj2.x);
-                Assert.AreEqual("twenty", obj2.y);
+                Assert.AreEqual("ten", obj2!.x);
+                Assert.AreEqual("twenty", obj2!.y);
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             }
             catch (Exception exp)
@@ -379,24 +376,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             await using var connection = await dataSource.OpenConnectionAsync();
 
-            connection.ReloadTypes();
+            await connection.ReloadTypesAsync();
 
             try
             {
                 await using var callProc = new EDBCommand("db2021_proc2", connection);
                 callProc.CommandType = CommandType.StoredProcedure;
                 EDBCommandBuilder.DeriveParameters(callProc);
-                callProc.Prepare();
+                await callProc.PrepareAsync();
                 await callProc.ExecuteNonQueryAsync();
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 var obj1 = (ct1)callProc.Parameters[0].Value;
-                Assert.AreEqual(10, obj1.x);
-                Assert.AreEqual(20, obj1.y);
+                Assert.AreEqual(10, obj1!.x);
+                Assert.AreEqual(20, obj1!.y);
 
                 var obj2 = (ct3)callProc.Parameters[1].Value;
-                Assert.AreEqual("ten", obj2.x);
-                Assert.AreEqual("twenty", obj2.y);
+                Assert.AreEqual("ten", obj2!.x);
+                Assert.AreEqual("twenty", obj2!.y);
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             }
             catch (Exception exp)
@@ -438,7 +435,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             await using var connection = await dataSource.OpenConnectionAsync();
 
-            connection.ReloadTypes();
+            await connection.ReloadTypesAsync();
 
             try
             {
@@ -449,17 +446,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 callProc.Parameters[0].Value = new ct1();
                 callProc.Parameters[1].Value = new ct3();
 
-                callProc.Prepare();
+                await callProc.PrepareAsync();
                 await callProc.ExecuteNonQueryAsync();
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
                 var obj1 = (ct1)callProc.Parameters[0].Value;
-                Assert.AreEqual(10, obj1.x);
-                Assert.AreEqual(20, obj1.y);
+                Assert.AreEqual(10, obj1!.x);
+                Assert.AreEqual(20, obj1!.y);
 
                 var obj2 = (ct3)callProc.Parameters[1].Value;
-                Assert.AreEqual("ten", obj2.x);
-                Assert.AreEqual("twenty", obj2.y);
+                Assert.AreEqual("ten", obj2!.x);
+                Assert.AreEqual("twenty", obj2!.y);
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
             }
             catch (Exception exp)
@@ -484,7 +481,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand(query, con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     //select to_dsinterval('80 13:30:00');
                     //  to_dsinterval   
@@ -529,7 +526,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand(query, con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     //SELECT NVL(dp1, dp2) FROM db1618_t1 ORDER BY 1;
                     //  nvl  
@@ -566,7 +563,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand(query, con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     //SELECT FROM_TZ(TIMESTAMP '2017-08-08 08:09:10', 'Asia/Kolkata') FROM DUAL;
                     //          from_tz          
@@ -599,7 +596,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand(query, con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     //SELECT to_nchar(7654321, 'C9G999G999D99'),to_nchar(timestamp '2022-04-20 17:31:12.66', 'Day: MONTH DD, YYYY');
                     //   to_nchar    |           to_nchar            
@@ -636,7 +633,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 //(1 row)
                 using (var cmd = new EDBCommand("SELECT to_blob('unknown string'), to_blob('row string'::RAW), to_blob('long raw string'::LONG RAW);", con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
                     rs.Read();
                     Assert.That(rs.GetFieldType(0), Is.EqualTo(typeof(byte[])));
                     Assert.That(rs.GetFieldType(1), Is.EqualTo(typeof(byte[])));
@@ -655,7 +652,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                        + " to_clob('n'::NCHAR), to_clob('nvarchar2 string'::NVARCHAR2), to_clob('clob string'::CLOB);";
                 using (var cmd = new EDBCommand(query, con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
                     rs.Read();
                     Assert.AreEqual("unknown string", rs.GetString(0));
                     Assert.AreEqual("c", rs.GetString(1));
@@ -727,7 +724,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand("select excpt_test();", con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     rs.Read();
                     Assert.AreEqual(-1476, rs.GetInt32(0));
@@ -737,7 +734,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 using (var cmd = new EDBCommand("select excpt_test2();", con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     rs.Read();
                     Assert.AreEqual("division by zero", rs.GetString(0));
@@ -763,7 +760,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand("SELECT to_multi_byte('ABC&123');", con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     rs.Read();
                     Assert.AreEqual("ＡＢＣ＆１２３", rs.GetString(0));
@@ -789,7 +786,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand("SELECT to_single_byte('ＡＢＣ＆１２３');", con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     rs.Read();
                     Assert.AreEqual("ABC&123", rs.GetString(0));
@@ -839,7 +836,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand(query, con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     rs.Read();
                     Assert.AreEqual(20, rs.GetInt32(0));
@@ -926,7 +923,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             {
                 using (var cmd = new EDBCommand("select * from target order by tid;", con))
                 {
-                    EDBDataReader rs = cmd.ExecuteReader();
+                    var rs = cmd.ExecuteReader();
 
                     //select * from target order by tid;
                     // tid | balance 
@@ -1016,7 +1013,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     + "  FROM xmltest_db1691 ORDER BY id;";
 
             var cmd = new EDBCommand(query, con);
-            EDBDataReader rs = cmd.ExecuteReader();
+            var rs = cmd.ExecuteReader();
 
             //test=# SELECT extractvalue(xmltest_db1691.data, '/menu/beers/name[position()=1]')
             //test-#   FROM xmltest_db1691 ORDER BY id;
@@ -1107,7 +1104,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             using (var cmd = new EDBCommand("SELECT * FROM db1425_t1 ORDER BY a, b", con))
             {
-                EDBDataReader rs = cmd.ExecuteReader();
+                var rs = cmd.ExecuteReader();
 
                 //SELECT * FROM db1425_t1 ORDER BY a, b;
                 //  a   |  b   

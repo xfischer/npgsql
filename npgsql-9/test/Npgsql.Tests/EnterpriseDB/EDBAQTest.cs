@@ -111,7 +111,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             using (var queue = new EDBAQQueue("MSG_QUEUE", con))
             {
-                EDBTransaction txn = queue.Connection.BeginTransaction();
+                var txn = queue.Connection.BeginTransaction();
 
                 try
                 {

@@ -16,14 +16,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     [NonParallelizable]
     public class EDBByteaTest : EPASTestBase
     {
-        EDBConnection conn = null;
         //String testImagePath = @"C:\Windows\System32\migwiz\PostMigRes\Web\base_images\AppInstalled.gif";
-        string testImagePath = @"C:\Windows\media\Windows Background.wav";
+        const string testImagePath = @"C:\Windows\media\Windows Background.wav";
 
         [SetUp]
         public void Init()
         {
-            conn = OpenConnection();
+            using var conn = OpenConnection();                
 
             var com = new EDBCommand("", conn);
             com.CommandType = CommandType.Text;
@@ -100,10 +99,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-            if (conn.State != ConnectionState.Open)
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-                conn = OpenConnection();
+            using var conn = OpenConnection();
+
             var com = new EDBCommand("", conn);
             com.CommandType = CommandType.Text;
 
@@ -168,19 +165,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                FileStream fs = null;
-                fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
+                using var conn = OpenConnection();
+                using var fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
                 var data = new byte[fs.Length];
-                fs.Read(data, 0, data.Length);
+                _ = fs.Read(data, 0, data.Length);
                 fs.Close();
 
                 var cmd = new EDBCommand("test_bytea_three_in_with_numeric(:imgin,:imgout,:img3,:num)", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
 
-                cmd.Parameters.Add(new EDBParameter("imgin", EDBDbType.Bytea, 10000, "imgin", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("img3", EDBDbType.Bytea, 10000, "img3", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("num", EDBDbType.Numeric, 100, "num", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
+                cmd.Parameters.Add(new EDBParameter("imgin", EDBDbType.Bytea, 10000, "imgin", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("img3", EDBDbType.Bytea, 10000, "img3", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("num", EDBDbType.Numeric, 100, "num", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
                 cmd.Prepare();
                 cmd.Parameters[0].Value = data;
                 cmd.Parameters[1].Value = data;
@@ -200,18 +197,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                FileStream fs = null;
-                fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
+                using var conn = OpenConnection();
+                using var fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
                 var data = new byte[fs.Length];
-                fs.Read(data, 0, data.Length);
+                _ = fs.Read(data, 0, data.Length);
                 fs.Close();
 
                 var cmd = new EDBCommand("test_bytea_three_in(:imgin,:imgout,:img3)", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
 
-                cmd.Parameters.Add(new EDBParameter("imgin", EDBDbType.Bytea, 10000, "imgin", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("img3", EDBDbType.Bytea, 10000, "img3", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
+                cmd.Parameters.Add(new EDBParameter("imgin", EDBDbType.Bytea, 10000, "imgin", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("img3", EDBDbType.Bytea, 10000, "img3", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
 
                 cmd.Prepare();
                 cmd.Parameters[0].Value = data;
@@ -233,16 +230,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                FileStream fs = null;
-                fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
+                using var conn = OpenConnection();
+                using var fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
                 var data = new byte[fs.Length];
-                fs.Read(data, 0, data.Length);
+                _ = fs.Read(data, 0, data.Length);
                 fs.Close();
 
                 var cmd = new EDBCommand("test_bytea_in_in(:imgin,:imgout)", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
 
-                cmd.Parameters.Add(new EDBParameter("imgin", EDBDbType.Bytea, 10000, "imgin", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
+                cmd.Parameters.Add(new EDBParameter("imgin", EDBDbType.Bytea, 10000, "imgin", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
                 cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Numeric, 100, "imgout", ParameterDirection.Input, true, 2, 2, DataRowVersion.Current, 1));
 
                 cmd.Prepare();
@@ -264,17 +261,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                FileStream fs = null;
-                fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
+                using var conn = OpenConnection();
+                using var fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
                 var data = new byte[fs.Length];
-                fs.Read(data, 0, data.Length);
+                _ = fs.Read(data, 0, data.Length);
                 fs.Close();
 
                 var cmd = new EDBCommand("test_bytea_two_in(:imgin,:imgout)", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
 
-                cmd.Parameters.Add(new EDBParameter("imgin", EDBDbType.Bytea, 10000, "imgin", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null));
+                cmd.Parameters.Add(new EDBParameter("imgin", EDBDbType.Bytea, 10000, "imgin", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Input, false, 2, 2, DataRowVersion.Current, null!));
 
                 cmd.Prepare();
                 cmd.Parameters[0].Value = data;
@@ -289,14 +286,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-        static string EncodeHex(ICollection<byte> buf)
+        static string EncodeHex(byte[] buf)
         {
-            var hex = new StringBuilder(@"E'\\x", buf.Count * 2 + 3);
+            var hex = new StringBuilder(@"E'\\x", buf.Length * 2 + 3);
             foreach (var b in buf)
             {
                 hex.Append(string.Format("{0:x2}", b));
             }
-            hex.Append("'");
+            hex.Append('\'');
             return hex.ToString();
         }
 
@@ -304,11 +301,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testa_bytea_out()
         {
             // Insert Data first
-
-            FileStream fs_in = null;
-            fs_in = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
+            using var conn = OpenConnection();
+            using var fs_in = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
             var data = new byte[fs_in.Length];
-            fs_in.Read(data, 0, data.Length);
+            _ = fs_in.Read(data, 0, data.Length);
             fs_in.Close();
 #pragma warning disable CS8604 // Possible null reference argument.
             conn.ExecuteNonQuery($"INSERT INTO test_bytea_three_with_numeric (a) VALUES ({EncodeHex(data)})");
@@ -316,7 +312,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             var cmd = new EDBCommand("test_bytea_out(:imgout)", conn);
             cmd.CommandType = CommandType.StoredProcedure;
-            cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null));
+            cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
             cmd.Prepare();
             byte[] ss = { 1, 2, 3 };
             cmd.Parameters[0].Value = ss;
@@ -335,10 +331,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     fs.WriteByte(image[i]);
                 fs.Close();
             }
-            while (reader.Read()) ;
-
-            //reader.Close();
-            //conn.Close();
+            while (reader.Read());
 
             Console.WriteLine("Image Saved");
 
@@ -351,8 +344,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			{
 				EDBCommand cmd = new EDBCommand("test_bytea_out_two(:imgout,:imgout1)",conn);
 				cmd.CommandType= CommandType.StoredProcedure;
-				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-				cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
+				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
+				cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
 				cmd.Prepare();
 				//cmd.Parameters[0].Value = null;
 				EDBDataReader reader = cmd.ExecuteReader();
@@ -387,9 +380,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			{
 				EDBCommand cmd = new EDBCommand("test_bytea_out_two_with_num(:imgout,:imgout1,:num)",conn);
 				cmd.CommandType= CommandType.StoredProcedure;
-				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-				cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-				cmd.Parameters.Add(new EDBParameter("num", EDBTypes.EDBDbType.Numeric,10,"num",ParameterDirection.Input,false ,2,2,System.Data.DataRowVersion.Current,null));
+				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
+				cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
+				cmd.Parameters.Add(new EDBParameter("num", EDBTypes.EDBDbType.Numeric,10,"num",ParameterDirection.Input,false ,2,2,System.Data.DataRowVersion.Current,null!));
 				cmd.Prepare();
 				cmd.Parameters[2].Value = 100;
 				EDBDataReader reader = cmd.ExecuteReader();
@@ -440,10 +433,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 {
                     EDBCommand cmd = new EDBCommand("test_bytea_out_two_with_num_varchar(:imgout,:imgout1,:num,:var)",conn);
                     cmd.CommandType= CommandType.StoredProcedure;
-                    cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-                    cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null));
-                    cmd.Parameters.Add(new EDBParameter("num", EDBTypes.EDBDbType.Numeric,10,"num",ParameterDirection.Input,false ,2,2,System.Data.DataRowVersion.Current,null));
-                    cmd.Parameters.Add(new EDBParameter("var", EDBTypes.EDBDbType.Varchar,10,"var",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null));
+                    cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
+                    cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
+                    cmd.Parameters.Add(new EDBParameter("num", EDBTypes.EDBDbType.Numeric,10,"num",ParameterDirection.Input,false ,2,2,System.Data.DataRowVersion.Current,null!));
+                    cmd.Parameters.Add(new EDBParameter("var", EDBTypes.EDBDbType.Varchar,10,"var",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null!));
                     cmd.Prepare();
                     cmd.Parameters[2].Value = 100;
                     EDBDataReader reader = cmd.ExecuteReader();
@@ -489,12 +482,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
+                using var conn = OpenConnection();
                 var cmd = new EDBCommand("test_bytea_out_two_with_num_varchar(:imgout,:imgout1,:num,:var)", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("imgout1", EDBDbType.Bytea, 10000, "imgout1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("num", EDBDbType.Numeric, 10, "num", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("var", EDBDbType.Varchar, 10, "var", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, null));
+                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("imgout1", EDBDbType.Bytea, 10000, "imgout1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("num", EDBDbType.Numeric, 10, "num", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("var", EDBDbType.Varchar, 10, "var", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, null!));
                 cmd.Prepare();
                 cmd.Parameters[2].Value = 100;
                 var reader = cmd.ExecuteReader();
@@ -521,16 +515,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                         fs1.WriteByte(image[i]);
                     fs1.Close();
 
-                    Console.WriteLine(cmd.Parameters[3].Value.ToString());
-                    Console.WriteLine(cmd.Parameters[2].Value.ToString());
+                    Console.WriteLine(cmd.Parameters[3].Value!.ToString());
+                    Console.WriteLine(cmd.Parameters[2].Value!.ToString());
                     while (reader.Read()) ;
                     var commd = new EDBCommand("DROP TABLE test_bytea_three_with_numeric", conn);
 
                     commd.ExecuteNonQuery();
                 }
 
-
-                //				conn.Close();
 
                 Console.WriteLine("Image Saved");
             }
@@ -544,13 +536,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
+                using var conn = OpenConnection();
                 var cmd = new EDBCommand("test_bytea_inout_two_with_numinout_varchar(:imgout,:imgout1,:num,:var,:imgout2)", conn);
                 cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("imgout1", EDBDbType.Bytea, 10000, "imgout1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("num", EDBDbType.Numeric, 10, "num", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("var", EDBDbType.Varchar, 10, "var", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, null));
-                cmd.Parameters.Add(new EDBParameter("imgout2", EDBDbType.Bytea, 10, "imgout2", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null));
+                cmd.Parameters.Add(new EDBParameter("imgout", EDBDbType.Bytea, 10000, "imgout", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("imgout1", EDBDbType.Bytea, 10000, "imgout1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("num", EDBDbType.Numeric, 10, "num", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("var", EDBDbType.Varchar, 10, "var", ParameterDirection.InputOutput, false, 2, 2, DataRowVersion.Current, null!));
+                cmd.Parameters.Add(new EDBParameter("imgout2", EDBDbType.Bytea, 10, "imgout2", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
                 cmd.Prepare();
                 cmd.Parameters[2].Value = 100;
                 var reader = cmd.ExecuteReader();
@@ -577,8 +570,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                         fs1.WriteByte(image[i]);
                     fs1.Close();
 
-                    Console.WriteLine(cmd.Parameters[3].Value.ToString());
-                    Console.WriteLine(cmd.Parameters[2].Value.ToString());
+                    Console.WriteLine(cmd.Parameters[3].Value!.ToString());
+                    Console.WriteLine(cmd.Parameters[2].Value!.ToString());
                 }
                 while (reader.Read()) ;
                 //				conn.Close();
@@ -595,10 +588,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void CRUDTest()
         {
-
+            using var conn = OpenConnection();
             byte[] data = { 1, 23, 3 };
             byte[] data2 = { 1, 3, 4 };
-            var dataOut = new byte[3];
 
             var command = new EDBCommand("INSERT INTO ByteaTest Values(1, :data)", conn);
             command.Parameters.Add(new EDBParameter("data", EDBDbType.Bytea));
@@ -609,7 +601,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             // Retrieve
             command = new EDBCommand("select f1 from ByteaTest;", conn);
-            dataOut = (byte[])command.ExecuteScalar();
+            Assert.IsInstanceOf<byte[]>(command.ExecuteScalar());
 
             // Update
             command = new EDBCommand("Update ByteaTest set f1 = :b where id = 1", conn);
@@ -620,7 +612,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(1, rowsAdded);
 
             command = new EDBCommand("select f1 from ByteaTest;", conn);
-            dataOut = (byte[])command.ExecuteScalar();
+            Assert.IsInstanceOf<byte[]>(command.ExecuteScalar());
 
             // Delete
             command = new EDBCommand("Delete from ByteaTest where id = 1", conn);

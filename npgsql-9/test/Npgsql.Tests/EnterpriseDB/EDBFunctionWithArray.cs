@@ -24,7 +24,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 			//write setup for following test cases
 			con = OpenConnection();
-            EDBCommand Command=new EDBCommand("",con);
+            var Command=new EDBCommand("",con);
             
 			Command = new EDBCommand("CREATE OR REPLACE FUNCTION FuncReturningArrayVarchar(Name IN VARCHAR, Age IN INT, "+
 				"     		Sal IN  INT, WhoAmI IN OUT VARCHAR,CheckOut OUT INT) return VARCHAR[]  "+ 
@@ -159,7 +159,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void Dispose()
 		{
 			
-			EDBCommand Command=new EDBCommand("",con);
+			var Command=new EDBCommand("",con);
 
             Command.CommandText = "drop FUNCTION FuncReturningArrayVarchar( IN VARCHAR,  IN INT, IN  INT,  IN OUT VARCHAR, OUT INT) ;";
 			Command.ExecuteNonQuery();
@@ -190,7 +190,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 
             string[] a = { "100", "200", "300", "400" };
-			EDBCommand command = new EDBCommand("CREATE TABLE tblTest1 (c1 VARCHAR, c2 INT); ", con);
+			var command = new EDBCommand("CREATE TABLE tblTest1 (c1 VARCHAR, c2 INT); ", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest1 VALUES ('Ahmar',100);INSERT INTO tblTest1 VALUES ('Nauman',200);", con);
 			command.ExecuteNonQuery();
@@ -213,7 +213,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                Object rst = command.Parameters[5].Value!;
+                var rst = command.Parameters[5].Value!;
 
                 Assert.AreEqual(a, (string[])rst);
             }
@@ -230,7 +230,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 
             decimal[] a = { 132.654M, 897.2563M };
-			EDBCommand command = new EDBCommand("CREATE TABLE tblTest (f1 Numeric[10],f2 numeric[]);  ", con);
+			var command = new EDBCommand("CREATE TABLE tblTest (f1 Numeric[10],f2 numeric[]);  ", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest VALUES ('{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}','{132.654,897.2563}');", con);
 			command.ExecuteNonQuery();
@@ -248,7 +248,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters["param"].Value!;
+            var rst = command.Parameters["param"].Value!;
 			
 			Assert.NotNull(rst);
 			Assert.AreEqual(a,(decimal[])rst!);
@@ -263,7 +263,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void FuncReturningArrayInteger()
 		{
             int[] a = {132,897};
-			EDBCommand command = new EDBCommand("CREATE TABLE tblTest2 (f1 integer[10],f2 integer[]);  ", con);
+			var command = new EDBCommand("CREATE TABLE tblTest2 (f1 integer[10],f2 integer[]);  ", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest2 VALUES ('{120,1234,2,3123,42342,5355,652,7,8,94}','{132,897}');", con);
 			command.ExecuteNonQuery();
@@ -279,7 +279,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters["param"].Value!;
+            var rst = command.Parameters["param"].Value!;
 			
 			Console.WriteLine(rst);
 			
@@ -295,7 +295,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 
             double[] a = { 132.654, 897.2563 };
-			EDBCommand command = new EDBCommand("CREATE TABLE tblTest3 (d1 float[10],f2 float[]);  ", con);
+			var command = new EDBCommand("CREATE TABLE tblTest3 (d1 float[10],f2 float[]);  ", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest3 VALUES ('{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}','{132.654,897.2563}');", con);
 			command.ExecuteNonQuery();
@@ -310,7 +310,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters[2].Value!;
+            var rst = command.Parameters[2].Value!;
 			
 			Console.WriteLine(rst);
 			
@@ -326,7 +326,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 
             double[] a = { 555.43534543233, 344654.34534439785 };
-			EDBCommand command = new EDBCommand("CREATE TABLE tblTest4 (d1 double precision[],f2 double precision[]);", con);
+			var command = new EDBCommand("CREATE TABLE tblTest4 (d1 double precision[],f2 double precision[]);", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest4 VALUES ('{122.323423453,230.32131231322,123342.2323324}','{555.43534543233,344654.34534439785}');", con);
 			command.ExecuteNonQuery();
@@ -341,7 +341,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			command.Prepare();
             command.ExecuteNonQuery();
 
-            Object rst = command.Parameters["param"].Value!;
+            var rst = command.Parameters["param"].Value!;
 			
 			Console.WriteLine(rst);
 			
@@ -357,7 +357,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		{
 
             long[] a = { 55543534543233, 34465434534439785 };
-			EDBCommand command = new EDBCommand("CREATE TABLE tblTest5 (d1 bigint[],f2 bigint[]);", con);
+			var command = new EDBCommand("CREATE TABLE tblTest5 (d1 bigint[],f2 bigint[]);", con);
 			command.ExecuteNonQuery();
 			command = new EDBCommand("INSERT INTO tblTest5 VALUES ('{122323423453,23032131231322,1233422323324}','{55543534543233,34465434534439785}');", con);
 			command.ExecuteNonQuery();
@@ -370,9 +370,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters.Add(new EDBParameter("param", EDBTypes.EDBDbType.Bigint, 10, "param", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1)); 
 			
 			command.Prepare();
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
 
-            Object rst = command.Parameters["param"].Value!;
+            var rst = command.Parameters["param"].Value!;
 
             Console.WriteLine(rst);
 			Reader.Close();

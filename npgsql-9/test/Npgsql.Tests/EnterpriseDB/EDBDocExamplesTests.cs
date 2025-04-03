@@ -301,7 +301,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 for (var i = 0; i < notices.Count; i++)
                 {
                     var notice = (PostgresNotice?)notices[i];
-                    Assert.AreEqual(expectedMsgs[i], notice.MessageText);
+                    Assert.AreEqual(expectedMsgs[i], notice!.MessageText);
                 }
             }
             finally
@@ -586,8 +586,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             //End doc
 
             //Just verification, not for doc
-            Assert.AreEqual("ACCOUNTING", command.Parameters["pDNAME"].Value.ToString());
-            Assert.AreEqual("NEW YORK", command.Parameters["pLOC"].Value.ToString());
+            Assert.AreEqual("ACCOUNTING", command.Parameters["pDNAME"].Value!.ToString());
+            Assert.AreEqual("NEW YORK", command.Parameters["pLOC"].Value!.ToString());
             //End verification
         }
 
@@ -620,13 +620,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters.Add(new EDBParameter("refCursor",
                 EDBTypes.EDBDbType.Refcursor, 10, "refCursor",
                 ParameterDirection.Output, false, 2, 2,
-                System.Data.DataRowVersion.Current, null));
+                System.Data.DataRowVersion.Current, null!));
 
             await command.PrepareAsync();
             command.Parameters[0].Value = null;
 
             await command.ExecuteNonQueryAsync();
-            var cursorName = command.Parameters[0].Value.ToString();
+            var cursorName = command.Parameters[0].Value!.ToString();
             command.CommandText = "fetch all in \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
 

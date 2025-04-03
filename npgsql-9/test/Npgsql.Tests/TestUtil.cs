@@ -67,8 +67,8 @@ public static class TestUtil
 	// EnterpriseDB
     public static void createTempTable(EDBConnection con, string table, string columns)
     {
-        string strCommandSql = "create temp table " + table + " (" + columns + ")";
-        EDBCommand com = new EDBCommand(strCommandSql, con);
+        var strCommandSql = "create temp table " + table + " (" + columns + ")";
+        var com = new EDBCommand(strCommandSql, con);
         com.CommandType = CommandType.Text;
         try
         {
@@ -89,12 +89,12 @@ public static class TestUtil
 
         try
         {
-            string strCommandSql = "DROP TABLE IF EXISTS " + table;
+            var strCommandSql = "DROP TABLE IF EXISTS " + table;
             /*              if (haveMinimumServerVersion(con, "7.3"))
                             {
                                 sql += " CASCADE ";
                             }*/
-            EDBCommand com = new EDBCommand(strCommandSql, con);
+            var com = new EDBCommand(strCommandSql, con);
             com.CommandType = CommandType.Text;
             com.ExecuteNonQuery();
         }

@@ -69,9 +69,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 			con.ChangeDatabase("template1");
 
-			EDBCommand command = new EDBCommand("select current_database()", con);
+			var command = new EDBCommand("select current_database()", con);
 
-			string result = (string)command.ExecuteScalar();
+			var result = (string)command.ExecuteScalar()!;
 			Console.WriteLine(result);
 			Assert.AreEqual("template1", result);
 
@@ -128,7 +128,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void TestEDBCommandStatement() 
 		{
 			
-			EDBCommand Command=new EDBCommand("",con);	
+			var Command=new EDBCommand("",con);	
 			Assert.IsNotNull(Command);
 			Command.Dispose();
 		
@@ -139,7 +139,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void TestIsClosed()
 		{
-		 EDBConnection Con = OpenConnection();
+		 var Con = OpenConnection();
 
 		// Should not say closed
 			Console.WriteLine(Con.State.ToString());
@@ -156,7 +156,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void TestDoubleClose()
 		{
-			EDBConnection Con = OpenConnection();
+			var Con = OpenConnection();
 			Con.Close();
 			Con.Close();
 		}

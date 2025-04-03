@@ -39,7 +39,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             DropProc("DROP FUNCTION rm44158_fun;");
             DropTable("DROP TABLE rm44158_tab;");
 
-            String function = "create function rm44158_fun return timestamp is "
+            var function = "create function rm44158_fun return timestamp is "
                       + " begin "
                           + " perform dbms_lock.sleep(1);"
                               + " return sysdate;"
@@ -47,7 +47,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             CreateProc(function);
 
-            String anony1 = "declare "
+            var anony1 = "declare "
                           + " a timestamp; b timestamp; c timestamp;"
                       + " begin "
                           + " select sysdate, rm44158_fun, sysdate into a, b, c;"
@@ -61,14 +61,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                       + " end;";
             CreateAnonymousBlock(anony1);
 
-            String createTable = "create table rm44158_tab(n timestamp);";
+            var createTable = "create table rm44158_tab(n timestamp);";
             CreateTable(createTable);
-            String insert1 = "insert into rm44158_tab values('12-dec-18:12:12:12');";
-            String insert2 = "insert into rm44158_tab values('12-may-2010:12:12:33');";
+            var insert1 = "insert into rm44158_tab values('12-dec-18:12:12:12');";
+            var insert2 = "insert into rm44158_tab values('12-may-2010:12:12:33');";
             InsertIntoTable(insert1);
             InsertIntoTable(insert2);
 
-            String anony2 = "DECLARE"
+            var anony2 = "DECLARE"
                          + " v_value1   timestamp;"
                          + " v_value2   timestamp;"
                          + " result  integer;"
@@ -84,7 +84,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             CreateAnonymousBlock(anony2);
         }
 
-        public void CreateAnonymousBlock(String query)
+        public void CreateAnonymousBlock(string query)
         {
             CreateObject(query);
 
@@ -102,7 +102,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             //--Test1: Explicit INDEX specified on PRIMARY KEY column along with create
             //--table, server will create the explicit index specified.
-            string createTable1 = "CREATE TABLE rm43851_products1("
+            var createTable1 = "CREATE TABLE rm43851_products1("
                     + " product_no INTEGER,"
                     + " name VARCHAR(50),"
                     + " price NUMERIC,"
@@ -112,15 +112,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             CreateTable(createTable1);
 
-            string select1 = "SELECT conname FROM pg_constraint WHERE conrelid = (SELECT oid FROM pg_class"
+            var select1 = "SELECT conname FROM pg_constraint WHERE conrelid = (SELECT oid FROM pg_class"
                     + " WHERE relname = 'rm43851_products1');";
-            string select2 = "SELECT* FROM pg_indexes WHERE tablename = 'rm43851_products1' ORDER BY indexname;";
+            var select2 = "SELECT* FROM pg_indexes WHERE tablename = 'rm43851_products1' ORDER BY indexname;";
 
             SelectFromTable(select1);
             SelectFromTable(select2);
             //\d + rm43851_products1;
 
-            string insert1 = "INSERT INTO rm43851_products1 VALUES(1, 'product 1', 1.1);";
+            var insert1 = "INSERT INTO rm43851_products1 VALUES(1, 'product 1', 1.1);";
             //string insert2 = "INSERT INTO rm43851_products1 VALUES(1, 'product 1', 1.1);";
 
             InsertIntoTable(insert1);
@@ -128,7 +128,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             //--Test2: Explicit INDEX specified on PRIMARY KEY column along with create
             //--table but the order of keys is different.
-            string createTable2 = "CREATE TABLE rm43851_products2("
+            var createTable2 = "CREATE TABLE rm43851_products2("
                + " product_no INTEGER,"
                + " name VARCHAR(50),"
                + " price NUMERIC,"
@@ -140,15 +140,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             + " );";
             CreateTable(createTable2);
 
-            string select3 = "SELECT conname FROM pg_constraint WHERE conrelid = (SELECT oid FROM pg_class"
+            var select3 = "SELECT conname FROM pg_constraint WHERE conrelid = (SELECT oid FROM pg_class"
                     + " WHERE relname = 'rm43851_products2');";
-            string select4 = "SELECT* FROM pg_indexes WHERE tablename = 'rm43851_products2' ORDER BY indexname;";
+            var select4 = "SELECT* FROM pg_indexes WHERE tablename = 'rm43851_products2' ORDER BY indexname;";
 
             SelectFromTable(select3);
             SelectFromTable(select4);
             //\d + rm43851_products2;
 
-            string insert3 = "INSERT INTO rm43851_products2 VALUES(1, 'product 1', 1.1);";
+            var insert3 = "INSERT INTO rm43851_products2 VALUES(1, 'product 1', 1.1);";
             //string insert4 = "INSERT INTO rm43851_products2 VALUES(1, 'product 1', 1.1);";
             InsertIntoTable(insert3);
             //InsertIntoTable(insert4);
@@ -160,7 +160,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 #nullable disable
             TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
-            string proc1 = "CREATE OR REPLACE PROCEDURE utl_proc1() IS"
+            var proc1 = "CREATE OR REPLACE PROCEDURE utl_proc1() IS"
                         + " req   UTL_HTTP.REQ;"
                         + " resp UTL_HTTP.RESP;"
                         + " value VARCHAR2(32768);"
@@ -179,7 +179,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             + " UTL_HTTP.END_RESPONSE(resp);"
             + " END;";
 
-            string proc2 = "CREATE OR REPLACE PROCEDURE utl_proc2() IS"
+            var proc2 = "CREATE OR REPLACE PROCEDURE utl_proc2() IS"
                 + " req   UTL_HTTP.REQ;"
             + " resp UTL_HTTP.RESP;"
             + " value VARCHAR2(32768);"
@@ -198,7 +198,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             + " UTL_HTTP.END_RESPONSE(resp);"
             + " END;";
 
-            string proc3 = "CREATE OR REPLACE PROCEDURE utl_proc3() IS"
+            var proc3 = "CREATE OR REPLACE PROCEDURE utl_proc3() IS"
                 + " req   UTL_HTTP.REQ;"
             + " resp UTL_HTTP.RESP;"
             + " value raw(32767);"
@@ -429,7 +429,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropProc("DROP PROCEDURE dbms_output_proc;");
-            string createProc = "CREATE OR REPLACE PROCEDURE dbms_output_proc() IS"
+            var createProc = "CREATE OR REPLACE PROCEDURE dbms_output_proc() IS"
             + " BEGIN"
             + " SET dbms_output.serveroutput = OFF;"
             + " dbms_output.put_line('when \"set dbms_output.serveroutput OFF\" is used.');"
@@ -498,13 +498,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             DropTable("DROP TABLE IF EXISTS rm44142_dtypes;");
             DropTable("DROP TABLE IF EXISTS rm44142_tbl;");
 
-            string createTable1 = "CREATE TABLE rm44142_dtypes(col_long LONG, col_int  INTEGER);";
+            var createTable1 = "CREATE TABLE rm44142_dtypes(col_long LONG, col_int  INTEGER);";
             CreateTable(createTable1);
 
-            string insert1 = "INSERT INTO rm44142_dtypes VALUES('TestingForDefineColumnValueLong', 1);";
+            var insert1 = "INSERT INTO rm44142_dtypes VALUES('TestingForDefineColumnValueLong', 1);";
             InsertIntoTable(insert1);
 
-            string createProc1 = "CREATE OR REPLACE PROCEDURE dbmssql_proc1() IS"
+            var createProc1 = "CREATE OR REPLACE PROCEDURE dbmssql_proc1() IS"
                + " cur_id               INTEGER;"
             + " v_long VARCHAR2(20);"
             + " sql_stmt VARCHAR2(50) := 'SELECT col_int, col_long ' || ' FROM rm44142_dtypes';"
@@ -526,13 +526,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             CallProc("dbmssql_proc1()");
 
-            string createTable2 = "CREATE TABLE rm44142_tbl(col_int INTEGER PRIMARY KEY);";
+            var createTable2 = "CREATE TABLE rm44142_tbl(col_int INTEGER PRIMARY KEY);";
             CreateTable(createTable2);
 
-            string insert2 = "INSERT INTO rm44142_tbl VALUES(1);";
+            var insert2 = "INSERT INTO rm44142_tbl VALUES(1);";
             InsertIntoTable(insert2);
 
-            string createProc2 = "CREATE OR REPLACE PROCEDURE dbmssql_proc2() IS"
+            var createProc2 = "CREATE OR REPLACE PROCEDURE dbmssql_proc2() IS"
                + " cur_id               INTEGER;"
             + " sql_stmt VARCHAR2(50) := 'SELECT col_int FROM rm44142';"
             + " position INTEGER;"
@@ -557,7 +557,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropView("DROP VIEW tstz_vw;");
-            string createView = "CREATE VIEW tstz_vw as SELECT"
+            var createView = "CREATE VIEW tstz_vw as SELECT"
             + " TO_TIMESTAMP_TZ('12-jan-2010', 'dd-month-yyyy') tz1, "
             + " TO_TIMESTAMP_TZ('12-january-2010', 'dd-mon-yyyy') tz2, "
             + " TO_TIMESTAMP_TZ('', 'DD/MM/YYYY HH24:MI:SS') tz3, "
@@ -573,7 +573,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             CreateView(createView);
 
-            string select = "select* from tstz_vw;";
+            var select = "select* from tstz_vw;";
             SelectFromTable(select);
         }
 
@@ -585,14 +585,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 #nullable restore 
             DropPackageBody("DROP PACKAGE BODY test_func_spec_pkg");
             DropPackage("DROP PACKAGE test_func_spec_pkg");
-            string pkg = "create or replace package test_func_spec_pkg as"
+            var pkg = "create or replace package test_func_spec_pkg as"
                             + " function test1(col1 number) return number;"
                             + " procedure test2(col1 IN number, col2 OUT number);"
                          + " end test_func_spec_pkg;";
 
             CreatePackage(pkg);
 
-            string pkgbody = "create or replace package body test_func_spec_pkg as"
+            var pkgbody = "create or replace package body test_func_spec_pkg as"
 
                             + " function test1(col1 number) return number is"
                             + " begin"
@@ -622,19 +622,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
             DropTable("DROP TABLE fm_tab CASCADE");
-            string createTable = "create table fm_tab(c1 varchar2(50));";
+            var createTable = "create table fm_tab(c1 varchar2(50));";
             CreateTable(createTable);
 
-            string insert = "insert into fm_tab values ('0101.010'), ('00915.12300');";
+            var insert = "insert into fm_tab values ('0101.010'), ('00915.12300');";
             InsertIntoTable(insert);
 
-            string createView = "create view fm_vw as select to_number(c1,'FM99999999.99999') from fm_tab;";
+            var createView = "create view fm_vw as select to_number(c1,'FM99999999.99999') from fm_tab;";
             CreateView(createView);
 
-            string selectView1 = "select * from all_views where view_name = 'FM_VW';";
+            var selectView1 = "select * from all_views where view_name = 'FM_VW';";
             SelectFromTable(selectView1);
 
-            string selectView2 = "select * from fm_vw ;";
+            var selectView2 = "select * from fm_vw ;";
             SelectFromTable(selectView2);
         }
 
@@ -644,18 +644,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 #nullable disable
             TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
-            string dropTable = "drop table alp_tab";
+            var dropTable = "drop table alp_tab";
             DropTable(dropTable);
 
-            string createTable = "create table alp_tab (a int) partition by list(a) automatic (partition p1 values (1), partition p2 values (2));";
+            var createTable = "create table alp_tab (a int) partition by list(a) automatic (partition p1 values (1), partition p2 values (2));";
             CreateTable(createTable);
 
-            string insert = "insert into alp_tab values(1), (2), (3), (4);";
+            var insert = "insert into alp_tab values(1), (2), (3), (4);";
             InsertIntoTable(insert);
 
             //\d+ alp_tab
 
-            string select = "select tableoid::regclass, * from alp_tab;";
+            var select = "select tableoid::regclass, * from alp_tab;";
             SelectFromTable(select);
         }
 
@@ -665,18 +665,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 #nullable disable
             TestUtil.MinimumPgVersion(con, "13.0.0");
 #nullable restore 
-            string dropTable = "drop table alp_tab";
+            var dropTable = "drop table alp_tab";
             DropTable(dropTable);
 
-            string createTable = "create table alp_tab (a int) partition by list(a) automatic (partition p1 values (1), partition p2 values (2));";
+            var createTable = "create table alp_tab (a int) partition by list(a) automatic (partition p1 values (1), partition p2 values (2));";
             CreateTable(createTable);
 
-            string insert = "insert into alp_tab values(1), (2), (3), (4);";
+            var insert = "insert into alp_tab values(1), (2), (3), (4);";
             InsertIntoTable(insert);
 
             //\d+ alp_tab
 
-            string select = "select tableoid::text, * from alp_tab;";
+            var select = "select tableoid::text, * from alp_tab;";
             SelectFromTable(select);
         }
 
@@ -688,22 +688,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 #nullable restore 
             DropTable("DROP TABLE median_test CASCADE");
             //-- Additional smallint, int, bigint, and numeric variants in aggregate function MEDIAN.
-            string createTable = "create table median_test(c1 smallint, c2 integer, c3 bigint, c4 decimal, c5 numeric, c6 real, c7 double precision, c8 NUMERIC(3, 2),c9 NUMERIC(3),c10 float, c11 float(2),c12 float8, c13 money,c14 interval, c15 long, c16 smallserial,c17 serial, c18 bigserial);";
+            var createTable = "create table median_test(c1 smallint, c2 integer, c3 bigint, c4 decimal, c5 numeric, c6 real, c7 double precision, c8 NUMERIC(3, 2),c9 NUMERIC(3),c10 float, c11 float(2),c12 float8, c13 money,c14 interval, c15 long, c16 smallserial,c17 serial, c18 bigserial);";
             CreateTable(createTable);
 
-            string insert1 = "INSERT INTO median_test VALUES (32766,2147483646,9223372036854775806,131071.16383,131071.16383,131071.16383,131071.16383,1.1,1.0,131.16,131,131,131,'5 days 4 hours',1111);";
-            string insert2 = "INSERT INTO median_test VALUES (12766,1147483646,1223372036854775806,31071.16383,31071.16383,31071.16383,31071.16383,2.1,2.0,31.16,31,31,31,'2 days 4 hours',111);";
+            var insert1 = "INSERT INTO median_test VALUES (32766,2147483646,9223372036854775806,131071.16383,131071.16383,131071.16383,131071.16383,1.1,1.0,131.16,131,131,131,'5 days 4 hours',1111);";
+            var insert2 = "INSERT INTO median_test VALUES (12766,1147483646,1223372036854775806,31071.16383,31071.16383,31071.16383,31071.16383,2.1,2.0,31.16,31,31,31,'2 days 4 hours',111);";
             InsertIntoTable(insert1);
             InsertIntoTable(insert2);
 
-            string createView = "CREATE VIEW median_vw AS select median(c1) mc1, median(c2) mc2, median(c3) mc3, median(c4) mc4, median(c5) mc5, median(c6) mc6, median(c7) mc7, median(c8) mc8, median(c9) mc9, median(c10) mc10, median(c11) mc11, median(c12) mc12, median(c13::numeric) mc13, median(c14) mc14, median(c15::numeric) mc15, median(c16) mc16, median(c17) mc17, median(c18) mc18 from median_test;";
+            var createView = "CREATE VIEW median_vw AS select median(c1) mc1, median(c2) mc2, median(c3) mc3, median(c4) mc4, median(c5) mc5, median(c6) mc6, median(c7) mc7, median(c8) mc8, median(c9) mc9, median(c10) mc10, median(c11) mc11, median(c12) mc12, median(c13::numeric) mc13, median(c14) mc14, median(c15::numeric) mc15, median(c16) mc16, median(c17) mc17, median(c18) mc18 from median_test;";
             CreateView(createView);
 
-            string selectView = "SELECT * FROM median_vw;";
+            var selectView = "SELECT * FROM median_vw;";
             SelectFromTable(selectView);
             //-- Added support for CREATE INDEX syntax that contains a column name and number i.e. (col_name,1)
 
-            string createIndex = "create index idx1_median_test on median_test(c1,5);";
+            var createIndex = "create index idx1_median_test on median_test(c1,5);";
             CreateIndex(createIndex);
             //\d+ median_test
 
@@ -714,7 +714,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             //Log("Calling Procedure...");
             try
             {
-                using (EDBCommand com = new EDBCommand("", con))
+                using (var com = new EDBCommand("", con))
                 {
                     com.CommandType = CommandType.StoredProcedure;
 
@@ -734,7 +734,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                using (EDBCommand com = new EDBCommand("", con))
+                using (var com = new EDBCommand("", con))
                 {
                     com.CommandType = CommandType.Text;
 
@@ -879,7 +879,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                using (EDBCommand com = new EDBCommand("", con))
+                using (var com = new EDBCommand("", con))
                 {
                     com.CommandType = CommandType.Text;
 
@@ -944,9 +944,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (EDBCommand command = new EDBCommand(insert, con))
+                using (var command = new EDBCommand(insert, con))
                 {
-                    Int32 rowsAdded = command.ExecuteNonQuery();
+                    var rowsAdded = command.ExecuteNonQuery();
                     Log("Inserted rows: " + rowsAdded);
                 }
             }
@@ -965,16 +965,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (EDBCommand cmdSelect = new EDBCommand(select, con))
+                using (var cmdSelect = new EDBCommand(select, con))
                 {
                     cmdSelect.CommandType = CommandType.Text;
-                    using (EDBDataReader reader = cmdSelect.ExecuteReader())
+                    using (var reader = cmdSelect.ExecuteReader())
                     {
                         while (reader.Read())
                         {
                             //Log("Value [" + 0 + "]: " + reader.GetString(0));
                             //Log("Value [" + 1 + "]: " + reader.GetInt32(1));
-                            for (int i = 0; i < reader.GetColumnSchema().Count; i++)
+                            for (var i = 0; i < reader.GetColumnSchema().Count; i++)
                                 Log("Value [" + i + "]: " + reader.GetValue(i));
                         }
                     }
@@ -995,16 +995,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             try
             {
-                using (EDBCommand cmdSelect = new EDBCommand(query, con))
+                using (var cmdSelect = new EDBCommand(query, con))
                 {
                     cmdSelect.CommandType = CommandType.Text;
-                    using (EDBDataReader reader = cmdSelect.ExecuteReader())
+                    using (var reader = cmdSelect.ExecuteReader())
                     {
                         while (reader.Read())
                         {
                             //Log("Value [" + 0 + "]: " + reader.GetString(0));
                             //Log("Value [" + 1 + "]: " + reader.GetInt32(1));
-                            for (int i = 0; i < reader.GetColumnSchema().Count; i++)
+                            for (var i = 0; i < reader.GetColumnSchema().Count; i++)
                                 Log("Value [" + i + "]: " + reader.GetValue(i));
                         }
                     }
@@ -1019,7 +1019,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Log("Selected from table successfully.");
         }
 
-        void Log(string msg)
+        static void Log(string msg)
         {
             Console.WriteLine("[=======] " + msg);
         }

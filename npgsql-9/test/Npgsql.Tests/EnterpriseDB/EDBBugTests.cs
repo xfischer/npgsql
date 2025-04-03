@@ -373,7 +373,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             InsertIntoTable(con, "insert into ca.epas_test_table2 (id, title) values ( 1, 'row 1')");
         }
 
-        private void CreateDropSchema(EDBConnection con, string schameString, bool create)
+        private static void CreateDropSchema(EDBConnection con, string schameString, bool create)
         {
             //Create Table.
             try
@@ -389,7 +389,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-        private void CreateTable(EDBConnection con, string tableString)
+        private static void CreateTable(EDBConnection con, string tableString)
         {
             //Create Table.
             try
@@ -404,7 +404,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             }
         }
 
-        private void InsertIntoTable(EDBConnection con, string insertString)
+        private static void InsertIntoTable(EDBConnection con, string insertString)
         {
             //Insert into table.
             using var insertCommand = new EDBCommand("", con);
@@ -414,7 +414,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.IsTrue(count != 0, "Data was not inserted.");
         }
 
-        private void CreateDropProcedure(EDBConnection con, string procString, bool create)
+        private static void CreateDropProcedure(EDBConnection con, string procString, bool create)
         {
             //Create Procedure
             using var createProcCommand = new EDBCommand("", con);
@@ -461,7 +461,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     }
                 }
 
-                if (con != null && con.Connector == null)
+                if (con is null || (con.Connector == null))
                     con = OpenConnection();
 
                 if (pkgNameDelete != null)

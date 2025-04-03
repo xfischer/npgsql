@@ -94,7 +94,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             int[] a = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
             int[] b = { 40, 50, 60, 70, 81, 90, 32765 };
 			Command.CommandText= "SELECT * FROM arrtestInt2;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(short[])Reader.GetValue(0));
@@ -119,7 +119,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             int[] b = { -2147483648, 100, 433, 544, 2147483647 };
 
 			Command.CommandText= "SELECT * FROM arrtestInt4;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(int[])Reader.GetValue(0));
@@ -144,7 +144,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             long[] b = { 65454545, 32769 };
 
 			Command.CommandText= "SELECT * FROM arrtestInt8;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(long[])Reader.GetValue(0));
@@ -168,7 +168,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             double[] a = { 2, 4.21, 6.32, 3.98, 4, 5.91, 6, 7.66, 8.88, 9.99 };
             double[] b = { 43534.234, 5534.463 };
 			Command.CommandText= "SELECT * FROM arrtestFloat;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(double[] )Reader.GetValue(0));
@@ -192,7 +192,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             float[] b = { 2132.32F, 987.145F};
 
 			Command.CommandText= "SELECT * FROM arrtestFloat4;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(float[])Reader.GetValue(0));
@@ -216,7 +216,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             double[] a = { 122.33, 230.32, 1342.24, 28766.33, 343245.234, 462.33, 575.323, 6787.433, 7004.344, 865.345, 983.433 };
             double[] b = { 8555.233, 654.9785 };
 			Command.CommandText= "SELECT * FROM arrtestFloat8;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(double[])Reader.GetValue(0));
@@ -242,7 +242,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             float[] a = { 12.3233F, 13.223F, 265.323F, 30.001F, 4235.9F, 543.454F, 543.453F, 775.235F, 800.992F, 9122.12F };
 
 			Command.CommandText="SELECT * FROM arrtest1;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -267,7 +267,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             decimal[] a = { 120.89809M, 1234.00090M, 2.2434M, 3123.0M, 42342.22M, 53552.2M, 652.233M, 7.09M, 8.11M, 9.654M };
             decimal[] b = { 132.654M, 897.2563M };
             Command.CommandText = "SELECT * FROM ArraysNumeric;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -293,7 +293,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             decimal[] b = { 1.234M, 2.142M };
 
             Command.CommandText = "SELECT * FROM ArraysNumericWithPrecision;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -318,7 +318,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             int[] a = { -1, -2, -3, -4, 0, 4, 5, 6, 7, 8 };
             int[] b = { 40, 50, 60, 70, 81, 90, 32765 };
             Command.CommandText = "SELECT * FROM ArraysSmallInt;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -345,7 +345,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 
             Command.CommandText = "SELECT * FROM ArraysBigInt;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
             Assert.AreEqual(a, (long[])Reader.GetValue(0));
@@ -371,7 +371,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 
             Command.CommandText = "SELECT * FROM ArraysDoublePrecision;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
             Assert.AreEqual(a, (double[])Reader.GetValue(0));
@@ -400,7 +400,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             int[] b = { 5, 9 };
 
             Command.CommandText = "SELECT * FROM ArraysInteger;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -425,7 +425,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             decimal[] a = { 321.255M, 654.233M, 8987M, 545.23M, 654.36M };
             decimal[] b = { 31.2434M, 23.1442M };
             Command.CommandText = "SELECT * FROM arrtestNumber;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -451,7 +451,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             decimal[] a = { 120.89M, 123.90M, 22.33M, 412.40M, 422.22M, 552.21M, 62.22M, 712.09M, 18.11M, 91.65M };
             decimal[] b = { 1.234M, 2.142M };
             Command.CommandText = "SELECT * FROM ArraysDecimal;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -476,14 +476,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             decimal[] a = { -21474823123326.41M, 2123432474836.25M };
            
             Command.CommandText= "SELECT * FROM arrtestMoney;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 			object[] test={"-$21,474,823,123,326.41","$2,123,432,474,836.25"};
 			Assert.IsTrue(Reader.Read());
             Assert.AreEqual(a, Reader.GetValue(0));
 			//Assert.AreEqual("{\""+test[0].ToString()+"\",\""+test[1].ToString()+"\"}",Reader.GetValue(0).ToString());
 			string[] teststr={"$2,343,245.57","$523,432.32"};
             var value = Reader.GetValue(1);
-            Assert.IsInstanceOf(typeof(decimal[]), value);
+            Assert.IsInstanceOf<decimal[]>(value);
             Assert.AreEqual(2343245.57m, ((decimal[])value)[0]);
             Assert.AreEqual(523432.32m, ((decimal[])value)[1]);
 
@@ -507,7 +507,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             decimal[] a = { -474836.4128M, 74836.2417M };
             decimal[] b = { 45.1157M, 15.2636M };
             Command.CommandText = "SELECT * FROM ArraysSmallMoney;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -533,7 +533,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             string[] a = {"Lord of the Rings","Suffocles"};
 
 			Command.CommandText= "SELECT * FROM  bookstextarray;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -559,7 +559,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             string[] a = {"The Hitchhikers Guide to the Galaxy","Harry Potter","Kitten","Squared"};
 
 			Command.CommandText="SELECT * FROM  favourite_books;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -585,7 +585,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             string[] a = {"Lord of the Rings","Suffocles"};
 
 			Command.CommandText= "SELECT * FROM  bookstinytext;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -611,7 +611,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             string[] a = {"The Hitchikers Guide to the Galaxy","Harry Potter","Kitten","Squared"};
 			
 			Command.CommandText= "SELECT * FROM  favourite_booksVarchar2;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -635,7 +635,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 			
 			Command.CommandText= "SELECT * FROM charstest;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(string[])Reader.GetValue(0));
@@ -657,7 +657,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 			
 			Command.CommandText="SELECT * FROM chartest;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(string[])Reader.GetValue(0));
@@ -682,7 +682,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 			
 			Command.CommandText="SELECT * FROM books;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 			
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(string[])Reader.GetValue(0));
@@ -707,7 +707,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             string[] a = { "Lord of the War", "Suffocles", "A walk in the cloudsssss" };
 
 			Command.CommandText= "SELECT * FROM bookslongtext;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(string[])Reader.GetValue(0));
@@ -733,7 +733,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             DateTime[] a = { Convert.ToDateTime("2004-05-06 00:00:00"), Convert.ToDateTime("2010-12-03 00:00:00") };
 
 			Command.CommandText= "SELECT * FROM arrtestDate;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			//Assert.AreEqual(a,(D)Reader.GetValue(0));
@@ -758,7 +758,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             DateTime[] a = { DateTime.Parse("1999-01-08 04:05:06"), DateTime.Parse("2006-12-11 04:05:06") };
 
             Command.CommandText = "SELECT * FROM ArraysTimestamp;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
@@ -783,7 +783,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 
             Command.CommandText = "SELECT * FROM ArraysDateTime;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
@@ -809,7 +809,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             DateTime[] a = {DateTime.Parse("04:05:06"),DateTime.Parse("12:10:48")};
 
             Command.CommandText = "SELECT * FROM ArraysTime;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
           //  DateTime[] data = (DateTime[])Reader.GetValue(0);
@@ -863,7 +863,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 
             Command.CommandText = "SELECT * FROM ArraysBoolean;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(bool[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((bool[])Reader.GetValue(0))));
@@ -888,7 +888,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 
             Command.CommandText = "SELECT * FROM ArraysBool;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(bool[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((bool[])Reader.GetValue(0))));
@@ -913,7 +913,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 
             Command.CommandText = "SELECT * FROM ArraysBool2;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(bool[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((bool[])Reader.GetValue(0))));
@@ -938,7 +938,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             DateTime[] a = { DateTime.Parse("1999-01-08 04:05:06"), DateTime.Parse("2005-11-08 12:02:06"), DateTime.Parse("2004-02-10 00:04:50") };
 
             Command.CommandText = "SELECT * FROM ArraysTimestampWithoutTimeZone;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
@@ -962,7 +962,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             TimeSpan[] a = { new TimeSpan(1, 12, 59, 10), new TimeSpan(2, 1, 23, 34) };
 
             Command.CommandText = "SELECT * FROM ArraysInterval;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
             Assert.IsTrue(Reader.Read());
             Assert.AreEqual(a,(TimeSpan[])Reader.GetValue(0));
@@ -994,7 +994,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             TimeSpan[] a = { new TimeSpan(-23, 0, 0), new TimeSpan(2, 1, 23, 34)
             , new TimeSpan(1, -1, 0, 0), new TimeSpan(21, 0, 0, 0)};
             Command.CommandText = "SELECT * FROM ArraysInterval2;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 			
 			Assert.IsTrue(Reader.Read());
             Assert.AreEqual(a, (TimeSpan[])Reader.GetValue(0));
@@ -1023,10 +1023,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 
             int[] a = { 100, 200, 300, 400, 500 };
-            int[] c = {  };
+            int[] c = [];
 
             Command.CommandText = "SELECT  * FROM ArraySelect where b = 101;";
-            using EDBDataReader Reader = Command.ExecuteReader();
+            using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(short[])Reader.GetValue(0));
@@ -1059,7 +1059,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             int[] a = { 100, 200, 300, 400, 500 };
             Command.CommandText = "SELECT a, e[0] ,e[1]  FROM ArrayUpdate where a[2] = 200;";
-			using EDBDataReader Reader = Command.ExecuteReader();
+			using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(short[])Reader.GetValue(0));

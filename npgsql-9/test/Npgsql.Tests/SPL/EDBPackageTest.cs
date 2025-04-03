@@ -402,7 +402,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
 
             cstmt.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Varchar, 10, "ret",
-                ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -658,7 +658,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             using var conn = OpenConnection();
             //The following code called function emp_rpt.open_emp_by_dept and
             //and returned cusor emp_rpt.EMP_REFCUR as ResultSet
-            EDBTransaction tran = conn.BeginTransaction();
+            var tran = conn.BeginTransaction();
             var commandText = "emp_rpt.open_emp_by_dept(:param1)";
 
             var cstmt = new EDBCommand(commandText, conn);
@@ -669,7 +669,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 30));
 
             cstmt.Parameters.Add(new EDBParameter("ret", EDBTypes.EDBDbType.Refcursor, 10, "ret",
-                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();
@@ -677,9 +677,9 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var cursorName = cstmt.Parameters[1].Value.ToString();
             cstmt.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             cstmt.CommandType = CommandType.Text;
-            EDBDataReader rst = cstmt.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = cstmt.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            List<string> list = getResultSetData(rst);
+            var list = getResultSetData(rst);
 
             Assert.IsNotNull(rst);
 

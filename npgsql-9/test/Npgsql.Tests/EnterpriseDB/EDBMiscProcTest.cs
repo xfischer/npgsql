@@ -367,22 +367,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
         #endregion
 
-        [Test, Ignore("Investiage Prompt")]
+        [Test, Ignore("Investigate Prompt")]
         public void RefCursorFunc()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             var command = new EDBCommand("public.GETREFCURSOR", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
             var cursorName = command.Parameters[0].Value.ToString();
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
@@ -401,24 +401,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 var command = new EDBCommand("public.getrefcursor", con);
                 command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.ExecuteNonQuery();
                 var cursorName = command.Parameters[0].Value.ToString();
                 command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 Assert.IsNotNull(rst);
                 Assert.IsTrue(rst.Read());
                 Assert.AreEqual("V1", rst.GetValue(0).ToString());
                 Assert.IsTrue(rst.Read());
 
-                if (2 == int.Parse(rst.GetValue(1).ToString()))
-                    Assert.IsTrue(true);
-                else
-                    Assert.IsFalse(false);
+                var value = rst.GetValue(1).ToString();
+                Assert.AreEqual(2, value);
 
                 rst.Close();
             }
@@ -435,12 +433,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void RefCursorFuncOut()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETREFCURSOR_OUT(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -449,14 +447,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             rst.Close();
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
             Assert.IsNotNull(rst1);
 
             rst1.Close();
@@ -474,8 +472,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 var command = new EDBCommand("public.GETREFCURSOR_OUT(:param1)", con);
                 command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.ExecuteNonQuery();
@@ -484,7 +482,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 Assert.IsNotNull(rst);
                 Assert.IsTrue(rst.Read());
@@ -495,7 +493,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 Assert.IsNotNull(rst1);
                 Assert.IsTrue(rst1.Read());
@@ -515,12 +513,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test, Ignore("Investigate")]
         public void RefCursorProc()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             var command = new EDBCommand("public.getrefcursorproc(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -528,18 +526,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var cursorName = command.Parameters[0].Value.ToString();
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
 
             Assert.IsTrue(rst.Read());
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
-
+            var value = int.Parse(rst.GetValue(1).ToString());
+            Assert.AreEqual(2, value);
+            
             rst.Close();
             tran.Commit();
 
@@ -556,7 +552,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 var command = new EDBCommand("public.getrefcursorproc(:param1)", con);
                 command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.ExecuteNonQuery();
@@ -564,17 +560,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 Assert.IsNotNull(rst);
                 Assert.IsTrue(rst.Read());
                 Assert.AreEqual("V1", rst.GetValue(0).ToString());
 
                 Assert.IsTrue(rst.Read());
-                if (2 == int.Parse(rst.GetValue(1).ToString()))
-                    Assert.IsTrue(true);
-                else
-                    Assert.IsFalse(false);
+                var value = int.Parse(rst.GetValue(1).ToString());
+                Assert.AreEqual(2, value);
 
                 rst.Close();
             }
@@ -590,12 +584,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void RefcursorsVV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETREFCURSORSVVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -604,29 +598,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
             Assert.IsTrue(rst.Read());
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            var value = int.Parse(rst.GetValue(1).ToString());
+            Assert.AreEqual(2, value);
             rst.Close();
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
             Assert.IsNotNull(rst1);
             Assert.IsTrue(rst1.Read());
             Assert.AreEqual("V1", rst1.GetValue(0).ToString());
             Assert.IsTrue(rst1.Read());
-            if (2 == int.Parse(rst1.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            value = int.Parse(rst1.GetValue(1).ToString());
+            Assert.AreEqual(2, value);
 
             rst1.Close();
             tran.Commit();
@@ -636,12 +626,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void RefcursorsV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETREFCURSORSVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -650,7 +640,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.IsTrue(rst.Read());
@@ -658,7 +648,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsFalse(rst.Read());
             Assert.IsFalse(rst1.Read());
@@ -679,10 +669,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Prepare();
             command.ExecuteReader();
             var a = int.Parse(command.Parameters[0].Value.ToString());
-            if (a == 29)
-                Assert.IsTrue(true);
-            else
-                Assert.IsTrue(false);
+            Assert.AreEqual(29, a);
         }
 
         //	[Test]
@@ -696,25 +683,23 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.Prepare();
 
-            EDBDataReader Reader = command.ExecuteReader();
+            var Reader = command.ExecuteReader();
             var a = int.Parse(command.Parameters[0].Value.ToString());
-            if (a == 29)
-                Assert.IsTrue(true);
-            else
-                Assert.IsTrue(false);
+
+            Assert.AreEqual(29, a);
 
             Reader.Close();
         }
 
-        [Test, Ignore("Investiage Prompt")]
+        [Test, Ignore("Investigate Prompt")]
         public void SYSRefCursorFunc()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             var command = new EDBCommand("public.getsysrefcursor()", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -722,7 +707,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
@@ -735,29 +720,26 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void SYSRefCursorProc()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             var command = new EDBCommand("public.getsysrefcursorproc(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
             var cursorName = command.Parameters[0].Value.ToString();
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
 
             Assert.IsTrue(rst.Read());
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
 
             rst.Close();
             tran.Commit();
@@ -767,12 +749,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void SYSRefcursorsV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETSYSREFCURSORSVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -781,7 +763,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
@@ -791,7 +773,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsFalse(rst1.Read());
 
@@ -803,12 +785,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void SYSRefcursorsVV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETSYSREFCURSORSVVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -817,29 +799,23 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
             Assert.IsTrue(rst.Read());
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
             rst.Close();
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
             Assert.IsNotNull(rst1);
             Assert.IsTrue(rst1.Read());
             Assert.AreEqual("V1", rst1.GetValue(0).ToString());
             Assert.IsTrue(rst1.Read());
-            if (2 == int.Parse(rst1.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst1.GetValue(1).ToString()));
 
             rst1.Close();
             tran.Commit();
@@ -849,12 +825,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void SYSRefCursorFuncOut()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETSYSREFCURSOR_OUT(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -863,14 +839,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
 
             rst.Close();
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst1);
 
@@ -879,15 +855,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        [Test, Ignore("Investiage Prompt")]
+        [Test, Ignore("Investigate Prompt")]
         public void PACKAGERefCursorFunc()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             var command = new EDBCommand("REFCURSOR_PKG.GETREFCURSOR", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -895,7 +871,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var cursorName = command.Parameters[0].Value.ToString();
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
@@ -908,29 +884,26 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKAGERefCursorProc()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             var command = new EDBCommand("REFCURSOR_PKG.getrefcursorproc(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
             var cursorName = command.Parameters[0].Value.ToString();
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
 
             Assert.IsTrue(rst.Read());
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
 
             rst.Close();
             tran.Commit();
@@ -940,12 +913,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKGAERefCursorFuncOut()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETREFCURSOR_OUT(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -954,14 +927,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             rst.Close();
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
             Assert.IsNotNull(rst1);
 
             rst1.Close();
@@ -972,12 +945,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKAGERefcursorsVV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETREFCURSORSVVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -986,30 +959,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
             Assert.IsTrue(rst.Read());
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
             rst.Close();
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst1);
             Assert.IsTrue(rst1.Read());
             Assert.AreEqual("V1", rst1.GetValue(0).ToString());
             Assert.IsTrue(rst1.Read());
-            if (2 == int.Parse(rst1.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst1.GetValue(1).ToString()));
 
             rst1.Close();
             tran.Commit();
@@ -1019,12 +986,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKAGERefcursorsV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETREFCURSORSVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1033,7 +1000,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
@@ -1043,7 +1010,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsFalse(rst1.Read());
 
@@ -1065,10 +1032,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.ExecuteNonQuery();
             var a = int.Parse(command.Parameters[0].Value.ToString());
-            if (a == 29)
-                Assert.IsTrue(true);
-            else
-                Assert.IsTrue(false);
+            Assert.AreEqual(29, a);
         }
 
         [Test]
@@ -1082,25 +1046,22 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.Prepare();
 
-            EDBDataReader reader = command.ExecuteReader();
+            var reader = command.ExecuteReader();
             var a = int.Parse(command.Parameters[0].Value.ToString());
-            if (a == 29)
-                Assert.IsTrue(true);
-            else
-                Assert.IsTrue(false);
+            Assert.AreEqual(29, a);
             reader.Close();
 
         }
 
-        [Test, Ignore("Investiage Prompt")]
+        [Test, Ignore("Investigate Prompt")]
         public void PACKSYSRefCursorFunc()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             var command = new EDBCommand("REFCURSOR_PKG.getsysrefcursor()", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1108,7 +1069,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
@@ -1121,29 +1082,26 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKSYSRefCursorProc()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
 
             var command = new EDBCommand("REFCURSOR_PKG.getsysrefcursorproc(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
             var cursorName = command.Parameters[0].Value.ToString();
             command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
 
             Assert.IsTrue(rst.Read());
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
 
             rst.Close();
             rst.Close();
@@ -1154,12 +1112,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKSYSRefcursorsV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETSYSREFCURSORSVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1168,7 +1126,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
@@ -1178,7 +1136,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
             Assert.IsFalse(rst1.Read());
 
             rst1.Close();
@@ -1189,12 +1147,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKSYSRefcursorsVV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETSYSREFCURSORSVVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1203,29 +1161,23 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
             Assert.IsTrue(rst.Read());
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
             rst.Close();
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
             Assert.IsNotNull(rst1);
             Assert.IsTrue(rst1.Read());
             Assert.AreEqual("V1", rst1.GetValue(0).ToString());
             Assert.IsTrue(rst1.Read());
-            if (2 == int.Parse(rst1.GetValue(1).ToString()))
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst1.GetValue(1).ToString()));
 
             rst1.Close();
             tran.Commit();
@@ -1235,12 +1187,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKSYSRefCursorFuncOut()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETSYSREFCURSOR_OUT(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1249,14 +1201,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             rst.Close();
 
             command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
             Assert.IsNotNull(rst1);
 
             rst1.Close();
@@ -1275,24 +1227,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 var command = new EDBCommand("REFCURSOR_PKG.getrefcursorproc(:param1)", con);
                 command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.ExecuteNonQuery();
                 var cursorName = command.Parameters[0].Value.ToString();
                 command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 Assert.IsNotNull(rst);
                 Assert.IsTrue(rst.Read());
                 Assert.AreEqual("V1", rst.GetValue(0).ToString());
 
                 Assert.IsTrue(rst.Read());
-                if (2 == int.Parse(rst.GetValue(1).ToString()))
-                    Assert.IsTrue(true);
-                else
-                    Assert.IsFalse(false);
+                Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
 
                 rst.Close();
             }
@@ -1316,8 +1265,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 var command = new EDBCommand("REFCURSOR_PKG.GETREFCURSOR_OUT(:param1)", con);
                 command.CommandType = CommandType.StoredProcedure;
 
-                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
                 command.Prepare();
                 command.ExecuteNonQuery();
@@ -1326,7 +1275,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 Assert.IsNotNull(rst);
                 Assert.IsTrue(rst.Read());
@@ -1338,7 +1287,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
                 command.CommandType = CommandType.Text;
-                EDBDataReader rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
+                var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
                 Assert.IsNotNull(rst1);
                 Assert.IsTrue(rst1.Read());
@@ -1371,12 +1320,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             Console.WriteLine(command.Parameters[1].Value.ToString());
             var a = int.Parse(command.Parameters[1].Value.ToString());
-
-            if (a == 55)
-                Assert.IsTrue(true);
-            else
-                Assert.IsTrue(false);
-
+            Assert.AreEqual(55, a);
         }
 
         [Test]
@@ -1391,12 +1335,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.Prepare();
 
-            EDBDataReader reader = command.ExecuteReader();
+            var reader = command.ExecuteReader();
             var a = int.Parse(command.Parameters[0].Value.ToString());
-            if (a == 33)
-                Assert.IsTrue(true);
-            else
-                Assert.IsTrue(false);
+            Assert.AreEqual(33, a);
 
             reader.Close();
         }
@@ -1414,12 +1355,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             Console.WriteLine(command.Parameters[1].Value.ToString());
             var a = int.Parse(command.Parameters[1].Value.ToString());
-
-            if (a == 55)
-                Assert.IsTrue(true);
-            else
-                Assert.IsTrue(false);
-
+            Assert.AreEqual(55, a);
         }
 
         [Test]
@@ -1434,23 +1370,20 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.Prepare();
 
-            EDBDataReader reader = command.ExecuteReader();
+            var reader = command.ExecuteReader();
             var a = int.Parse(command.Parameters[0].Value.ToString());
-            if (a == 33)
-                Assert.IsTrue(true);
-            else
-                Assert.IsTrue(false);
+            Assert.AreEqual(33, a);
             reader.Close();
         }
         [Test]
         public void RefcursorsIV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETREFCURSORSIVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1459,18 +1392,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
             Assert.IsTrue(rst.Read());
-
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
             rst.Close();
 
             Assert.AreEqual("", cursorName2);
@@ -1482,12 +1410,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void RefcursorsII()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETREFCURSORSIIPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1503,12 +1431,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKRefcursorsIV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETREFCURSORSIVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1517,18 +1445,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
             Assert.IsTrue(rst.Read());
 
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
 
             rst.Close();
 
@@ -1542,12 +1466,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKRefcursorsII()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETREFCURSORSIIPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1563,12 +1487,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void SYSRefcursorsIV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETSYSREFCURSORSIVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1577,18 +1501,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
             Assert.IsTrue(rst.Read());
-
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
             rst.Close();
 
             Assert.AreEqual("", cursorName2);
@@ -1602,12 +1521,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test, Ignore("Investigate")]
         public void SYSRefcursorsII()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("public.GETSYSREFCURSORSIIPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
 
@@ -1624,12 +1543,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void PACKSYSRefcursorsIV()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETSYSREFCURSORSIVPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();
@@ -1638,18 +1557,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.CommandText = "FETCH ALL IN \"" + cursorName1 + "\"";
             command.CommandType = CommandType.Text;
-            EDBDataReader rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
+            var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.IsNotNull(rst);
             Assert.IsTrue(rst.Read());
             Assert.AreEqual("V1", rst.GetValue(0).ToString());
             Assert.IsTrue(rst.Read());
 
-            if (2 == int.Parse(rst.GetValue(1).ToString()))
-
-                Assert.IsTrue(true);
-            else
-                Assert.IsFalse(false);
+            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
 
             rst.Close();
             tran.Commit();
@@ -1662,12 +1577,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test, Ignore("Investigate")]
         public void PACKSYSRefcursorsII()
         {
-            EDBTransaction tran = con.BeginTransaction();
+            var tran = con.BeginTransaction();
             var command = new EDBCommand("REFCURSOR_PKG.GETSYSREFCURSORSIIPROC(:param1,:param0)", con);
             command.CommandType = CommandType.StoredProcedure;
             command.Transaction = tran;
-            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+            command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Refcursor, 10, "param1", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Parameters.Add(new EDBParameter("param0", EDBTypes.EDBDbType.Refcursor, 10, "param0", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
             command.Prepare();
             command.ExecuteNonQuery();

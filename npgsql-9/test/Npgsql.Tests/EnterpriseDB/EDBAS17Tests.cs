@@ -15,7 +15,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     [NonParallelizable]
     internal class EDBAS17Tests : EPASTestBase
     {
-        private async Task<int> Execute(EDBConnection conn, string query, bool ignoreResult)
+        private static async Task<int> Execute(EDBConnection conn, string query, bool ignoreResult)
         {
             try
             {
@@ -66,7 +66,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         //Simple select returning single value
-        private async Task<object?> ExecuteSimpleReader(EDBConnection conn, string query)
+        private static async Task<object?> ExecuteSimpleReader(EDBConnection conn, string query)
         {
             object? val = null;
             try
@@ -76,7 +76,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandType = CommandType.Text;
 
                     com.CommandText = query;
-                    EDBDataReader reader = await com.ExecuteReaderAsync();
+                    var reader = await com.ExecuteReaderAsync();
 
                     Assert.IsTrue(reader.HasRows);
 
@@ -94,7 +94,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             return val;
         }
 
-        private async Task RunQueryAndVerifyResultAsync(EDBConnection conn, string query, string[] expected)
+        private static async Task RunQueryAndVerifyResultAsync(EDBConnection conn, string query, string[] expected)
         {
             try
             {
@@ -103,11 +103,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandType = CommandType.Text;
 
                     com.CommandText = query;
-                    EDBDataReader reader = await com.ExecuteReaderAsync();
+                    var reader = await com.ExecuteReaderAsync();
 
                     Assert.IsTrue(reader.HasRows);
 
-                    int i = 0;
+                    var i = 0;
                     while (await reader.ReadAsync())
                     {
                         Assert.AreEqual(expected[i], reader.GetString(0));
@@ -132,11 +132,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandType = CommandType.Text;
 
                     com.CommandText = query;
-                    using (EDBDataReader reader = com.ExecuteReader())
+                    using (var reader = com.ExecuteReader())
                     {
                         Assert.IsTrue(reader.HasRows);
 
-                        int i = 0;
+                        var i = 0;
                         while (reader.Read())
                         {
                             Assert.AreEqual(expected[i], reader.GetString(0));
@@ -163,7 +163,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandType = CommandType.Text;
 
                     com.CommandText = query;
-                    EDBDataReader reader = await com.ExecuteReaderAsync();
+                    var reader = await com.ExecuteReaderAsync();
 
                     Assert.IsTrue(reader.HasRows);
 
@@ -183,7 +183,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         //Executes a stored procedure with no arguments
         //If there are any messages from dbms_output.put_line, they are retured as a list.
-        public async Task<List<string>> ExecuteProcNotice(EDBConnection conn, string sqlStr)
+        public static async Task<List<string>> ExecuteProcNotice(EDBConnection conn, string sqlStr)
         {
             var messages = new List<string>();
 
@@ -326,14 +326,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await Execute(conn, "DROP package body core_pkg_nvl_date", true);
             await Execute(conn, "DROP package core_pkg_nvl_date", true);
 
-            string pkgSql = "CREATE OR REPLACE PACKAGE core_pkg_nvl_date\n"
+            var pkgSql = "CREATE OR REPLACE PACKAGE core_pkg_nvl_date\n"
         + "IS\n"
         + "     d_date DATE;\n"
         + "     v_varchar varchar(200);\n"
         + "     FUNCTION test RETURN void;\n"
         + "END;\n";
             await Execute(conn, pkgSql, false);
-            string bodySql = "CREATE OR REPLACE PACKAGE BODY core_pkg_nvl_date\n"
+            var bodySql = "CREATE OR REPLACE PACKAGE BODY core_pkg_nvl_date\n"
         + "IS\n"
         + " FUNCTION test RETURN void IS\n"
         + " BEGIN\n"
@@ -345,7 +345,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         + "END;\n";
             await Execute(conn, bodySql, false);
 
-            string procMsg = "date = 01-JAN-00 00:00:00";
+            var procMsg = "date = 01-JAN-00 00:00:00";
             var message1 = await ExecuteProcNotice(conn, "core_pkg_nvl_date.test");
             Assert.AreEqual(1, message1.Count);
             Assert.AreEqual(procMsg, message1[0]);
@@ -356,14 +356,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await Execute(conn, "drop procedure xml_funcs_proc;", true);
             await Execute(conn, "drop table person_xmltype;", true);
 
-            string tblSql = "CREATE TABLE person_xmltype\n"
+            var tblSql = "CREATE TABLE person_xmltype\n"
         + "(\n"
         + "  person_id   integer,\n"
         + "  person_data xmltype\n"
         + ");\n";
             await Execute(conn, tblSql, false);
 
-            string insSql = "INSERT INTO person_xmltype\n"
+            var insSql = "INSERT INTO person_xmltype\n"
         + "  (person_id, person_data)\n"
         + "VALUES\n"
         + "(1, xmltype('<PDRecord>\n"
@@ -398,7 +398,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         + ") ;\n";
             await Execute(conn, insSql, false);
 
-            string procSql = "CREATE OR REPLACE PROCEDURE xml_funcs_proc()\n"
+            var procSql = "CREATE OR REPLACE PROCEDURE xml_funcs_proc()\n"
         + "IS\n"
         + "    xmltype_data XMLTYPE;\n"
         + "BEGIN\n"
@@ -544,7 +544,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await Execute(conn, "drop procedure xml_dom_proc1;", true);
             await Execute(conn, "drop procedure xml_dom_proc2;", true);
 
-            String procSql1 = "CREATE OR REPLACE PROCEDURE xml_dom_proc1()\n"
+            var procSql1 = "CREATE OR REPLACE PROCEDURE xml_dom_proc1()\n"
         + "IS\n"
         + "        xml_doc DBMS_XMLDOM.DOMDocument;\n"
         + "        root_node DBMS_XMLDOM.DOMNode;\n"
@@ -560,7 +560,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             await Execute(conn, procSql1, false);
 
-            String procSql2 = "CREATE OR REPLACE PROCEDURE xml_dom_proc2()\n"
+            var procSql2 = "CREATE OR REPLACE PROCEDURE xml_dom_proc2()\n"
         + "IS\n"
         + "    l_xmltype XMLTYPE;\n"
         + "    l_domdoc dbms_xmldom.DOMDocument;\n"
@@ -636,7 +636,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await Execute(conn, "CREATE TABLE t1_dbassert (a INT);", false);
             await Execute(conn, "CREATE TABLE こんにちは ( a INT);", false);
 
-            string tblSql1 = "CREATE TABLE open_tab_dbassert (\n"
+            var tblSql1 = "CREATE TABLE open_tab_dbassert (\n"
             + "  code        VARCHAR2(5),\n"
             + "  description VARCHAR2(50)\n"
             + ");\n";
@@ -644,7 +644,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await Execute(conn, "INSERT INTO open_tab_dbassert VALUES ('ONE', 'Description for ONE');", false);
             await Execute(conn, "INSERT INTO open_tab_dbassert VALUES ('TWO', 'Description for TWO');", false);
 
-            string tblSql2 = "CREATE TABLE secret_tab_dbassert (\n"
+            var tblSql2 = "CREATE TABLE secret_tab_dbassert (\n"
             + "  code        VARCHAR2(5),\n"
             + "  description VARCHAR2(50)\n"
             + ");\n";
@@ -652,7 +652,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await Execute(conn, "INSERT INTO secret_tab_dbassert VALUES ('CODE1', 'SECRET 1');", false);
             await Execute(conn, "INSERT INTO secret_tab_dbassert VALUES ('CODE2', 'SECRET 2');", false);
 
-            string procSql = "CREATE OR REPLACE PROCEDURE get_open_data_dbassert(p_code IN VARCHAR2) AS\n"
+            var procSql = "CREATE OR REPLACE PROCEDURE get_open_data_dbassert(p_code IN VARCHAR2) AS\n"
                 + "  l_sql     VARCHAR2(32767);\n"
                 + "  c_cursor  SYS_REFCURSOR;\n"
                 + "  l_buffer  VARCHAR2(32767);\n"
@@ -709,7 +709,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await SetUpDbmsAssert(conn);
 
             //This query returns <DB>.sys so we get database from connection.
-            string db = conn.Database;
+            var db = conn.Database;
             var val1 = await ExecuteSimpleReader(conn, "SELECT SYS.DBMS_ASSERT.SCHEMA_NAME(current_database() || '.sys') FROM DUAL");
             Assert.IsNotNull(val1);
             Assert.AreEqual(db + ".sys", val1!.ToString());
@@ -940,7 +940,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await Execute(conn, "INSERT INTO table2_2235 VALUES (10, UTL_RAW.CAST_TO_RAW('abcd'));", false);
             await Execute(conn, "INSERT INTO table3_2235 VALUES (10, 'abcd');", false);
 
-            string procSql1 = "CREATE OR REPLACE PROCEDURE displaybfile_proc() AUTHID CURRENT_USER\n"
+            var procSql1 = "CREATE OR REPLACE PROCEDURE displaybfile_proc() AUTHID CURRENT_USER\n"
         + "IS\n"
         + "File_loc BFILE;\n"
         + "Buffer RAW(32767);\n"
@@ -957,7 +957,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         + "END;\n";
             await Execute(conn, procSql1, false);
 
-            string procSql2 = "CREATE OR REPLACE PROCEDURE substringbfile_proc() AUTHID CURRENT_USER\n"
+            var procSql2 = "CREATE OR REPLACE PROCEDURE substringbfile_proc() AUTHID CURRENT_USER\n"
         + "IS\n"
         + "File_loc BFILE;\n"
         + "Position INTEGER := 10;\n"
@@ -1008,7 +1008,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 com.CommandText = "SELECT col1_2235, col2_2235 FROM table1_2235";
                 //com.CommandText = "SELECT col1_2235 FROM table1_2235";
-                EDBDataReader reader = await com.ExecuteReaderAsync();
+                var reader = await com.ExecuteReaderAsync();
 
                 Assert.IsTrue(reader.HasRows);
 
@@ -1037,7 +1037,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await SetUpDbmsBFILE(conn);
 
             // File contents areThis is a test
-            string expected = "\\x46696c6520636f6e74656e7473206172657468697320697320746573740a";
+            var expected = "\\x46696c6520636f6e74656e7473206172657468697320697320746573740a";
             await CreateTestFileAsync();
 
             var messages = await ExecuteProcNotice(conn, "displaybfile_proc");

@@ -30,7 +30,7 @@ public class EDBNonBreakingChangesTests : TestBase
     {
         await DropSampleTableAsync(connection);
 
-        string createTableScript = """
+        var createTableScript = """
     CREATE TABLE test_dynamicjson (
         data JSONB
     )
@@ -41,7 +41,7 @@ public class EDBNonBreakingChangesTests : TestBase
 
     private static async Task DropSampleTableAsync(EDBConnection connection)
     {
-        string dropTableScript = """
+        var dropTableScript = """
     DROP TABLE IF EXISTS test_dynamicjson
     """;
         using EDBCommand dropCommand = new(dropTableScript, connection);

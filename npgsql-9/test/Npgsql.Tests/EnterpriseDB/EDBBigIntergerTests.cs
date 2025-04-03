@@ -19,14 +19,14 @@ public class EDBBigIntergerTests
         const int StackAllocByteThreshold = 64 * sizeof(uint);
         Span<short> destination = stackalloc short[StackAllocByteThreshold / sizeof(short)];
 
-        BigInteger bigInt = new BigInteger(-1m);
+        var bigInt = new BigInteger(-1m);
 
         var bits = bigInt.ToByteArray().AsSpan();
 
         Assert.AreEqual(1, bits.Length);
         Assert.AreEqual(255, bits[0]);
 
-        PgNumeric.Builder b = new PgNumeric.Builder(bigInt, destination);
+        var b = new PgNumeric.Builder(bigInt, destination);
         var pgNumeric = b.Build();
 
         Assert.AreEqual(16384, pgNumeric.Sign);

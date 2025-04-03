@@ -23,8 +23,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			//write setup for following test cases
 			con = OpenConnection();
 
-			EDBCommand command = new EDBCommand("create table EDBLineTest(id serial, f1 line);", con);
-			int result = command.ExecuteNonQuery();
+			var command = new EDBCommand("create table EDBLineTest(id serial, f1 line);", con);
+			var result = command.ExecuteNonQuery();
 			Console.WriteLine("create table returned " + result);
 		}
 
@@ -38,14 +38,14 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringInt()
 		{
-			EDBLine line = EDBLine.Parse("{4,3,5}");
+			var line = EDBLine.Parse("{4,3,5}");
 			Check(line, 4, 3, 5);
 		}
 
 		[Test]
 		public void CreateFromStringNegativeInt()
 		{
-			EDBLine line = EDBLine.Parse("{-4,3,5}");
+			var line = EDBLine.Parse("{-4,3,5}");
 			Check(line, -4, 3, 5);
 		}
 
@@ -59,28 +59,28 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringDouble()
 		{
-			EDBLine line = EDBLine.Parse("{4.0,3.2,5.12}");
+			var line = EDBLine.Parse("{4.0,3.2,5.12}");
 			Check(line, 4, 3.2, 5.12);
 		}
 
 		[Test]
 		public void CreateFromInt()
 		{
-			EDBLine line = new EDBLine(4, 3, 5);
+			var line = new EDBLine(4, 3, 5);
 			Check(line, 4, 3, 5);
 		}
 
 		[Test]
 		public void CreateFromDouble()
 		{
-			EDBLine line = new EDBLine(4.2, 3.2, 5.1);
+			var line = new EDBLine(4.2, 3.2, 5.1);
 			Check(line, 4.2, 3.2, 5.1);
 		}
 
 		[Test]
 		public void TestToString()
 		{
-			EDBLine line = new EDBLine(4, 3, 5);
+			var line = new EDBLine(4, 3, 5);
 			Assert.AreEqual("{4,3,5}", line.ToString());
 
 			line = new EDBLine(-4, 3, 5);
@@ -93,9 +93,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void TestEqual()
 		{
-			EDBLine c1 = new EDBLine(4, 3, 5);
-			EDBLine c2 = new EDBLine(4, 3, 5);
-			EDBLine c3 = new EDBLine(4, 3.2, 6);
+			var c1 = new EDBLine(4, 3, 5);
+			var c2 = new EDBLine(4, 3, 5);
+			var c3 = new EDBLine(4, 3.2, 6);
 
 			Assert.True(c1 == c2);
 			Assert.True(c1.Equals(c2));
@@ -104,7 +104,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			Assert.False(c1 == c3);
 			Assert.True(c1 != c3);
 
-			String s = "Hello";
+			var s = "Hello";
 			Assert.False(c1.Equals((object)s));
 		}
 
@@ -112,17 +112,17 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		public void TestCRUD()
 		{
 			// Create 
-			EDBLine inCircle = new EDBLine(4.0, 3.0, 15);
-			EDBCommand command = new EDBCommand("insert into EDBLineTest values (1, :b)", con);
+			var inCircle = new EDBLine(4.0, 3.0, 15);
+			var command = new EDBCommand("insert into EDBLineTest values (1, :b)", con);
 			command.Parameters.Add(new EDBParameter("b", EDBDbType.Line));
 			command.Parameters[0].Value = inCircle;
 
-			Int32 rowsAdded = command.ExecuteNonQuery();
+			var rowsAdded = command.ExecuteNonQuery();
 			Assert.AreEqual(1, rowsAdded);
 
 			// Retrieve
 			command = new EDBCommand("select f1 from EDBLineTest;", con);
-			EDBLine line = (EDBLine)command.ExecuteScalar();
+			var line = (EDBLine)command.ExecuteScalar();
 			Check(line, 4, 3, 15);
 
 			// Update
@@ -151,8 +151,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[TearDown] 
 		public void Dispose()
 		{
-			EDBCommand command = new EDBCommand("drop table EDBLineTest;", con);
-			int result = command.ExecuteNonQuery();
+			var command = new EDBCommand("drop table EDBLineTest;", con);
+			var result = command.ExecuteNonQuery();
 			Console.WriteLine("drop table returned " + result);
 			TestUtil.closeDB(con);
 		}

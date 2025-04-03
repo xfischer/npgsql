@@ -71,7 +71,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var command = "select sal from emp1 where empno=" + empno;
 
             var seletCommand = new EDBCommand(command, conn);
-            EDBDataReader selectResult = seletCommand.ExecuteReader();
+            var selectResult = seletCommand.ExecuteReader();
             selectResult.Read();
 
             var sal = selectResult.GetDouble(0);
@@ -86,7 +86,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
             var command = "select count(*) from emp1";
 
             var seletCommand = new EDBCommand(command, conn);
-            EDBDataReader selectResult = seletCommand.ExecuteReader();
+            var selectResult = seletCommand.ExecuteReader();
             selectResult.Read();
 
             var count = selectResult.GetInt32(0);

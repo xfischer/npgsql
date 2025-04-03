@@ -25,14 +25,14 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			//write setup for following test cases
 			con = OpenConnection();
 
-			EDBCommand command = new EDBCommand("create table EDBPathTest(id serial, f1 path);", con);
-			int result = command.ExecuteNonQuery();
+			var command = new EDBCommand("create table EDBPathTest(id serial, f1 path);", con);
+			var result = command.ExecuteNonQuery();
 			Console.WriteLine("create table returned " + result);
 		}
 
 		private void Check(EDBPath path, EDBPoint []points)
 		{
-			for (int i = 0; i < path.Count; i++)
+			for (var i = 0; i < path.Count; i++)
 			{
 				Assert.AreEqual(points[i], path[i]);
 			}
@@ -41,7 +41,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringInt()
 		{
-			EDBPath path = EDBPath.Parse("((1,2),(3,4),(5,6))");
+			var path = EDBPath.Parse("((1,2),(3,4),(5,6))");
 			Check(path, testPoints);
 			Assert.False(path.Open);
 		}
@@ -49,7 +49,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringIntClosed()
 		{
-			EDBPath path = EDBPath.Parse("[(1,2),(3,4),(5,6)]");
+			var path = EDBPath.Parse("[(1,2),(3,4),(5,6)]");
 			Check(path, testPoints);
 			Assert.True(path.Open);
 		}
@@ -57,7 +57,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromStringNegativeInt()
 		{
-			EDBPath path = EDBPath.Parse("((7,0.1),(3,4.4),(8,-6))");
+			var path = EDBPath.Parse("((7,0.1),(3,4.4),(8,-6))");
 			Check(path, testPoints2);
 		}
 
@@ -71,19 +71,19 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void CreateFromList()
 		{
-			System.Collections.Generic.List<EDBPoint> lst = new System.Collections.Generic.List<EDBPoint>();
+			var lst = new System.Collections.Generic.List<EDBPoint>();
 			lst.Add(testPoints[0]);
 			lst.Add(testPoints[1]);
 			lst.Add(testPoints[2]);
 
-			EDBPath path = new EDBPath(lst);
+			var path = new EDBPath(lst);
 			Check(path, testPoints);
 		}
 
 		[Test]
 		public void CreateFromCapacity()
 		{
-			EDBPath path = new EDBPath(1);
+			var path = new EDBPath(1);
 			path.Add(testPoints[0]);
 			path.Add(testPoints[1]);
 			path.Add(testPoints[2]);
@@ -92,7 +92,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void TestToString()
 		{
-			EDBPath path = new EDBPath(testPoints);
+			var path = new EDBPath(testPoints);
 			Assert.AreEqual("((1,2),(3,4),(5,6))", path.ToString());
 
 			path = new EDBPath(testPoints2);
@@ -102,9 +102,9 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[Test]
 		public void TestEqual()
 		{
-			EDBPath c1 = new EDBPath(testPoints);
-			EDBPath c2 = new EDBPath(testPoints);
-			EDBPath c3 = new EDBPath(testPoints2);
+			var c1 = new EDBPath(testPoints);
+			var c2 = new EDBPath(testPoints);
+			var c3 = new EDBPath(testPoints2);
 
 			Assert.True(c1 == c2);
 			Assert.True(c1.Equals(c2));
@@ -113,7 +113,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			Assert.False(c1 == c3);
 			Assert.True(c1 != c3);
 
-			String s = "Hello";
+			var s = "Hello";
 			Assert.False(c1.Equals((object)s));
 		}
 
@@ -121,17 +121,17 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		public void TestCRUD()
 		{
 			// Create 
-			EDBPath inCircle = new EDBPath(testPoints);
-			EDBCommand command = new EDBCommand("insert into EDBPathTest values (1, :b)", con);
+			var inCircle = new EDBPath(testPoints);
+			var command = new EDBCommand("insert into EDBPathTest values (1, :b)", con);
 			command.Parameters.Add(new EDBParameter("b", EDBDbType.Path));
 			command.Parameters[0].Value = inCircle;
 
-			Int32 rowsAdded = command.ExecuteNonQuery();
+			var rowsAdded = command.ExecuteNonQuery();
 			Assert.AreEqual(1, rowsAdded);
 
 			// Retrieve
 			command = new EDBCommand("select f1 from EDBPathTest;", con);
-			EDBPath path = (EDBPath)command.ExecuteScalar();
+			var path = (EDBPath)command.ExecuteScalar();
 			Check(path, testPoints);
 
 			// Update
@@ -160,8 +160,8 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 		[TearDown] 
 		public void Dispose()
 		{
-			EDBCommand command = new EDBCommand("drop table EDBPathTest;", con);
-			int result = command.ExecuteNonQuery();
+			var command = new EDBCommand("drop table EDBPathTest;", con);
+			var result = command.ExecuteNonQuery();
 			Console.WriteLine("drop table returned " + result);
 			TestUtil.closeDB(con);
 		}
