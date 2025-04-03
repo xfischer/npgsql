@@ -10,9 +10,6 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
-#pragma warning disable CS8604 // Possible null reference argument.
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
 
 //EC-2591: Regression Tests for Nested Tables
 
@@ -36,20 +33,19 @@ internal class EDBNestedTableTest : EPASTestBase
 
     public class JointComposite
     {
-        public emp_rec_typ emp;
-        public dept_obj_typ loc;
+        public emp_rec_typ? emp;
+        public dept_obj_typ? loc;
     }
 
     enum Mood { Sad, Ok, Happy }
 
-    private static string[] enames = new string[] { "SMITH", "ALLEN", "WARD", "JONES", "MARTIN",
-        "BLAKE", "CLARK", "SCOTT", "KING", "TURNER" };
-    private static decimal[] empnos = new decimal[] { 7369, 7499, 7521, 7566, 7654, 7698, 7782, 7788, 7839, 7844 };
-    private static string[] deptNames = new string[] { "ACCOUNTING", "OPERATIONS", "RESEARCH", "SALES" };
-    private static string[] deptLocs = new string[] { "NEW YORK", "BOSTON", "DALLAS", "CHICAGO" };
-    //private static string[] deptLocs = new string[] { "T(_)_,_", "NEW YORK", "BOSTON", "DALLAS" };
-    private static int EMP_TOTAL = enames.Length;
-    private static int DEPT_TOTAL = deptNames.Length;
+    static readonly string[] enames = ["SMITH", "ALLEN", "WARD", "JONES", "MARTIN",
+        "BLAKE", "CLARK", "SCOTT", "KING", "TURNER" ];
+    static readonly decimal[] empnos = [7369, 7499, 7521, 7566, 7654, 7698, 7782, 7788, 7839, 7844];
+    static readonly string[] deptNames = ["ACCOUNTING", "OPERATIONS", "RESEARCH", "SALES"];
+    static readonly string[] deptLocs = ["NEW YORK", "BOSTON", "DALLAS", "CHICAGO"];
+    static readonly int EMP_TOTAL = enames.Length;
+    static readonly int DEPT_TOTAL = deptNames.Length;
 
     [OneTimeSetUp]
     public void Init()
@@ -748,7 +744,7 @@ internal class EDBNestedTableTest : EPASTestBase
             Assert.IsNotNull(paramValueInt);
             Assert.IsInstanceOf<int>(paramValueInt);
             Assert.AreEqual(456, paramValueInt);
-            
+
             var arrayList = (List<object>)paramValue!;
             Assert.AreEqual(10, arrayList.Count);
             CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
@@ -1526,10 +1522,12 @@ internal class EDBNestedTableTest : EPASTestBase
     public async Task DomainTypeNestedTableTest_TsQuery()
     {
         // 
+#pragma warning disable CS0618 // Type or member is obsolete
         var testArray = new EDBTsQuery[] {
             EDBTsQuery.Parse( "fat & rat")
             ,EDBTsQuery.Parse("super:*")
         };
+#pragma warning restore CS0618 // Type or member is obsolete
 
         var testArrayStrDeclaration = new string[] {
         "'fat & rat'::tsquery"
@@ -1543,6 +1541,7 @@ internal class EDBNestedTableTest : EPASTestBase
     public async Task DomainTypeNestedTableTest_TsVector()
     {
         // 
+#pragma warning disable CS0618 // Type or member is obsolete
         var testArray = new EDBTsVector[] {
             EDBTsVector.Parse("The Fat Rats")
             , new EDBTsVector(new () {
@@ -1554,6 +1553,7 @@ internal class EDBNestedTableTest : EPASTestBase
                         new (5, EDBTsVector.Lexeme.Weight.D)})
             })
         };
+#pragma warning restore CS0618 // Type or member is obsolete
 
         var testArrayStrDeclaration = new string[] {
         "'The Fat Rats'::tsvector",
@@ -1822,7 +1822,7 @@ internal class EDBNestedTableTest : EPASTestBase
             return values.Select(v =>
             {
                 var i = v as EDBInterval?;
-                return $"'{i.Value.Months} months {i.Value.Days} days {i.Value.Time / 1000} milliseconds'::interval";
+                return $"'{i!.Value.Months} months {i.Value.Days} days {i.Value.Time / 1000} milliseconds'::interval";
             }).ToArray();
 
         if (typeof(T) == typeof(EDBPolygon)
@@ -1884,7 +1884,7 @@ internal class EDBNestedTableTest : EPASTestBase
                 var result = string.Join(",", i.Select(kvp =>
                 {
                     string kvpString;
-                    if (kvp.Key.Contains(",") || kvp.Key.Contains(";") || kvp.Key.Contains(" "))
+                    if (kvp.Key.Contains(',') || kvp.Key.Contains(';') || kvp.Key.Contains(' '))
                     {
                         kvpString = $"\"{kvp.Key}\"=>";
                     }
@@ -1893,7 +1893,7 @@ internal class EDBNestedTableTest : EPASTestBase
                         kvpString = $"{kvp.Key}=>";
                     }
 
-                    if (kvp.Value.Contains(",") || kvp.Value.Contains(";") || kvp.Value.Contains(" "))
+                    if (kvp.Value.Contains(',') || kvp.Value.Contains(';') || kvp.Value.Contains(' '))
                     {
                         kvpString += $"\"{kvp.Value}\"";
                     }
@@ -1984,7 +1984,3 @@ internal class EDBNestedTableTest : EPASTestBase
     }
 
 }
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-#pragma warning restore CS8604 // Possible null reference argument.
-

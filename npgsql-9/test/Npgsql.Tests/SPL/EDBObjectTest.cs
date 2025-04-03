@@ -1,16 +1,7 @@
-﻿using System;
-using NUnit.Framework;
-using EnterpriseDB.EDBClient;
+﻿using System.Collections;
 using System.Data;
-using System.Data.SqlTypes;
-using System.Xml.Linq;
 using System.Threading;
-using System.Collections.Generic;
-using System.Collections;
-
-#pragma warning disable CS8604 // Possible null reference argument.
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+using NUnit.Framework;
 
 //EC-2641: Regression Tests for Object types and objects in SPL
 
@@ -19,41 +10,39 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
     [NonParallelizable]
     internal class EDBObjectTest : EPASTestBase
     {
-        EDBConnection? conn = null;
-
-        private static string[] EMP_DISPLAY_RESULT = {
+        private static readonly string[] EMP_DISPLAY_RESULT = {
             "Employee No   : 9001", "Name          : JONES",
             "Street        : 123 MAIN STREET",
             "City/State/Zip: EDISON, NJ 08817"
             };
-        private static string[] DEPT_DISPLAY_RESULT = {
+        private static readonly string[] DEPT_DISPLAY_RESULT = {
             "Dept No    : 20",
             "Dept Name  : RESEARCH"
             };
-        private static string[] CONSTUCTOR_METHOD_RESULT = {
+        private static readonly string[] CONSTUCTOR_METHOD_RESULT = {
             "Boston",
             "MA"
             };
-        private static string[] GET_DNAME_RESULT = {
+        private static readonly string[] GET_DNAME_RESULT = {
             "RESEARCH"
             };
 
         [SetUp]
         public void Init()
         {
-            conn = OpenConnection();
+            using var conn = OpenConnection();
 
-            Execute("DROP TYPE BODY address");
-            Execute("DROP TYPE address");
-            Execute("DROP TYPE BODY dept_obj_type");
-            Execute("DROP TYPE dept_obj_type");
-            Execute("DROP TYPE BODY emp_obj_typ");
-            Execute("DROP TYPE emp_obj_typ");
-            Execute("DROP TYPE addr_obj_typ");
-            Execute("DROP FUNCTION postal_code_to_city");
-            Execute("DROP FUNCTION postal_code_to_state");
+            Execute("DROP TYPE BODY address", conn);
+            Execute("DROP TYPE address", conn);
+            Execute("DROP TYPE BODY dept_obj_type", conn);
+            Execute("DROP TYPE dept_obj_type", conn);
+            Execute("DROP TYPE BODY emp_obj_typ", conn);
+            Execute("DROP TYPE emp_obj_typ", conn);
+            Execute("DROP TYPE addr_obj_typ", conn);
+            Execute("DROP FUNCTION postal_code_to_city", conn);
+            Execute("DROP FUNCTION postal_code_to_state", conn);
 
-            Execute("DROP TABLE citydata CASCADE");
+            Execute("DROP TABLE citydata CASCADE", conn);
 
             // The first example creates the addr_object_type object type that
             // contains only attributes and no methods.
@@ -64,7 +53,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                                + "    state           CHAR(2),\n"
                                + "    zip             NUMBER(5)\n"
                                + ");";
-            Execute(addrObjType);
+            Execute(addrObjType, conn);
 
             // This object type specification creates the emp_obj_typ object type.
             var empObjType = "CREATE OR REPLACE TYPE emp_obj_typ AS OBJECT\n"
@@ -75,7 +64,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                               + "    MEMBER PROCEDURE display_emp01(SELF IN OUT emp_obj_typ),\n"
                               + "    MEMBER PROCEDURE display_emp02(SELF IN OUT emp_obj_typ)\n"
                               + ");";
-            Execute(empObjType);
+            Execute(empObjType, conn);
 
             // Object type emp_obj_typ contains member methods named display_emp01 and
             // display_emp02.
@@ -102,7 +91,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "            SELF.addr.state || ' ' || LPAD(SELF.addr.zip,5,'0'));\n"
                     + "    END;\n"
                     + "END;";
-            Execute(empObjTypeBody);
+            Execute(empObjTypeBody, conn);
 
             // The following object type specification includes a static function get_dname
             // and a member procedure display_dept
@@ -111,7 +100,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "    STATIC FUNCTION get_dname(p_deptno IN NUMBER) RETURN VARCHAR2,\n"
                     + "    MEMBER PROCEDURE display_dept\n"
                     + ");";
-            Execute(deptObjType);
+            Execute(deptObjType, conn);
 
             // The object type body for dept_obj_type defines a static function named
             // get_dname and a member procedure named display_dept:
@@ -138,11 +127,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "            dept_obj_type.get_dname(SELF.deptno));\n"
                     + "    END;\n"
                     + "END;";
-            Execute(deptObjTypeBody);
+            Execute(deptObjTypeBody, conn);
 
-            Execute("CREATE TABLE citydata(post_code  VARCHAR2(10),  city VARCHAR2(40), state VARCHAR2(2))");
-            Execute("insert into citydata values ('01801','Woburn','MA')");
-            Execute("insert into citydata values ('02203','Boston','MA')");
+            Execute("CREATE TABLE citydata(post_code  VARCHAR2(10),  city VARCHAR2(40), state VARCHAR2(2))", conn);
+            Execute("insert into citydata values ('01801','Woburn','MA')", conn);
+            Execute("insert into citydata values ('02203','Boston','MA')", conn);
 
             // Methods used in constructor function in object type address
             var postalCodeToCityFun = "CREATE OR REPLACE FUNCTION postal_code_to_city(p_post_code VARCHAR2)\n"
@@ -153,7 +142,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "   SELECT city INTO v_city FROM citydata WHERE post_code = p_post_code;"
                     + " RETURN v_city;"
                     + "END;";
-            Execute(postalCodeToCityFun);
+            Execute(postalCodeToCityFun, conn);
 
             // Methods used in constructor function in object type address
             var postalCodeToStateFun = "CREATE OR REPLACE FUNCTION postal_code_to_state(p_post_code VARCHAR2)\n"
@@ -164,7 +153,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "   SELECT state INTO v_state from citydata WHERE post_code = p_post_code;"
                     + " RETURN v_state;"
                     + "END;";
-            Execute(postalCodeToStateFun);
+            Execute(postalCodeToStateFun, conn);
 
             // To create a custom constructor, declare the constructor function (using the
             // keyword constructor) in
@@ -183,7 +172,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "     postal_code VARCHAR2\n"
                     + "    ) RETURN self AS RESULT\n"
                     + ")";
-            Execute(addressType);
+            Execute(addressType, conn);
 
             var addressTypeBody = "CREATE OR REPLACE TYPE BODY address AS\n"
                     + " CONSTRUCTOR FUNCTION address\n"
@@ -199,17 +188,11 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "     RETURN;\n"
                     + "   END;\n"
                     + "END;";
-            Execute(addressTypeBody);
+            Execute(addressTypeBody, conn);
 
         }
 
-        [TearDown]
-        public void Dispose()
-        {
-            TestUtil.closeDB(conn);
-        }
-
-        private int Execute(string query)
+        private int Execute(string query, EDBConnection conn)
         {
             try
             {
@@ -228,14 +211,12 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
         private void DoMemberMethodTest(string procedure)
         {
-            conn.ReloadTypes();
-
-            //Close and reopen the connection so that custom types are reloaded.
-            TestUtil.closeDB(conn);
-            EDBConnection.GlobalTypeMapper.MapComposite<addr_obj_typ>("public.addr_obj_typ");
-            EDBConnection.GlobalTypeMapper.MapComposite<emp_obj_typ>("public.emp_obj_typ");
-
-            conn = OpenConnection();
+            using var ds = base.CreateDataSource(b =>
+            {
+                b.MapComposite<addr_obj_typ>("public.addr_obj_typ");
+                b.MapComposite<emp_obj_typ>("public.emp_obj_typ");
+            });
+            using var conn = ds.OpenConnection();
 
             // Call object member method
             var commandText = procedure;
@@ -303,16 +284,14 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void StaticMethodTest()
         {
-            conn.ReloadTypes();
-
-            //Close and reopen the connection so that custom types are reloaded.
-            TestUtil.closeDB(conn);
-            EDBConnection.GlobalTypeMapper.MapComposite<dept_obj_type>("public.dept_obj_type");
-
-            conn = OpenConnection();
+            using var ds = base.CreateDataSource(b =>
+            {
+                b.MapComposite<dept_obj_type>("public.dept_obj_type");
+            });
+            using var conn = ds.OpenConnection();           
 
             // member method display_dept used static method get_dname
-            Execute("DROP PROCEDURE StaticMethod_SP;");
+            Execute("DROP PROCEDURE StaticMethod_SP;", conn);
 
             var sql = "CREATE OR REPLACE PROCEDURE StaticMethod_SP()\n"
                       + " IS\n"
@@ -323,7 +302,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                     + "     v_dept.display_dept();"
                     + "END;";
 
-            Execute(sql);
+            Execute(sql, conn);
 
             var mre = new ManualResetEvent(false);
             var notices = new ArrayList();
@@ -360,8 +339,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void ConstuctorMethodTest()
         {
+            using var conn = OpenConnection();
+
             // call constructor method
-            Execute("DROP PROCEDURE ConstuctorMethod_SP;");
+            Execute("DROP PROCEDURE ConstuctorMethod_SP;", conn);
 
             var sql = "CREATE OR REPLACE PROCEDURE ConstuctorMethod_SP()\n"
                 + " IS\n"
@@ -372,7 +353,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 + "  DBMS_OUTPUT.PUT_LINE(cust_addr.state);\n"
                 + "END;";
 
-            Execute(sql);
+            Execute(sql, conn);
 
             var mre = new ManualResetEvent(false);
             var notices = new ArrayList();
@@ -409,8 +390,9 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void ReferencingAnObjectTest()
         {
+            using var conn = OpenConnection();
             // This example displays the values assigned to the emp_obj_typ object.
-            Execute("DROP PROCEDURE ReferencingAnObject_SP;");
+            Execute("DROP PROCEDURE ReferencingAnObject_SP;", conn);
 
             var sql = "CREATE OR REPLACE PROCEDURE ReferencingAnObject_SP()\n"
                 + " IS\n"
@@ -425,7 +407,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 + "        v_emp.addr.state || ' ' || LPAD(v_emp.addr.zip,5,'0'));\n"
                 + "END;";
 
-            Execute(sql);
+            Execute(sql, conn);
 
             var mre = new ManualResetEvent(false);
             var notices = new ArrayList();
@@ -462,9 +444,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void ReferencingAnObjectWithMemberMethodTest()
         {
+            using var conn = OpenConnection();
             // You can duplicate the results of the previous anonymous block by calling
             // the member procedure display_emp.
-            Execute("DROP PROCEDURE ReferencingAnObjectWithMemberMethod_SP;");
+            Execute("DROP PROCEDURE ReferencingAnObjectWithMemberMethod_SP;", conn);
 
             var sql = "CREATE OR REPLACE PROCEDURE ReferencingAnObjectWithMemberMethod_SP()\n"
                 + " IS\n"
@@ -476,7 +459,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 + "    v_emp.display_emp01;\n"
                 + "END;";
 
-            Execute(sql);
+            Execute(sql, conn);
 
             var mre = new ManualResetEvent(false);
             var notices = new ArrayList();
@@ -513,9 +496,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void ReferencingAnObjectDisplayDeptTest()
         {
+            using var conn = OpenConnection();
             //This anonymous block creates an instance of dept_obj_type and calls
             //the member procedure display_dept
-            Execute("DROP PROCEDURE ReferencingAnObjectDisplayDept_SP;");
+            Execute("DROP PROCEDURE ReferencingAnObjectDisplayDept_SP;", conn);
 
             var sql = "CREATE OR REPLACE PROCEDURE ReferencingAnObjectDisplayDept_SP()\n"
                 + " IS\n"
@@ -525,7 +509,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 + "    v_dept.display_dept;\n"
                 + "END;";
 
-            Execute(sql);
+            Execute(sql, conn);
 
             var mre = new ManualResetEvent(false);
             var notices = new ArrayList();
@@ -562,9 +546,10 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
         [Test]
         public void ReferencingAnObjectGetDnameTest()
         {
+            using var conn = OpenConnection();
             //You can call the static function defined in dept_obj_type
             //directly by qualifying it by the object type name as follows:
-            Execute("DROP PROCEDURE ReferencingAnObjectGetDname_SP;");
+            Execute("DROP PROCEDURE ReferencingAnObjectGetDname_SP;", conn);
 
             var sql = "CREATE OR REPLACE PROCEDURE ReferencingAnObjectGetDname_SP()\n"
                 + " IS\n"
@@ -572,7 +557,7 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
                 + "    DBMS_OUTPUT.PUT_LINE(dept_obj_type.get_dname(20));\n"
                 + "END;";
 
-            Execute(sql);
+            Execute(sql, conn);
 
             var mre = new ManualResetEvent(false);
             var notices = new ArrayList();
@@ -630,7 +615,4 @@ namespace EnterpriseDB.EDBClient.Tests.SPL
 
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 }
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-#pragma warning restore CS8604 // Possible null reference argument.
 
