@@ -1653,7 +1653,7 @@ CREATE TABLE record ()");
             {
 #if NETFRAMEWORK
                 if (++count == 1)
-                    return; ;
+                    return;
                 throw new Exception("INTENTIONAL FAILURE");
 #else
                 throw new NotSupportedException();

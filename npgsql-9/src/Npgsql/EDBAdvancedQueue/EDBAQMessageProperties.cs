@@ -159,7 +159,7 @@ namespace EnterpriseDB.EDBClient
             {
                 throw new InvalidOperationException("Valuue must be set");
             }
-            value = value.Replace(@"(", string.Empty).Replace(@")", string.Empty); ;
+            value = value.Replace(@"(", string.Empty).Replace(@")", string.Empty);
             EDBAQMessageProperties obj = new EDBAQMessageProperties(1, 0, null, null, null, null, null, null, null, null, null, 0);
             string[] arr = value.Split(',');
             PropertyInfo[] props = GetType().GetProperties();

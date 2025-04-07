@@ -22,7 +22,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [SetUp]
         public void Init()
         {
-            using var conn = OpenConnection();                
+            using var conn = OpenConnection();
 
             var com = new EDBCommand("", conn);
             com.CommandType = CommandType.Text;
@@ -30,10 +30,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var strSqlEmptyArg = "create or replace procedure test_bytea_in_in(z in bytea,y in numeric) is declare begin null ;end;";
             com.CommandText = strSqlEmptyArg;
             com.ExecuteNonQuery();
-            //			
-            //			strSqlEmptyArg = "CREATE TABLE test_bytea_proc1( a numeric ,b bytea)";
-            //			com.CommandText = strSqlEmptyArg;
-            //			com.ExecuteNonQuery();
 
             strSqlEmptyArg = "CREATE TABLE IF NOT EXISTS test_bytea_two( a bytea ,b bytea)";
             com.CommandText = strSqlEmptyArg;
@@ -163,7 +159,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void test_bytea_three_in_with_numeric()
         {
-            try
+            Assert.DoesNotThrow(() =>
             {
                 using var conn = OpenConnection();
                 using var fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
@@ -186,16 +182,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 cmd.ExecuteNonQuery();
 
                 Console.WriteLine("Image Saved");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
+            });
         }
         [Test]
         public void test_bytea_three_in()
         {
-            try
+            Assert.DoesNotThrow(() =>
             {
                 using var conn = OpenConnection();
                 using var fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
@@ -217,18 +209,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 cmd.ExecuteNonQuery();
 
                 Console.WriteLine("Image Saved");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-
+            });
         }
 
         [Test]
         public void test_bytea_in_in()
         {
-            try
+            Assert.DoesNotThrow(() =>
             {
                 using var conn = OpenConnection();
                 using var fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
@@ -248,18 +235,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 cmd.ExecuteNonQuery();
 
                 Console.WriteLine("Image Saved");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-
+            });
         }
         [Test]
         public void test_bytea_two_in()
         {
-
-            try
+            Assert.DoesNotThrow(() =>
             {
                 using var conn = OpenConnection();
                 using var fs = new FileStream(testImagePath, FileMode.Open, FileAccess.Read);
@@ -279,11 +260,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 cmd.ExecuteNonQuery();
 
                 Console.WriteLine("Image Saved");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
+            });
         }
 
         static string EncodeHex(byte[] buf)
@@ -331,152 +308,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     fs.WriteByte(image[i]);
                 fs.Close();
             }
-            while (reader.Read());
+            while (reader.Read()) ;
 
             Console.WriteLine("Image Saved");
 
         }
 
-        [Test]
-        public void testa_bytea_out_two()
-        {
-            /*try
-			{
-				EDBCommand cmd = new EDBCommand("test_bytea_out_two(:imgout,:imgout1)",conn);
-				cmd.CommandType= CommandType.StoredProcedure;
-				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
-				cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
-				cmd.Prepare();
-				//cmd.Parameters[0].Value = null;
-				EDBDataReader reader = cmd.ExecuteReader();
-				reader.Read(); 
-				if (reader.HasRows) 
-				{ 
-					Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
-					reader.GetBytes(0, 0, image, 0, image.Length); 
-
-					FileStream fs = new 
-						FileStream("C:\\Temp\\procout1.gif", FileMode.Create, FileAccess.ReadWrite); 
-				
-					for(int i=0;i<image.Length;i++) 
-						fs.WriteByte(image[i]); 
-					fs.Close(); 
-				}
-                while (reader.Read()) ;
-				//conn.Close();
-
-				Console.WriteLine("Image Saved"); 
-			}
-			catch(Exception ex)
-			{
-				Console.WriteLine(ex.ToString());
-			}*/
-
-        }
-        [Test]
-        public void testa_bytea_out_two_with_num()
-        {
-            /*try
-			{
-				EDBCommand cmd = new EDBCommand("test_bytea_out_two_with_num(:imgout,:imgout1,:num)",conn);
-				cmd.CommandType= CommandType.StoredProcedure;
-				cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
-				cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
-				cmd.Parameters.Add(new EDBParameter("num", EDBTypes.EDBDbType.Numeric,10,"num",ParameterDirection.Input,false ,2,2,System.Data.DataRowVersion.Current,null!));
-				cmd.Prepare();
-				cmd.Parameters[2].Value = 100;
-				EDBDataReader reader = cmd.ExecuteReader();
-				reader.Read(); 
-				if (reader.HasRows) 
-				{ 
-					Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
-					reader.GetBytes(0, 0, image, 0, image.Length); 
-
-					FileStream fs = new 
-						FileStream("C:\\Temp\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
-				
-					for(int i=0;i<image.Length;i++) 
-						fs.WriteByte(image[i]); 
-					fs.Close(); 
-				
-					Byte[] image1 = new Byte[Convert.ToInt32((reader.GetBytes(1, 0,null, 0, Int32.MaxValue)))]; 
-					reader.GetBytes(1, 0, image1, 0, image1.Length); 
-
-					FileStream fs1 = new 
-						FileStream("C:\\Temp\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
-				
-					for(int i=0;i<image1.Length;i++) 
-						fs1.WriteByte(image[i]); 
-					fs1.Close(); 
-				
-				
-				
-				}
-                while (reader.Read()) ;
-				//conn.Close();
-
-				Console.WriteLine("Image Saved"); 
-			}
-			catch(Exception ex)
-			{
-				Console.WriteLine(ex.ToString());
-			}*/
-
-        }
-
-        [Test]
-        public void testa_bytea_out_two_with_num_varchar()
-        {
-
-
-            /*	try
-                {
-                    EDBCommand cmd = new EDBCommand("test_bytea_out_two_with_num_varchar(:imgout,:imgout1,:num,:var)",conn);
-                    cmd.CommandType= CommandType.StoredProcedure;
-                    cmd.Parameters.Add(new EDBParameter("imgout", EDBTypes.EDBDbType.Bytea,10000,"imgout",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
-                    cmd.Parameters.Add(new EDBParameter("imgout1", EDBTypes.EDBDbType.Bytea,10000,"imgout1",ParameterDirection.Output,false ,2,2,System.Data.DataRowVersion.Current,null!));
-                    cmd.Parameters.Add(new EDBParameter("num", EDBTypes.EDBDbType.Numeric,10,"num",ParameterDirection.Input,false ,2,2,System.Data.DataRowVersion.Current,null!));
-                    cmd.Parameters.Add(new EDBParameter("var", EDBTypes.EDBDbType.Varchar,10,"var",ParameterDirection.InputOutput,false ,2,2,System.Data.DataRowVersion.Current,null!));
-                    cmd.Prepare();
-                    cmd.Parameters[2].Value = 100;
-                    EDBDataReader reader = cmd.ExecuteReader();
-                    reader.Read(); 
-                    if (reader.HasRows) 
-                    { 
-                        Byte[] image = new Byte[Convert.ToInt32((reader.GetBytes(0, 0,null, 0, Int32.MaxValue)))]; 
-                        reader.GetBytes(0, 0, image, 0, image.Length); 
-
-                        FileStream fs = new 
-                            FileStream("C:\\Temp\\procout11.gif", FileMode.Create, FileAccess.ReadWrite); 
-
-                        for(int i=0;i<image.Length;i++) 
-                            fs.WriteByte(image[i]); 
-                        fs.Close(); 
-
-                        Byte[] image1 = new Byte[Convert.ToInt32((reader.GetBytes(1, 0,null, 0, Int32.MaxValue)))]; 
-                        reader.GetBytes(1, 0, image1, 0, image1.Length); 
-
-                        FileStream fs1 = new 
-                            FileStream("C:\\Temp\\procout12.gif", FileMode.Create, FileAccess.ReadWrite); 
-
-                        for(int i=0;i<image1.Length;i++) 
-                            fs1.WriteByte(image[i]); 
-                        fs1.Close(); 
-
-                        Console.WriteLine(cmd.Parameters[3].Value.ToString());
-
-                    }
-                    while (reader.Read()) ;
-    //				conn.Close();
-
-                    Console.WriteLine("Image Saved"); 
-                }
-                catch(Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                }
-            */
-        }
         public void testa_bytea_out_two_with_num_varchar1()
         {
 

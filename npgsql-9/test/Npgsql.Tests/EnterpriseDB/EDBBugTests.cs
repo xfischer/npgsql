@@ -187,8 +187,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     dropTypeCommand.ExecuteNonQuery();
                 }
             }
-            catch (Exception)
+            finally
             {
+                // swallow exception
             }
         }
 
@@ -322,21 +323,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test]
         public void ExecuteReaderClobTest()
         {
-            using var con = OpenConnection();
-            using var trans = con.BeginTransaction();
-            using EDBCommand cmd = new EDBCommand()
+            Assert.DoesNotThrow(() =>
             {
-                CommandText = "SELECT datasource FROM testclob ",
-                CommandType = System.Data.CommandType.Text,
-                Connection = con,
-                Transaction = trans
-            };
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-            }
-            reader.Close();
-            trans.Commit(); //throws mentioned exception
+                using var con = OpenConnection();
+                using var trans = con.BeginTransaction();
+                using EDBCommand cmd = new EDBCommand()
+                {
+                    CommandText = "SELECT datasource FROM testclob ",
+                    CommandType = System.Data.CommandType.Text,
+                    Connection = con,
+                    Transaction = trans
+                };
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                }
+                reader.Close();
+                trans.Commit(); //throws mentioned exception
+            });
         }
     }
 
