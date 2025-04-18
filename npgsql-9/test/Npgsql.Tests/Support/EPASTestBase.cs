@@ -1,14 +1,13 @@
 ﻿using NUnit.Framework;
 
-namespace EnterpriseDB.EDBClient.Tests
+namespace EnterpriseDB.EDBClient.Tests;
+
+public abstract class EPASTestBase : TestBase
 {
-    public abstract class EPASTestBase : TestBase
+    [OneTimeSetUp]
+    public void OneTimeSetUp()
     {
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            using var con = OpenConnection();
-            TestUtil.EnsureIsEPASRedwood(con);
-        }
+        using var con = OpenConnection();
+        TestUtil.EnsureIsEPASRedwood(con);
     }
 }

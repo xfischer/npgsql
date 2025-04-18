@@ -13,7 +13,7 @@ public class EDBLoginTimeOutTest
 {
 
     [Test]
-    public void testIntTimeout()
+    public void TestIntTimeout()
     {
         Assert.DoesNotThrow(() =>
         {
@@ -23,7 +23,7 @@ public class EDBLoginTimeOutTest
     }
 
     [Test]
-    public void testFloatTimeout()
+    public void TestFloatTimeout()
     {
         Assert.Throws<ArgumentException>(() =>
         {
@@ -33,7 +33,7 @@ public class EDBLoginTimeOutTest
     }
 
     [Test]
-    public void testZeroTimeout()
+    public void TestZeroTimeout()
     {
         Assert.DoesNotThrow(() =>
         {
@@ -44,7 +44,7 @@ public class EDBLoginTimeOutTest
 
 
     [Test]
-    public void testNegativeTimeout()
+    public void TestNegativeTimeout()
     {
         Assert.Throws<ArgumentException>(() =>
         {
@@ -54,7 +54,7 @@ public class EDBLoginTimeOutTest
     }
 
     [Test]
-    public void testBadTimeout()
+    public void TestBadTimeout()
     {
         Assert.Throws<ArgumentException>(() =>
         {

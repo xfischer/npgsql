@@ -68,6 +68,7 @@ internal class EDBCompoundTriggerTest : EPASTestBase
         }
         catch
         {
+            // swallow exception
         }
     }
 
@@ -151,7 +152,7 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             notices.Add(args.Notice);
             mre.Set();
         };
-        conn.Notice += action;
+        conn!.Notice += action;
         try
         {
             Execute(insertSql);
@@ -161,12 +162,12 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice.MessageText);
+                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice?.MessageText);
             }
         }
         finally
         {
-            conn.Notice -= action;
+            conn!.Notice -= action;
         }
         mre.Close();
     }
@@ -188,7 +189,7 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             notices.Add(args.Notice);
             mre.Set();
         };
-        conn.Notice += action;
+        conn!.Notice += action;
         try
         {
             Execute(updateSql);
@@ -198,12 +199,12 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice.MessageText);
+                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice?.MessageText);
             }
         }
         finally
         {
-            conn.Notice -= action;
+            conn!.Notice -= action;
         }
         mre.Close();
     }
@@ -224,7 +225,7 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             notices.Add(args.Notice);
             mre.Set();
         };
-        conn.Notice += action;
+        conn!.Notice += action;
         try
         {
             Execute(deleteSql);
@@ -234,12 +235,12 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice.MessageText);
+                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice?.MessageText);
             }
         }
         finally
         {
-            conn.Notice -= action;
+            conn!.Notice -= action;
         }
         mre.Close();
 
@@ -261,7 +262,7 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             notices.Add(args.Notice);
             mre.Set();
         };
-        conn.Notice += action;
+        conn!.Notice += action;
         try
         {
             Execute(sql);
@@ -271,12 +272,12 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(TRUNCATE_TRIGGER_RESULT[i], notice.MessageText);
+                Assert.AreEqual(TRUNCATE_TRIGGER_RESULT[i], notice?.MessageText);
             }
         }
         finally
         {
-            conn.Notice -= action;
+            conn!.Notice -= action;
         }
         mre.Close();
     }
@@ -340,7 +341,7 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             notices.Add(args.Notice);
             mre.Set();
         };
-        conn.Notice += action;
+        conn!.Notice += action;
         try
         {
             Execute(insertSql);
@@ -350,12 +351,12 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CONDITIONAL_TRIGGER_INSERT_RESULT[i], notice.MessageText);
+                Assert.AreEqual(CONDITIONAL_TRIGGER_INSERT_RESULT[i], notice?.MessageText);
             }
         }
         finally
         {
-            conn.Notice -= action;
+            conn!.Notice -= action;
         }
         mre.Close();
     }
@@ -378,7 +379,7 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             notices.Add(args.Notice);
             mre.Set();
         };
-        conn.Notice += action;
+        conn!.Notice += action;
         try
         {
             Execute(updateSql);
@@ -388,12 +389,12 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CONDITIONAL_TRIGGER_UPDATE_RESULT[i], notice.MessageText);
+                Assert.AreEqual(CONDITIONAL_TRIGGER_UPDATE_RESULT[i], notice?.MessageText);
             }
         }
         finally
         {
-            conn.Notice -= action;
+            conn!.Notice -= action;
         }
         mre.Close();
     }
@@ -415,7 +416,7 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             notices.Add(args.Notice);
             mre.Set();
         };
-        conn.Notice += action;
+        conn!.Notice += action;
         try
         {
             Execute(deleteSql);
@@ -425,12 +426,12 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CONDITIONAL_TRIGGER_DELETE_RESULT[i], notice.MessageText);
+                Assert.AreEqual(CONDITIONAL_TRIGGER_DELETE_RESULT[i], notice?.MessageText);
             }
         }
         finally
         {
-            conn.Notice -= action;
+            conn!.Notice -= action;
         }
         mre.Close();
     }

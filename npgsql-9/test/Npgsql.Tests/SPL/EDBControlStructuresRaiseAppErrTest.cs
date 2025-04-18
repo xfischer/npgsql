@@ -81,6 +81,7 @@ internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
         }
         catch
         {
+            // Ignore
         }
     }
 
@@ -91,13 +92,13 @@ internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
         //Verify employee with correct information
         var mre = new ManualResetEvent(false);
         PostgresNotice? notice = null;
-        NoticeEventHandler action = (sender, args) =>
+        void action(object sender, EDBNoticeEventArgs args)
         {
             Assert.IsNotNull(args.Notice);
             notice = args.Notice;
             mre.Set();
-        };
-        conn.Notice += action;
+        }
+        conn!.Notice += action;
         try
         {
             using (var cstmt = new EDBCommand("verify_emp1(:param1)", conn))
@@ -127,13 +128,13 @@ internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
         //Verify employee with no name error
         var mre = new ManualResetEvent(false);
         PostgresNotice? notice = null;
-        NoticeEventHandler action = (sender, args) =>
+        void action(object sender, EDBNoticeEventArgs args)
         {
             Assert.IsNotNull(args.Notice);
             notice = args.Notice;
             mre.Set();
-        };
-        conn.Notice += action;
+        }
+        conn!.Notice += action;
         try
         {
             using (var cstmt = new EDBCommand("verify_emp2(:param1)", conn))

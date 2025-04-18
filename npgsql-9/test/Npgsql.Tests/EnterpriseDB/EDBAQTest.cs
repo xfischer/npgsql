@@ -7,6 +7,7 @@ using System.Diagnostics;
 #nullable disable
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
+
     class MyXML
     {
         public string value { get; set; }
@@ -28,10 +29,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 .Build()
                 .OpenConnection();
 
-            var Command = new EDBCommand("", con);
-
-
-            Command.CommandText = "CREATE OR REPLACE TYPE myxml AS (value XML);";
+            var Command = new EDBCommand("", con)
+            {
+                CommandText = "CREATE OR REPLACE TYPE myxml AS (value XML);"
+            };
 
             Console.WriteLine("CREATE type TYPE myxml: " + Command.ExecuteNonQuery());
 
@@ -57,8 +58,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            var Command = new EDBCommand("", con);
-            Command.CommandText = "EXEC DBMS_AQADM.DROP_QUEUE(queue_name => 'MSG_QUEUE'); ";
+            var Command = new EDBCommand("", con)
+            {
+                CommandText = "EXEC DBMS_AQADM.DROP_QUEUE(queue_name => 'MSG_QUEUE'); "
+            };
             Command.ExecuteNonQuery();
             Command.CommandText = "EXEC DBMS_AQADM.DROP_QUEUE_TABLE('MSG_QUEUE_TABLE', force => TRUE); ";
             Command.ExecuteNonQuery();
@@ -109,97 +112,87 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             var queMsg = new EDBAQMessage();
 
-            using (var queue = new EDBAQQueue("MSG_QUEUE", con))
-            {
-                var txn = queue.Connection.BeginTransaction();
+            using var queue = new EDBAQQueue("MSG_QUEUE", con);
+            var txn = queue.Connection.BeginTransaction();
 
-                try
-                {
-                    queMsg.Payload = new MyXML { value = "(<Message><MessageText>Mahesh</MessageText></Message>)" };
-                    queue.EnqueueOptions.Visibility = EDBAQVisibility.ON_COMMIT;
-                    queue.MessageType = EDBAQMessageType.Udt;
-                    queue.UdtTypeName = "myxml";
-                    queue.Enqueue(queMsg);
-                    Assert.IsNotNull(queMsg.MessageId);
-                    txn.Commit();
-                    return queMsg;
-                }
-                catch (Exception)
-                {
-                    txn?.Rollback();
-                    throw;
-                }
+            try
+            {
+                queMsg.Payload = new MyXML { value = "(<Message><MessageText>Mahesh</MessageText></Message>)" };
+                queue.EnqueueOptions.Visibility = EDBAQVisibility.ON_COMMIT;
+                queue.MessageType = EDBAQMessageType.Udt;
+                queue.UdtTypeName = "myxml";
+                queue.Enqueue(queMsg);
+                Assert.IsNotNull(queMsg.MessageId);
+                txn.Commit();
+                return queMsg;
+            }
+            catch (Exception)
+            {
+                txn?.Rollback();
+                throw;
             }
         }
 
         private EDBAQMessage Dequeue(int waitTimeSeconds = 10)
         {
-            var deqMsg = new EDBAQMessage();
+            EDBAQMessage deqMsg;
 
-            using (var queueListen = new EDBAQQueue("MSG_QUEUE", con))
+            using var queueListen = new EDBAQQueue("MSG_QUEUE", con);
+            queueListen.MessageType = EDBAQMessageType.Udt;
+            queueListen.UdtTypeName = "myxml";
+            queueListen.DequeueOptions.Navigation = EDBAQNavigationMode.FIRST_MESSAGE;
+            queueListen.DequeueOptions.Visibility = EDBAQVisibility.ON_COMMIT;
+            queueListen.DequeueOptions.Wait = 1;
+
+            EDBTransaction txn = null;
+
+            if (queueListen.Connection.State == System.Data.ConnectionState.Closed)
             {
-                queueListen.MessageType = EDBAQMessageType.Udt;
-                queueListen.UdtTypeName = "myxml";
-                queueListen.DequeueOptions.Navigation = EDBAQNavigationMode.FIRST_MESSAGE;
-                queueListen.DequeueOptions.Visibility = EDBAQVisibility.ON_COMMIT;
-                queueListen.DequeueOptions.Wait = 1;
-
-                EDBTransaction txn = null;
-
-                if (queueListen.Connection.State == System.Data.ConnectionState.Closed)
+                queueListen.Connection.Open();
+            }
+            try
+            {
+                var v = queueListen.Listen(waitTimeSeconds);
+                // If we are waiting for a message and we specify a Wait time,
+                // then if there are no more messages, we want to just bounce out.
+                if (waitTimeSeconds > -1 && v == null)
                 {
-                    queueListen.Connection.Open();
+                    throw new InvalidOperationException("Message was expected");
                 }
+
+                // once we're here that means a message has been detected in the queue. Let's deal with it.
+                txn = queueListen.Connection.BeginTransaction();
+                // dequeue the message
                 try
                 {
-                    var v = queueListen.Listen(waitTimeSeconds);
-                    // If we are waiting for a message and we specify a Wait time,
-                    // then if there are no more messages, we want to just bounce out.
-                    if (waitTimeSeconds > -1 && v == null)
-                    {
-                        throw new InvalidOperationException("Message was expected");
-                    }
-
-                    // once we're here that means a message has been detected in the queue. Let's deal with it.
-                    txn = queueListen.Connection.BeginTransaction();
-                    // dequeue the message
-                    try
-                    {
-                        deqMsg = queueListen.Dequeue();
-                    }
-                    catch (Exception)
-                    {
-                        txn.Rollback();
-                        throw;
-                    }
-
-                    if (deqMsg != null)
-                    {
-                        // process the message payload
-
-                        // Direct cast
-                        var obj = (MyXML)deqMsg.Payload;
-                        Assert.AreEqual("(<Message><MessageText>Mahesh</MessageText></Message>)", obj.value);
-
-                        txn.Commit();
-
-                        return deqMsg;
-                    }
-
-                    return null;
+                    deqMsg = queueListen.Dequeue();
                 }
                 catch (Exception)
                 {
-                    if (txn != null)
-                    {
-                        txn.Rollback();
-                        if (txn != null)
-                        {
-                            txn.Dispose();
-                        }
-                    }
+                    txn.Rollback();
                     throw;
                 }
+
+                if (deqMsg != null)
+                {
+                    // process the message payload
+
+                    // Direct cast
+                    var obj = (MyXML)deqMsg.Payload;
+                    Assert.AreEqual("(<Message><MessageText>Mahesh</MessageText></Message>)", obj.value);
+
+                    txn.Commit();
+
+                    return deqMsg;
+                }
+
+                return null;
+            }
+            catch (Exception)
+            {
+                txn?.Rollback();
+                txn?.Dispose();
+                throw;
             }
         }
     }

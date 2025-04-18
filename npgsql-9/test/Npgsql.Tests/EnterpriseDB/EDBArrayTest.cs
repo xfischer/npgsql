@@ -6,99 +6,99 @@ using System.Collections;
 using NUnit;
 
 
-namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
-{
-    /// <summary>
-    /// Summary description for EDBArrayTest.
-    /// </summary>
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
-    [TestFixture]
+/// <summary>
+/// Summary description for EDBArrayTest.
+/// </summary>
+
+[TestFixture]
 	public class EDBArrayTest : EPASTestBase
-    {
+{
 		[OneTimeSetUp]
-        public void OneTimeSetUp_Cleanup()
-        {
-            Cleanup();
-        }
+    public void OneTimeSetUp_Cleanup()
+    {
+        Cleanup();
+    }
 
 		[OneTimeTearDown] 
 		public void Dispose()
 		{
-            Cleanup();
+        Cleanup();
 		}
 
-        private void Cleanup()
+    private void Cleanup()
+    {
+        
+        try
         {
-            
-            try
-            {
-                using var con = OpenConnection();
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestInt2");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestInt4");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestInt8");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestFloat");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestFloat4");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestFloat8");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtest1");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysNumeric");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysBoolean");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysNumericWithPrecision");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysSmallInt");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysBigInt");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysDoublePrecision");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysInteger");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestNumber");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysDecimal");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestMoney");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysSmallMoney");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS books");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS bookstextarray");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS bookstinytext");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS bookslongtext");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS favourite_books");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS favourite_booksVarchar2");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS chartest");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS charstest");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestDate");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysTimestamp");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysDateTime");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysTime");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysBool");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysBool2");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysTimestampWithoutTimeZone");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysInterval");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysInterval2");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraySelect");
-                con.ExecuteNonQuery("DROP TABLE IF EXISTS ArrayUpdate");
+            using var con = OpenConnection();
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestInt2");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestInt4");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestInt8");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestFloat");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestFloat4");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestFloat8");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtest1");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysNumeric");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysBoolean");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysNumericWithPrecision");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysSmallInt");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysBigInt");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysDoublePrecision");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysInteger");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestNumber");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysDecimal");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestMoney");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysSmallMoney");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS books");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS bookstextarray");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS bookstinytext");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS bookslongtext");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS favourite_books");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS favourite_booksVarchar2");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS chartest");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS charstest");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS arrtestDate");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysTimestamp");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysDateTime");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysTime");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysBool");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysBool2");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysTimestampWithoutTimeZone");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysInterval");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraysInterval2");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArraySelect");
+            con.ExecuteNonQuery("DROP TABLE IF EXISTS ArrayUpdate");
 
-            }
-            catch (Exception)
-            {
-
-            }
         }
+        catch (Exception)
+        {
 
-        // Following cases verify Arrays w.r.t various datatypes
+        }
+    }
 
-        [Test]
+    // Following cases verify Arrays w.r.t various datatypes
+
+    [Test]
 		public void ArraysInt2()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE arrtestInt2 (i int2[10],j int2[]);";
 			Command.ExecuteNonQuery();
 
 			Command.CommandText= "INSERT INTO arrtestInt2 VALUES ('{0,1,2,3,4,5,6,7,8,9}','{40,50,60,70,81,90,32765}');";
 			Command.ExecuteNonQuery();
-            int[] a = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            int[] b = { 40, 50, 60, 70, 81, 90, 32765 };
+        int[] a = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        int[] b = { 40, 50, 60, 70, 81, 90, 32765 };
 			Command.CommandText= "SELECT * FROM arrtestInt2;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(short[])Reader.GetValue(0));
-            Assert.AreEqual(b, (short[])Reader.GetValue(1));
+        Assert.AreEqual(b, (short[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -106,8 +106,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysInt4()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE arrtestInt4 (i int4[10],j int4[]);";
 			Command.ExecuteNonQuery();
@@ -115,11 +115,11 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO arrtestInt4 VALUES ('{0,1,2,3,4,5,6,7,8,9}','{-2147483648,100,433,544,2147483647}');";
 			Command.ExecuteNonQuery();
 
-            int[] a = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-            int[] b = { -2147483648, 100, 433, 544, 2147483647 };
+        int[] a = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        int[] b = { -2147483648, 100, 433, 544, 2147483647 };
 
 			Command.CommandText= "SELECT * FROM arrtestInt4;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(int[])Reader.GetValue(0));
@@ -131,8 +131,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysInt8()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE arrtestInt8 (i int8[10],j int8[]);";
 			Command.ExecuteNonQuery();
@@ -140,15 +140,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO arrtestInt8 VALUES ('{1000,2000,3000,4000,50000,6000,7000,8000,9000,10000}','{65454545,32769}');";
 			Command.ExecuteNonQuery();
 
-            long[] a = { 1000, 2000, 3000, 4000, 50000, 6000, 7000, 8000, 9000, 10000 };
-            long[] b = { 65454545, 32769 };
+        long[] a = { 1000, 2000, 3000, 4000, 50000, 6000, 7000, 8000, 9000, 10000 };
+        long[] b = { 65454545, 32769 };
 
 			Command.CommandText= "SELECT * FROM arrtestInt8;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(long[])Reader.GetValue(0));
-            Assert.AreEqual(b, (long[])Reader.GetValue(1));
+        Assert.AreEqual(b, (long[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -156,8 +156,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysFloat()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE arrtestFloat (f1 Float[10],f2 Float[]);";
 			Command.ExecuteNonQuery();
@@ -165,14 +165,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO arrtestFloat VALUES ('{2.0,4.21,6.32,3.98,4.00,5.91,6.00,7.66,8.88,9.99}','{43534.234,5534.463}');";
 			Command.ExecuteNonQuery();
 
-            double[] a = { 2, 4.21, 6.32, 3.98, 4, 5.91, 6, 7.66, 8.88, 9.99 };
-            double[] b = { 43534.234, 5534.463 };
+        double[] a = { 2, 4.21, 6.32, 3.98, 4, 5.91, 6, 7.66, 8.88, 9.99 };
+        double[] b = { 43534.234, 5534.463 };
 			Command.CommandText= "SELECT * FROM arrtestFloat;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(double[] )Reader.GetValue(0));
-            Assert.AreEqual(b, (double[])Reader.GetValue(1));
+        Assert.AreEqual(b, (double[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -180,23 +180,23 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysFloat4()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE arrtestFloat4 (f1 Float4[10],f2 Float4[]);";
 			Command.ExecuteNonQuery();
 
 			Command.CommandText= "INSERT INTO arrtestFloat4 VALUES ('{65.2,23.1,56.42,334.5,46.3,532.33,69.64,75.234,8.75,92.1}','{2132.32,987.145}');";
 			Command.ExecuteNonQuery();
-            float[] a = { 65.2F, 23.1F, 56.42F, 334.5F, 46.3F, 532.33F, 69.64F, 75.234F, 8.75F, 92.1F };
-            float[] b = { 2132.32F, 987.145F};
+        float[] a = { 65.2F, 23.1F, 56.42F, 334.5F, 46.3F, 532.33F, 69.64F, 75.234F, 8.75F, 92.1F };
+        float[] b = { 2132.32F, 987.145F};
 
 			Command.CommandText= "SELECT * FROM arrtestFloat4;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(float[])Reader.GetValue(0));
-            Assert.AreEqual(b, (float[])Reader.GetValue(1));
+        Assert.AreEqual(b, (float[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -204,8 +204,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysFloat8()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE arrtestFloat8 (f1 Float8[10],f2 Float8[]);";
 			Command.ExecuteNonQuery();
@@ -213,10 +213,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO arrtestFloat8 VALUES ('{122.33,230.32,1342.24,28766.33,343245.234,462.33,575.323,6787.433,7004.344,865.345,983.433}','{8555.233,654.9785}');";
 			Command.ExecuteNonQuery();
 
-            double[] a = { 122.33, 230.32, 1342.24, 28766.33, 343245.234, 462.33, 575.323, 6787.433, 7004.344, 865.345, 983.433 };
-            double[] b = { 8555.233, 654.9785 };
+        double[] a = { 122.33, 230.32, 1342.24, 28766.33, 343245.234, 462.33, 575.323, 6787.433, 7004.344, 865.345, 983.433 };
+        double[] b = { 8555.233, 654.9785 };
 			Command.CommandText= "SELECT * FROM arrtestFloat8;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(double[])Reader.GetValue(0));
@@ -228,8 +228,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysReal()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText="CREATE TABLE arrtest1 (r1 Real[10],r2 Real[]);";
 			Command.ExecuteNonQuery();
@@ -239,10 +239,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText="INSERT INTO arrtest1 VALUES ('{12.3233,13.223,265.323,30.001,4235.9,543.454,543.453,775.235,800.992,9122.12}');";
 			Command.ExecuteNonQuery();
 
-            float[] a = { 12.3233F, 13.223F, 265.323F, 30.001F, 4235.9F, 543.454F, 543.453F, 775.235F, 800.992F, 9122.12F };
+        float[] a = { 12.3233F, 13.223F, 265.323F, 30.001F, 4235.9F, 543.454F, 543.453F, 775.235F, 800.992F, 9122.12F };
 
 			Command.CommandText="SELECT * FROM arrtest1;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -255,24 +255,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysNumeric()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysNumeric (n1 Numeric[10],n2 numeric[]);";
+        Command.CommandText = "CREATE TABLE ArraysNumeric (n1 Numeric[10],n2 numeric[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysNumeric VALUES ('{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}','{132.654,897.2563}');";
+        Command.CommandText = "INSERT INTO ArraysNumeric VALUES ('{120.89809,1234.00090,2.2434,3123.0,42342.22,53552.2,652.233,7.09,8.11,9.654}','{132.654,897.2563}');";
 			Command.ExecuteNonQuery();
 
-            decimal[] a = { 120.89809M, 1234.00090M, 2.2434M, 3123.0M, 42342.22M, 53552.2M, 652.233M, 7.09M, 8.11M, 9.654M };
-            decimal[] b = { 132.654M, 897.2563M };
-            Command.CommandText = "SELECT * FROM ArraysNumeric;";
-            using var Reader = Command.ExecuteReader();
+        decimal[] a = { 120.89809M, 1234.00090M, 2.2434M, 3123.0M, 42342.22M, 53552.2M, 652.233M, 7.09M, 8.11M, 9.654M };
+        decimal[] b = { 132.654M, 897.2563M };
+        Command.CommandText = "SELECT * FROM ArraysNumeric;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(decimal[])Reader.GetValue(0));
-            Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
+        Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -280,25 +280,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysNumericWithPrecision()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysNumericWithPrecision (n1 Numeric(5,2)[10],n2 Numeric(4,3)[]);";
+        Command.CommandText = "CREATE TABLE ArraysNumericWithPrecision (n1 Numeric(5,2)[10],n2 Numeric(4,3)[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysNumericWithPrecision VALUES ('{120.89,123.90,22.334,412.40,422.22,552.21,62.22,712.09,18.11,91.65}','{1.234,2.142}');";
+        Command.CommandText = "INSERT INTO ArraysNumericWithPrecision VALUES ('{120.89,123.90,22.334,412.40,422.22,552.21,62.22,712.09,18.11,91.65}','{1.234,2.142}');";
 			Command.ExecuteNonQuery();
 
-            decimal[] a = { 120.89M, 123.90M, 22.33M, 412.40M, 422.22M, 552.21M, 62.22M, 712.09M, 18.11M, 91.65M };
-            decimal[] b = { 1.234M, 2.142M };
+        decimal[] a = { 120.89M, 123.90M, 22.33M, 412.40M, 422.22M, 552.21M, 62.22M, 712.09M, 18.11M, 91.65M };
+        decimal[] b = { 1.234M, 2.142M };
 
-            Command.CommandText = "SELECT * FROM ArraysNumericWithPrecision;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysNumericWithPrecision;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(decimal[])Reader.GetValue(0));
-            Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
+        Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -306,24 +306,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysSmallInt()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysSmallInt (i smallint[10],j smallint[]);";
+        Command.CommandText = "CREATE TABLE ArraysSmallInt (i smallint[10],j smallint[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysSmallInt VALUES ('{-1,-2,-3,-4,0,4,5,6,7,8}','{40,50,60,70,81,90,32765}');";
+        Command.CommandText = "INSERT INTO ArraysSmallInt VALUES ('{-1,-2,-3,-4,0,4,5,6,7,8}','{40,50,60,70,81,90,32765}');";
 			Command.ExecuteNonQuery();
 
-            int[] a = { -1, -2, -3, -4, 0, 4, 5, 6, 7, 8 };
-            int[] b = { 40, 50, 60, 70, 81, 90, 32765 };
-            Command.CommandText = "SELECT * FROM ArraysSmallInt;";
-            using var Reader = Command.ExecuteReader();
+        int[] a = { -1, -2, -3, -4, 0, 4, 5, 6, 7, 8 };
+        int[] b = { 40, 50, 60, 70, 81, 90, 32765 };
+        Command.CommandText = "SELECT * FROM ArraysSmallInt;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(short[])Reader.GetValue(0));
-            Assert.AreEqual(b, (short[])Reader.GetValue(1));
+        Assert.AreEqual(b, (short[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -332,24 +332,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysBigInt()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysBigInt (i bigint[10],j bigint[]);";
+        Command.CommandText = "CREATE TABLE ArraysBigInt (i bigint[10],j bigint[]);";
 			Command.ExecuteNonQuery();
 
 			long[] a ={-100,-200,-300,-4000,-922337203685477,50000,6000,7000,8000,9000};
-            long[] b ={ -9223372036854775808, 9223372036854775807};
+        long[] b ={ -9223372036854775808, 9223372036854775807};
 
-            Command.CommandText = "INSERT INTO ArraysBigInt VALUES ('{-100,-200,-300,-4000,-922337203685477,50000,6000,7000,8000,9000}','{-9223372036854775808,9223372036854775807}');";
+        Command.CommandText = "INSERT INTO ArraysBigInt VALUES ('{-100,-200,-300,-4000,-922337203685477,50000,6000,7000,8000,9000}','{-9223372036854775808,9223372036854775807}');";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "SELECT * FROM ArraysBigInt;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysBigInt;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
-            Assert.AreEqual(a, (long[])Reader.GetValue(0));
-            Assert.AreEqual(b, (long[])Reader.GetValue(1));
+        Assert.AreEqual(a, (long[])Reader.GetValue(0));
+        Assert.AreEqual(b, (long[])Reader.GetValue(1));
 			
 			Reader.Close();
 
@@ -358,24 +358,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysDoublePrecision()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysDoublePrecision (d1 double precision[3],d2 double precision[]);";
+        Command.CommandText = "CREATE TABLE ArraysDoublePrecision (d1 double precision[3],d2 double precision[]);";
 			Command.ExecuteNonQuery();
 
-            double[] a = { 122.323423453, 230.32131231322, 123342.2323324 };
-            double[] b = { 555.43534543233, 344654.34534439782 };
+        double[] a = { 122.323423453, 230.32131231322, 123342.2323324 };
+        double[] b = { 555.43534543233, 344654.34534439782 };
 
-            Command.CommandText = "INSERT INTO ArraysDoublePrecision VALUES ('{122.323423453,230.32131231322,123342.2323324}','{555.43534543233,344654.34534439785}');";
+        Command.CommandText = "INSERT INTO ArraysDoublePrecision VALUES ('{122.323423453,230.32131231322,123342.2323324}','{555.43534543233,344654.34534439785}');";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "SELECT * FROM ArraysDoublePrecision;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysDoublePrecision;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
-            Assert.AreEqual(a, (double[])Reader.GetValue(0));
-            Assert.AreEqual(b, (double[])Reader.GetValue(1));
+        Assert.AreEqual(a, (double[])Reader.GetValue(0));
+        Assert.AreEqual(b, (double[])Reader.GetValue(1));
 			//Assert.AreEqual("{122.323423453,230.32131231322,123342.2323324}",Reader.GetValue(0));
 			//Assert.AreEqual("{555.43534543233,344654.345344398}",Reader.GetValue(1));
 
@@ -387,25 +387,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysInteger()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysInteger (i integer[],j integer[2]);";
+        Command.CommandText = "CREATE TABLE ArraysInteger (i integer[],j integer[2]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysInteger VALUES ('{-2147483648,2147483647}','{5,9}');";
+        Command.CommandText = "INSERT INTO ArraysInteger VALUES ('{-2147483648,2147483647}','{5,9}');";
 			Command.ExecuteNonQuery();
 
-            int[] a = { -2147483648, 2147483647 };
-            int[] b = { 5, 9 };
+        int[] a = { -2147483648, 2147483647 };
+        int[] b = { 5, 9 };
 
-            Command.CommandText = "SELECT * FROM ArraysInteger;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysInteger;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(int[])Reader.GetValue(0));
-            Assert.AreEqual(b, (int[])Reader.GetValue(1));
+        Assert.AreEqual(b, (int[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -414,23 +414,23 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysNumber()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText="CREATE TABLE arrtestNumber (n1 Number[5],n2 Number[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO arrtestNumber VALUES ('{321.255,654.233,8987,545.23,654.36}','{31.2434,23.1442}');";
+        Command.CommandText = "INSERT INTO arrtestNumber VALUES ('{321.255,654.233,8987,545.23,654.36}','{31.2434,23.1442}');";
 			Command.ExecuteNonQuery();
-            decimal[] a = { 321.255M, 654.233M, 8987M, 545.23M, 654.36M };
-            decimal[] b = { 31.2434M, 23.1442M };
-            Command.CommandText = "SELECT * FROM arrtestNumber;";
-            using var Reader = Command.ExecuteReader();
+        decimal[] a = { 321.255M, 654.233M, 8987M, 545.23M, 654.36M };
+        decimal[] b = { 31.2434M, 23.1442M };
+        Command.CommandText = "SELECT * FROM arrtestNumber;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(decimal[])Reader.GetValue(0));
-            Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
+        Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -439,24 +439,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysDecimal()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysDecimal (n1 decimal(5,2)[10],n2 decimal(4,3)[]);";
+        Command.CommandText = "CREATE TABLE ArraysDecimal (n1 decimal(5,2)[10],n2 decimal(4,3)[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysDecimal VALUES ('{120.89,123.90,22.334,412.40,422.22,552.21,62.22,712.09,18.11,91.65}','{1.234,2.142}');";
+        Command.CommandText = "INSERT INTO ArraysDecimal VALUES ('{120.89,123.90,22.334,412.40,422.22,552.21,62.22,712.09,18.11,91.65}','{1.234,2.142}');";
 			Command.ExecuteNonQuery();
 
-            decimal[] a = { 120.89M, 123.90M, 22.33M, 412.40M, 422.22M, 552.21M, 62.22M, 712.09M, 18.11M, 91.65M };
-            decimal[] b = { 1.234M, 2.142M };
-            Command.CommandText = "SELECT * FROM ArraysDecimal;";
-            using var Reader = Command.ExecuteReader();
+        decimal[] a = { 120.89M, 123.90M, 22.33M, 412.40M, 422.22M, 552.21M, 62.22M, 712.09M, 18.11M, 91.65M };
+        decimal[] b = { 1.234M, 2.142M };
+        Command.CommandText = "SELECT * FROM ArraysDecimal;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(decimal[])Reader.GetValue(0));
-            Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
+        Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -464,8 +464,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]//, Ignore("Difference in decimal point value only")]
 		public void ArraysMoney()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE arrtestMoney (m1 money[],m2 money[2]);";
 			Command.ExecuteNonQuery();
@@ -473,21 +473,21 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO arrtestMoney VALUES ('{-21474823123326.4128,2123432474836.247}','{2343245.571,523432.3226}');";
 			Command.ExecuteNonQuery();
 
-            decimal[] a = { -21474823123326.41M, 2123432474836.25M };
-           
-            Command.CommandText= "SELECT * FROM arrtestMoney;";
-            using var Reader = Command.ExecuteReader();
+        decimal[] a = { -21474823123326.41M, 2123432474836.25M };
+       
+        Command.CommandText= "SELECT * FROM arrtestMoney;";
+        using var Reader = Command.ExecuteReader();
 			object[] test={"-$21,474,823,123,326.41","$2,123,432,474,836.25"};
 			Assert.IsTrue(Reader.Read());
-            Assert.AreEqual(a, Reader.GetValue(0));
+        Assert.AreEqual(a, Reader.GetValue(0));
 			//Assert.AreEqual("{\""+test[0].ToString()+"\",\""+test[1].ToString()+"\"}",Reader.GetValue(0).ToString());
 			string[] teststr={"$2,343,245.57","$523,432.32"};
-            var value = Reader.GetValue(1);
-            Assert.IsInstanceOf<decimal[]>(value);
-            Assert.AreEqual(2343245.57m, ((decimal[])value)[0]);
-            Assert.AreEqual(523432.32m, ((decimal[])value)[1]);
+        var value = Reader.GetValue(1);
+        Assert.IsInstanceOf<decimal[]>(value);
+        Assert.AreEqual(2343245.57m, ((decimal[])value)[0]);
+        Assert.AreEqual(523432.32m, ((decimal[])value)[1]);
 
-            Reader.Close();
+        Reader.Close();
 
 		}
 
@@ -495,24 +495,24 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysSmallMoney()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysSmallMoney (m1 smallmoney[],m2 smallmoney[2]);";
+        Command.CommandText = "CREATE TABLE ArraysSmallMoney (m1 smallmoney[],m2 smallmoney[2]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysSmallMoney VALUES ('{-474836.4128,74836.2417}','{45.1157,15.2636}');";
+        Command.CommandText = "INSERT INTO ArraysSmallMoney VALUES ('{-474836.4128,74836.2417}','{45.1157,15.2636}');";
 			Command.ExecuteNonQuery();
 
-            decimal[] a = { -474836.4128M, 74836.2417M };
-            decimal[] b = { 45.1157M, 15.2636M };
-            Command.CommandText = "SELECT * FROM ArraysSmallMoney;";
-            using var Reader = Command.ExecuteReader();
+        decimal[] a = { -474836.4128M, 74836.2417M };
+        decimal[] b = { 45.1157M, 15.2636M };
+        Command.CommandText = "SELECT * FROM ArraysSmallMoney;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
 			Assert.AreEqual(a,(decimal[])Reader.GetValue(0));
-            Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
+        Assert.AreEqual(b, (decimal[])Reader.GetValue(1));
 			Reader.Close();
 
 		}
@@ -521,8 +521,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysText()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE bookstextarray( books text[]);;";
 			Command.ExecuteNonQuery();
@@ -530,10 +530,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO bookstextarray VALUES ('{ Lord of the Rings , Suffocles}');";
 			Command.ExecuteNonQuery();
 
-            string[] a = {"Lord of the Rings","Suffocles"};
+        string[] a = {"Lord of the Rings","Suffocles"};
 
 			Command.CommandText= "SELECT * FROM  bookstextarray;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -547,8 +547,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysVarchar()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText="CREATE TABLE favourite_books( books Varchar[3]);";
 			Command.ExecuteNonQuery();
@@ -556,10 +556,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText="INSERT INTO favourite_books VALUES ('{The Hitchhikers Guide to the Galaxy,Harry Potter,Kitten, Squared}');";
 			Command.ExecuteNonQuery();
 
-            string[] a = {"The Hitchhikers Guide to the Galaxy","Harry Potter","Kitten","Squared"};
+        string[] a = {"The Hitchhikers Guide to the Galaxy","Harry Potter","Kitten","Squared"};
 
 			Command.CommandText="SELECT * FROM  favourite_books;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -573,8 +573,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysTinyText()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE bookstinytext( books tinytext[]);";
 			Command.ExecuteNonQuery();
@@ -582,10 +582,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO bookstinytext VALUES ('{Lord of the Rings,Suffocles}');";
 			Command.ExecuteNonQuery();
 			
-            string[] a = {"Lord of the Rings","Suffocles"};
+        string[] a = {"Lord of the Rings","Suffocles"};
 
 			Command.CommandText= "SELECT * FROM  bookstinytext;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -599,8 +599,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysVarchar2()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE favourite_booksVarchar2( books Varchar2[3]);";
 			Command.ExecuteNonQuery();
@@ -608,10 +608,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO favourite_booksVarchar2 VALUES ('{The Hitchikers Guide to the Galaxy,Harry Potter,Kitten, Squared}');";
 			Command.ExecuteNonQuery();
 
-            string[] a = {"The Hitchikers Guide to the Galaxy","Harry Potter","Kitten","Squared"};
+        string[] a = {"The Hitchikers Guide to the Galaxy","Harry Potter","Kitten","Squared"};
 			
 			Command.CommandText= "SELECT * FROM  favourite_booksVarchar2;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			
@@ -624,9 +624,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysCharacter()
 		{
-            string[] a = {"1st char  ","sec char  " };
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        string[] a = {"1st char  ","sec char  " };
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText="CREATE TABLE charstest( ch character(10)[]);";
 			Command.ExecuteNonQuery();
@@ -635,7 +635,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 			
 			Command.CommandText= "SELECT * FROM charstest;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(string[])Reader.GetValue(0));
@@ -646,9 +646,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysChar()
 		{
-            string[] a = { "1st char","sec char" };
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        string[] a = { "1st char","sec char" };
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText="CREATE TABLE chartest( ch char(8)[]);";
 			Command.ExecuteNonQuery();
@@ -657,7 +657,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.ExecuteNonQuery();
 			
 			Command.CommandText="SELECT * FROM chartest;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(string[])Reader.GetValue(0));
@@ -670,19 +670,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysLong()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText="CREATE TABLE books( books long[]);";
 			Command.ExecuteNonQuery();
 
-            string[] a = { "Lord of the War", "Suffocles" };
+        string[] a = { "Lord of the War", "Suffocles" };
 
 			Command.CommandText="INSERT INTO books VALUES ('{Lord of the War,Suffocles}');";
 			Command.ExecuteNonQuery();
 			
 			Command.CommandText="SELECT * FROM books;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 			
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(string[])Reader.GetValue(0));
@@ -695,8 +695,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysLongText()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE bookslongtext( books longtext[]);";
 			Command.ExecuteNonQuery();
@@ -704,10 +704,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO bookslongtext VALUES ('{Lord of the War,Suffocles,A walk in the cloudsssss }');";
 			Command.ExecuteNonQuery();
 
-            string[] a = { "Lord of the War", "Suffocles", "A walk in the cloudsssss" };
+        string[] a = { "Lord of the War", "Suffocles", "A walk in the cloudsssss" };
 
 			Command.CommandText= "SELECT * FROM bookslongtext;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(string[])Reader.GetValue(0));
@@ -716,13 +716,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 		}
 
-        //ZK CHECKME: Date[] to DateTime[] cast not supported in EDB
+    //ZK CHECKME: Date[] to DateTime[] cast not supported in EDB
 		[Test]
 		public void ArraysDate()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 				
 			Command.CommandText= "CREATE TABLE arrtestDate (d1 Date[]);";
 			Command.ExecuteNonQuery();
@@ -730,10 +730,10 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 			Command.CommandText= "INSERT INTO arrtestDate VALUES ('{040506,101203}');";
 			Command.ExecuteNonQuery();
 
-            DateTime[] a = { Convert.ToDateTime("2004-05-06 00:00:00"), Convert.ToDateTime("2010-12-03 00:00:00") };
+        DateTime[] a = { Convert.ToDateTime("2004-05-06 00:00:00"), Convert.ToDateTime("2010-12-03 00:00:00") };
 
 			Command.CommandText= "SELECT * FROM arrtestDate;";
-            using var Reader = Command.ExecuteReader();
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			//Assert.AreEqual(a,(D)Reader.GetValue(0));
@@ -746,19 +746,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysTimestamp()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysTimestamp (t Timestamp[]);";
+        Command.CommandText = "CREATE TABLE ArraysTimestamp (t Timestamp[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysTimestamp VALUES ('{1999-01-08 04:05:06,December 11 04:05:06 2006}');";
+        Command.CommandText = "INSERT INTO ArraysTimestamp VALUES ('{1999-01-08 04:05:06,December 11 04:05:06 2006}');";
 			Command.ExecuteNonQuery();
 
-            DateTime[] a = { DateTime.Parse("1999-01-08 04:05:06"), DateTime.Parse("2006-12-11 04:05:06") };
+        DateTime[] a = { DateTime.Parse("1999-01-08 04:05:06"), DateTime.Parse("2006-12-11 04:05:06") };
 
-            Command.CommandText = "SELECT * FROM ArraysTimestamp;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysTimestamp;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
@@ -772,18 +772,18 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysDateTime()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysDateTime (t DATETIME[]);";
+        Command.CommandText = "CREATE TABLE ArraysDateTime (t DATETIME[]);";
 			Command.ExecuteNonQuery();
 
-            DateTime[] a = {Convert.ToDateTime("1999-01-08 04:05:06"),Convert.ToDateTime("2006-12-11 04:05:06")};
-            Command.CommandText = "INSERT INTO ArraysDateTime VALUES ('{1999-01-08 04:05:06,December 11 04:05:06 2006}');";
+        DateTime[] a = {Convert.ToDateTime("1999-01-08 04:05:06"),Convert.ToDateTime("2006-12-11 04:05:06")};
+        Command.CommandText = "INSERT INTO ArraysDateTime VALUES ('{1999-01-08 04:05:06,December 11 04:05:06 2006}');";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "SELECT * FROM ArraysDateTime;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysDateTime;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
@@ -797,25 +797,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysTime()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysTime (t TIME[]);";
+        Command.CommandText = "CREATE TABLE ArraysTime (t TIME[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysTime VALUES ('{04:05:06,12:10:48 }');";
+        Command.CommandText = "INSERT INTO ArraysTime VALUES ('{04:05:06,12:10:48 }');";
 			Command.ExecuteNonQuery();
 
-            DateTime[] a = {DateTime.Parse("04:05:06"),DateTime.Parse("12:10:48")};
+        DateTime[] a = {DateTime.Parse("04:05:06"),DateTime.Parse("12:10:48")};
 
-            Command.CommandText = "SELECT * FROM ArraysTime;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysTime;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
-          //  DateTime[] data = (DateTime[])Reader.GetValue(0);
+      //  DateTime[] data = (DateTime[])Reader.GetValue(0);
 
 		//	Assert.AreEqual(a[0].ToShortTimeString(),data[0].ToShortTimeString());
-          //  Assert.AreEqual(a[1].ToShortTimeString(), data[1].ToShortTimeString());
+      //  Assert.AreEqual(a[1].ToShortTimeString(), data[1].ToShortTimeString());
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			
 			Reader.Close();
@@ -851,19 +851,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysBoolean()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysBoolean (t boolean[]);";
+        Command.CommandText = "CREATE TABLE ArraysBoolean (t boolean[]);";
 			Command.ExecuteNonQuery();
 
-            bool[] a =  { true, false, true, true, true, false, false, false, false, false, false, false };
+        bool[] a =  { true, false, true, true, true, false, false, false, false, false, false, false };
 
-            Command.CommandText = "INSERT INTO ArraysBoolean VALUES ('{t,f,t,t,t,f,f,f,f,f,f,f }');";
+        Command.CommandText = "INSERT INTO ArraysBoolean VALUES ('{t,f,t,t,t,f,f,f,f,f,f,f }');";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "SELECT * FROM ArraysBoolean;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysBoolean;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(bool[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((bool[])Reader.GetValue(0))));
@@ -876,19 +876,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysBoolTrueFalse()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysBool (t bool[]);";
+        Command.CommandText = "CREATE TABLE ArraysBool (t bool[]);";
 			Command.ExecuteNonQuery();
 
-            bool[] a = { true, false, false, false, true, false, false, true };
+        bool[] a = { true, false, false, false, true, false, false, true };
 
 			Command.CommandText = "INSERT INTO ArraysBool VALUES ('{true,false,false,false,true,false,false,true }');";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "SELECT * FROM ArraysBool;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysBool;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(bool[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((bool[])Reader.GetValue(0))));
@@ -901,19 +901,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysBoolOneZero()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysBool2 (t bool[]);";
+        Command.CommandText = "CREATE TABLE ArraysBool2 (t bool[]);";
 			Command.ExecuteNonQuery();
 
-            bool[] a = { false, true, true, false, false, false, true, true, true, true, true, false };
+        bool[] a = { false, true, true, false, false, false, true, true, true, true, true, false };
 
-            Command.CommandText = "INSERT INTO ArraysBool2 VALUES ('{0,1,1,0,0,0,1,1,1,1,1,0}');";
+        Command.CommandText = "INSERT INTO ArraysBool2 VALUES ('{0,1,1,0,0,0,1,1,1,1,1,0}');";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "SELECT * FROM ArraysBool2;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysBool2;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(bool[])Reader.GetValue(0), MakeDebugMessage(new BitArray(a), new BitArray((bool[])Reader.GetValue(0))));
@@ -926,19 +926,19 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArraysTimestampWithoutTimeZone()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysTimestampWithoutTimeZone (t Timestamp[]);";
+        Command.CommandText = "CREATE TABLE ArraysTimestampWithoutTimeZone (t Timestamp[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysTimestampWithoutTimeZone VALUES ('{1999-01-08 04:05:06 -8:00,2005-11-08 12:02:06 -8:00,February 10 00:04:50 2004 PST}');";
+        Command.CommandText = "INSERT INTO ArraysTimestampWithoutTimeZone VALUES ('{1999-01-08 04:05:06 -8:00,2005-11-08 12:02:06 -8:00,February 10 00:04:50 2004 PST}');";
 			Command.ExecuteNonQuery();
 
-            DateTime[] a = { DateTime.Parse("1999-01-08 04:05:06"), DateTime.Parse("2005-11-08 12:02:06"), DateTime.Parse("2004-02-10 00:04:50") };
+        DateTime[] a = { DateTime.Parse("1999-01-08 04:05:06"), DateTime.Parse("2005-11-08 12:02:06"), DateTime.Parse("2004-02-10 00:04:50") };
 
-            Command.CommandText = "SELECT * FROM ArraysTimestampWithoutTimeZone;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysTimestampWithoutTimeZone;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 		//	Assert.AreEqual(a,(DateTime[])Reader.GetValue(0));
@@ -950,87 +950,87 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		[Test]
 		public void ArraysInterval()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysInterval (t interval[]);";
+        Command.CommandText = "CREATE TABLE ArraysInterval (t interval[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysInterval VALUES ('{1 12:59:10,2 01:23:34}');";
+        Command.CommandText = "INSERT INTO ArraysInterval VALUES ('{1 12:59:10,2 01:23:34}');";
 			Command.ExecuteNonQuery();
-            //EDBTypes.EDBTimeSpan[] a = { EDBTypes.EDBTimeSpan.Parse("1 day 12:59:10"), EDBTypes.EDBTimeSpan.Parse("2 days 01:23:34") };
-            TimeSpan[] a = { new TimeSpan(1, 12, 59, 10), new TimeSpan(2, 1, 23, 34) };
+        //EDBTypes.EDBTimeSpan[] a = { EDBTypes.EDBTimeSpan.Parse("1 day 12:59:10"), EDBTypes.EDBTimeSpan.Parse("2 days 01:23:34") };
+        TimeSpan[] a = { new TimeSpan(1, 12, 59, 10), new TimeSpan(2, 1, 23, 34) };
 
-            Command.CommandText = "SELECT * FROM ArraysInterval;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT * FROM ArraysInterval;";
+        using var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual(a,(TimeSpan[])Reader.GetValue(0));
+        Assert.IsTrue(Reader.Read());
+        Assert.AreEqual(a,(TimeSpan[])Reader.GetValue(0));
 			
 			Reader.Close();
 
 		}
 
-        
+    
 		[Test]
 		public void ArraysInterval2()
 		{
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraysInterval2 (t interval[]);";
+        Command.CommandText = "CREATE TABLE ArraysInterval2 (t interval[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraysInterval2 VALUES ('{-23:00:00,2 01:23:34,1 day -01:00:00,21 days}');";
+        Command.CommandText = "INSERT INTO ArraysInterval2 VALUES ('{-23:00:00,2 01:23:34,1 day -01:00:00,21 days}');";
 			Command.ExecuteNonQuery();
 
-            /*
-            EDBTypes.EDBTimeSpan[] a = { EDBTypes.EDBTimeSpan.Parse("-23:00:00"),
-                EDBTypes.EDBTimeSpan.Parse("2 days 01:23:34"),
-                                         EDBTypes.EDBTimeSpan.Parse("1 day -01:00:00"),
-                EDBTypes.EDBTimeSpan.Parse("21 days")};
-            */
+        /*
+        EDBTypes.EDBTimeSpan[] a = { EDBTypes.EDBTimeSpan.Parse("-23:00:00"),
+            EDBTypes.EDBTimeSpan.Parse("2 days 01:23:34"),
+                                     EDBTypes.EDBTimeSpan.Parse("1 day -01:00:00"),
+            EDBTypes.EDBTimeSpan.Parse("21 days")};
+        */
 
-            TimeSpan[] a = { new TimeSpan(-23, 0, 0), new TimeSpan(2, 1, 23, 34)
-            , new TimeSpan(1, -1, 0, 0), new TimeSpan(21, 0, 0, 0)};
-            Command.CommandText = "SELECT * FROM ArraysInterval2;";
-            using var Reader = Command.ExecuteReader();
+        TimeSpan[] a = { new TimeSpan(-23, 0, 0), new TimeSpan(2, 1, 23, 34)
+        , new TimeSpan(1, -1, 0, 0), new TimeSpan(21, 0, 0, 0)};
+        Command.CommandText = "SELECT * FROM ArraysInterval2;";
+        using var Reader = Command.ExecuteReader();
 			
 			Assert.IsTrue(Reader.Read());
-            Assert.AreEqual(a, (TimeSpan[])Reader.GetValue(0));
+        Assert.AreEqual(a, (TimeSpan[])Reader.GetValue(0));
 			//Console.WriteLine(Reader.GetValue(0).ToString());
 			
 			Reader.Close();
 
 		}
-        
+    
 		[Test]
 		public void ArraySelect()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArraySelect (a int2[],b int, c name[],e float8[],f char(5)[],g varchar(5)[]);";
+        Command.CommandText = "CREATE TABLE ArraySelect (a int2[],b int, c name[],e float8[],f char(5)[],g varchar(5)[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraySelect (a,b, c, e, f, g) " +
-  			 " VALUES ('{100,200,300,400,500}', 101, '{}',  '{}', '{}', '{}');	";
+        Command.CommandText = "INSERT INTO ArraySelect (a,b, c, e, f, g) " +
+			 " VALUES ('{100,200,300,400,500}', 101, '{}',  '{}', '{}', '{}');	";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArraySelect (a, b, c, e, f, g) VALUES ('{11,12,23}',103, '{ foobar}', " +
+        Command.CommandText = "INSERT INTO ArraySelect (a, b, c, e, f, g) VALUES ('{11,12,23}',103, '{ foobar}', " +
 				" '{ 3.4,  6.7}', '{abc,abcde}', '{xyz,xyzz}');";
 			Command.ExecuteNonQuery();
 
-            int[] a = { 100, 200, 300, 400, 500 };
-            int[] c = [];
+        int[] a = { 100, 200, 300, 400, 500 };
+        int[] c = [];
 
-            Command.CommandText = "SELECT  * FROM ArraySelect where b = 101;";
-            using var Reader = Command.ExecuteReader();
+        Command.CommandText = "SELECT  * FROM ArraySelect where b = 101;";
+        using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
 			Assert.AreEqual(a,(short[])Reader.GetValue(0));
-            Assert.AreEqual(101, (int)Reader.GetValue(1));
+        Assert.AreEqual(101, (int)Reader.GetValue(1));
 						
 			Reader.Close();
 
@@ -1040,25 +1040,25 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 		public void ArrayUpdate()
 		{
 
-            using var con = OpenConnection();
-            using var Command = new EDBCommand("",con);
+        using var con = OpenConnection();
+        using var Command = new EDBCommand("",con);
 
-            Command.CommandText = "CREATE TABLE ArrayUpdate (a int2[],b int, c name[],e float8[],f char(5)[],g varchar(5)[]);";
+        Command.CommandText = "CREATE TABLE ArrayUpdate (a int2[],b int, c name[],e float8[],f char(5)[],g varchar(5)[]);";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArrayUpdate (a,b, c, e, f, g) " +
+        Command.CommandText = "INSERT INTO ArrayUpdate (a,b, c, e, f, g) " +
 				" VALUES ('{100,200,300,400,500}', 101, '{}',  '{}', '{}', '{}');	";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "UPDATE ArrayUpdate SET e[0] = '1.10'";
+        Command.CommandText = "UPDATE ArrayUpdate SET e[0] = '1.10'";
 			Command.ExecuteNonQuery();
 
-            Command.CommandText = "INSERT INTO ArrayUpdate (a, b, c, e, f, g) VALUES ('{11,12,23}',103, '{ foobar}', " +
+        Command.CommandText = "INSERT INTO ArrayUpdate (a, b, c, e, f, g) VALUES ('{11,12,23}',103, '{ foobar}', " +
 				" '{ 3.4,  6.7}', '{abc,abcde}', '{xyz,xyzz}');";
 			Command.ExecuteNonQuery();
 
-            int[] a = { 100, 200, 300, 400, 500 };
-            Command.CommandText = "SELECT a, e[0] ,e[1]  FROM ArrayUpdate where a[2] = 200;";
+        int[] a = { 100, 200, 300, 400, 500 };
+        Command.CommandText = "SELECT a, e[0] ,e[1]  FROM ArrayUpdate where a[2] = 200;";
 			using var Reader = Command.ExecuteReader();
 
 			Assert.IsTrue(Reader.Read());
@@ -1071,5 +1071,4 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
 		}
 
-    }
 }

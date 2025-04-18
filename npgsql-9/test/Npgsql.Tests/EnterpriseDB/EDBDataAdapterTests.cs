@@ -29,6 +29,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
 
 [TestFixture]
+[NonParallelizable]
 public class EDBDataAdapterTests : EPASTestBase
 {
 

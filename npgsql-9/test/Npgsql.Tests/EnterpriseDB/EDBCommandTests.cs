@@ -231,10 +231,12 @@ public class EDBCommandTests : EPASTestBase
     {
         con.Open();
 
-        var command = new EDBCommand("", con);
-        command.CommandText = "funcC";
+        var command = new EDBCommand("", con)
+        {
+            CommandText = "funcC",
 
-        command.CommandType = CommandType.StoredProcedure;
+            CommandType = CommandType.StoredProcedure
+        };
 
         var result = command.ExecuteReader();
 
@@ -249,8 +251,10 @@ public class EDBCommandTests : EPASTestBase
     {
         con.Open();
 
-        var command = new EDBCommand("funcC", con);
-        command.CommandType = CommandType.StoredProcedure;
+        var command = new EDBCommand("funcC", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         var result = command.ExecuteScalar();
 
@@ -263,8 +267,10 @@ public class EDBCommandTests : EPASTestBase
     {
         con.Open();
 
-        var command = new EDBCommand("public.funcC(:a)", con);
-        command.CommandType = CommandType.StoredProcedure;
+        var command = new EDBCommand("public.funcC(:a)", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         //command.Parameters.Add(new EDBParameter("a", DbType.Int32));
 
@@ -284,8 +290,10 @@ public class EDBCommandTests : EPASTestBase
     {
         con.Open();
 
-        var command = new EDBCommand("funcC(:a)", con);
-        command.CommandType = CommandType.StoredProcedure;
+        var command = new EDBCommand("funcC(:a)", con)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         command.Parameters.Add(new EDBParameter("a", EDBDbType.Integer));
         command.Prepare();
@@ -302,8 +310,10 @@ public class EDBCommandTests : EPASTestBase
     {
         con.Open();
 
-        var command = new EDBCommand("select * from funcb()", con);
-        command.CommandType = CommandType.Text;
+        var command = new EDBCommand("select * from funcb()", con)
+        {
+            CommandType = CommandType.Text
+        };
 
         var dr = command.ExecuteReader();
         Assert.AreEqual(5, dr.FieldCount);
@@ -475,8 +485,10 @@ public class EDBCommandTests : EPASTestBase
         var d = (DateTime)command.ExecuteScalar()!;
         Assert.AreEqual("2002-02-02 09:00:23Z", d.ToString("u"));
 
-        var culture = new DateTimeFormatInfo();
-        culture.TimeSeparator = ":";
+        var culture = new DateTimeFormatInfo
+        {
+            TimeSeparator = ":"
+        };
         var dt = System.DateTime.Parse("2004-06-04 09:48:00", culture);
 
         command.CommandText = "INSERT INTO tableb(field_timestamp) values (:a);delete from tableb where field_serial > 4;";
@@ -500,8 +512,10 @@ public class EDBCommandTests : EPASTestBase
 
         Assert.AreEqual("2002-02-02 09:00:23Z", d.ToString("u"));
 
-        var culture = new DateTimeFormatInfo();
-        culture.TimeSeparator = ":";
+        var culture = new DateTimeFormatInfo
+        {
+            TimeSeparator = ":"
+        };
         var dt = System.DateTime.Parse("2004-06-04 09:48:00", culture);
 
         command.CommandText = "INSERT INTO tableb(field_timestamp) values (:a);delete from tableb where field_serial > 4;";
@@ -1816,8 +1830,10 @@ public class EDBCommandTests : EPASTestBase
     {
         try
         {
-            var command = new EDBCommand("", con);
-            command.CommandText = "DROP TABLE on_hand;";
+            var command = new EDBCommand("", con)
+            {
+                CommandText = "DROP TABLE on_hand;"
+            };
             command.ExecuteNonQuery();
             command.CommandText = "drop TYPE inventory_item;";
             command.ExecuteNonQuery();

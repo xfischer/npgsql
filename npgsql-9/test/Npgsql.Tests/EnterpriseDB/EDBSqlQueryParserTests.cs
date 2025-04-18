@@ -108,10 +108,10 @@ LANGUAGE SQL;
 
     #region Setup / Teardown / Utils
 
-    List<EDBBatchCommand> ParseCommand(string sql, bool redwoodMode, params EDBParameter[] parameters)
+    static List<EDBBatchCommand> ParseCommand(string sql, bool redwoodMode, params EDBParameter[] parameters)
         => ParseCommand(sql, parameters, standardConformingStrings: true, redwoodMode);
 
-    List<EDBBatchCommand> ParseCommand(string sql, EDBParameter[] parameters, bool standardConformingStrings, bool redwoodMode)
+    static List<EDBBatchCommand> ParseCommand(string sql, EDBParameter[] parameters, bool standardConformingStrings, bool redwoodMode)
     {
         var cmd = new EDBCommand(sql);
         cmd.Parameters.AddRange(parameters);

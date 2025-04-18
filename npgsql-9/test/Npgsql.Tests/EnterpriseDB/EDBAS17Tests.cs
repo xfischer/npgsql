@@ -19,13 +19,11 @@ internal class EDBAS17Tests : EPASTestBase
         try
         {
 
-            using (var com = new EDBCommand("", conn))
-            {
-                com.CommandType = CommandType.Text;
+            using var com = new EDBCommand("", conn);
+            com.CommandType = CommandType.Text;
 
-                com.CommandText = query;
-                return await com.ExecuteNonQueryAsync();
-            }
+            com.CommandText = query;
+            return await com.ExecuteNonQueryAsync();
         }
         catch (Exception ex)
         {
@@ -44,21 +42,19 @@ internal class EDBAS17Tests : EPASTestBase
         object? val = null;
         try
         {
-            using (var com = new EDBCommand("", conn))
+            using var com = new EDBCommand("", conn);
+            com.CommandType = CommandType.Text;
+
+            com.CommandText = query;
+            var reader = await com.ExecuteReaderAsync();
+
+            Assert.IsTrue(reader.HasRows);
+
+            if (await reader.ReadAsync())
             {
-                com.CommandType = CommandType.Text;
-
-                com.CommandText = query;
-                var reader = await com.ExecuteReaderAsync();
-
-                Assert.IsTrue(reader.HasRows);
-
-                if (await reader.ReadAsync())
-                {
-                    val = reader.GetValue(0);
-                }
-                await reader.CloseAsync();
+                val = reader.GetValue(0);
             }
+            await reader.CloseAsync();
         }
         catch (Exception ex)
         {
@@ -71,24 +67,22 @@ internal class EDBAS17Tests : EPASTestBase
     {
         try
         {
-            using (var com = new EDBCommand("", conn))
+            using var com = new EDBCommand("", conn);
+            com.CommandType = CommandType.Text;
+
+            com.CommandText = query;
+            var reader = await com.ExecuteReaderAsync();
+
+            Assert.IsTrue(reader.HasRows);
+
+            var i = 0;
+            while (await reader.ReadAsync())
             {
-                com.CommandType = CommandType.Text;
-
-                com.CommandText = query;
-                var reader = await com.ExecuteReaderAsync();
-
-                Assert.IsTrue(reader.HasRows);
-
-                var i = 0;
-                while (await reader.ReadAsync())
-                {
-                    Assert.AreEqual(expected[i], reader.GetString(0));
-                    i++;
-                }
-                Assert.AreEqual(expected.Length, i);
-                await reader.CloseAsync();
+                Assert.AreEqual(expected[i], reader.GetString(0));
+                i++;
             }
+            Assert.AreEqual(expected.Length, i);
+            await reader.CloseAsync();
         }
         catch (Exception ex)
         {
@@ -264,7 +258,7 @@ internal class EDBAS17Tests : EPASTestBase
         Assert.AreEqual(procMsg, message1[0]);
     }
 
-    private async Task SetUpXMLType(EDBConnection conn)
+    private static async Task SetUpXMLType(EDBConnection conn)
     {
         await Execute(conn, "drop procedure xml_funcs_proc;", true);
         await Execute(conn, "drop table person_xmltype;", true);
@@ -336,18 +330,18 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpXMLType(conn);
 
         string[] expected =
-            {
+            [
         "<PDName>test_user1</PDName>",
         "<PDName>test_user2</PDName>",
         "<PDName>test_user3</PDName>",
         "<PDName>test_user4</PDName>",
         "<PDName>test_user5</PDName>"
-    };
+    ];
 
-        string[] expected2 = {
+        string[] expected2 = [
             "<b xmlns=\"http://example.com\">test</b>",
             "<b xmlns=\"http://example.com\">test1</b>"
-           };
+           ];
 
         await RunQueryAndVerifyResultAsync(conn, "SELECT CAST(person_data.EXTRACT_XML('/PDRecord/PDName') AS TEXT) FROM person_xmltype", expected);
 
@@ -368,18 +362,18 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpXMLType(conn);
 
         string[] expected =
-            {
+            [
         "<PDName>test_user1</PDName>",
         "<PDName>test_user2</PDName>",
         "<PDName>test_user3</PDName>",
         "<PDName>test_user4</PDName>",
         "<PDName>test_user5</PDName>"
-    };
+    ];
 
-        string[] expected2 = {
+        string[] expected2 = [
             "<b xmlns=\"http://example.com\">test</b>",
             "<b xmlns=\"http://example.com\">test1</b>"
-           };
+           ];
 
         await RunQueryAndVerifyResultAsync(conn, "SELECT person_data.EXTRACT_XML('/PDRecord/PDName') FROM person_xmltype", expected);
 
@@ -409,17 +403,17 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpXMLType(conn);
 
         string[] expected =
-            {
+            [
         "test_user1",
         "test_user2",
         "test_user3",
         "test_user4",
         "test_user5"
-    };
+    ];
 
-        string[] expected2 = {
+        string[] expected2 = [
             "test"
-           };
+           ];
 
         await RunQueryAndVerifyResultAsync(conn, "SELECT EXTRACTVALUE(person_data, '/PDRecord/PDName') FROM person_xmltype", expected);
 
@@ -439,11 +433,11 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpXMLType(conn);
 
         string[] values =
-            {
+            [
         "1",
         "test_user1@testmail.com",
         "test_user1@testmail.com",
-    };
+    ];
 
         var messages = await ExecuteProcNotice(conn, "xml_funcs_proc");
         Assert.AreEqual(3, messages.Count);
@@ -452,7 +446,7 @@ internal class EDBAS17Tests : EPASTestBase
         Assert.AreEqual(values[2], messages[2]);
     }
 
-    private async Task SetUpXMLDOM(EDBConnection conn)
+    private static async Task SetUpXMLDOM(EDBConnection conn)
     {
         await Execute(conn, "drop procedure xml_dom_proc1;", true);
         await Execute(conn, "drop procedure xml_dom_proc2;", true);
@@ -507,10 +501,10 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpXMLDOM(conn);
 
         string[] values =
-            {
+            [
         "item node: a:item",
         "item attr: romeo@example.com",
-    };
+    ];
 
         var messages = await ExecuteProcNotice(conn, "xml_dom_proc1");
         Assert.AreEqual(2, messages.Count);
@@ -529,16 +523,16 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpXMLDOM(conn);
 
         string[] values =
-            {
+            [
         "<Departments/>\n<Branches/>\n",
-    };
+    ];
 
         var messages = await ExecuteProcNotice(conn, "xml_dom_proc2");
         Assert.AreEqual(1, messages.Count);
         Assert.AreEqual(values[0], messages[0]);
     }
 
-    private async Task SetUpDbmsAssert(EDBConnection conn)
+    private static async Task SetUpDbmsAssert(EDBConnection conn)
     {
         await Execute(conn, "DROP PROCEDURE get_open_data_dbassert;", true);
         await Execute(conn, "DROP TABLE t1_dbassert;", true);
@@ -835,7 +829,7 @@ internal class EDBAS17Tests : EPASTestBase
     }
 
     //--DB-2235 : Implement BFILE as native datatype
-    private async Task SetUpDbmsBFILE(EDBConnection conn)
+    private static async Task SetUpDbmsBFILE(EDBConnection conn)
     {
         await Execute(conn, "DROP PROCEDURE displaybfile_proc", true);
         await Execute(conn, "DROP PROCEDURE substringbfile_proc", true);
@@ -903,11 +897,6 @@ internal class EDBAS17Tests : EPASTestBase
 
         await SetUpDbmsBFILE(conn);
 
-        string[] expected = {
-            "<b xmlns=\"http://example.com\">test</b>",
-            "<b xmlns=\"http://example.com\">test1</b>"
-           };
-
         //The actual test shared by the server team and its output is the following:
         //SELECT * FROM table1_2235;
         // col1_2235 |         col2_2235         
@@ -915,25 +904,23 @@ internal class EDBAS17Tests : EPASTestBase
         //	10 | tmp_2235,"file1_2235.txt"
         //	20 | wrongdir,"file2_2235.txt"
 
-        using (var com = new EDBCommand("", conn))
-        {
-            com.CommandType = CommandType.Text;
+        using var com = new EDBCommand("", conn);
+        com.CommandType = CommandType.Text;
 
-            com.CommandText = "SELECT col1_2235, col2_2235 FROM table1_2235";
-            var reader = await com.ExecuteReaderAsync();
+        com.CommandText = "SELECT col1_2235, col2_2235 FROM table1_2235";
+        var reader = await com.ExecuteReaderAsync();
 
-            Assert.IsTrue(reader.HasRows);
+        Assert.IsTrue(reader.HasRows);
 
-            Assert.IsTrue(await reader.ReadAsync());
-            Assert.AreEqual(10, reader.GetInt32(0));
-            Assert.AreEqual("tmp_2235,\"file1_2235.txt\"", reader.GetValue(1).ToString());
+        Assert.IsTrue(await reader.ReadAsync());
+        Assert.AreEqual(10, reader.GetInt32(0));
+        Assert.AreEqual("tmp_2235,\"file1_2235.txt\"", reader.GetValue(1).ToString());
 
-            Assert.IsTrue(await reader.ReadAsync());
-            Assert.AreEqual(20, reader.GetInt32(0));
-            Assert.AreEqual("wrongdir,\"file2_2235.txt\"", reader.GetValue(1).ToString());
+        Assert.IsTrue(await reader.ReadAsync());
+        Assert.AreEqual(20, reader.GetInt32(0));
+        Assert.AreEqual("wrongdir,\"file2_2235.txt\"", reader.GetValue(1).ToString());
 
-            await reader.CloseAsync();
-        }
+        await reader.CloseAsync();
     }
 
     //--DB-2235 : Implement BFILE as native datatype
@@ -963,10 +950,8 @@ internal class EDBAS17Tests : EPASTestBase
         {
             Directory.CreateDirectory("/tmp");
         }
-        using (var f = File.CreateText("/tmp/file1_2235.txt"))
-        {
-            await f.WriteAsync("this is test\n");
-        }
+        using var f = File.CreateText("/tmp/file1_2235.txt");
+        await f.WriteAsync("this is test\n");
     }
 
 
@@ -981,10 +966,10 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpDbmsBFILE(conn);
 
         string[] values =
-        {
+        [
     "Buffer is NULL",
     "\\x66696c6520636f6e74656e747320696e204246494c45206172656573740a",
-    };
+    ];
 
         var messages = await ExecuteProcNotice(conn, "substringbfile_proc");
         Assert.AreEqual(2, messages.Count);

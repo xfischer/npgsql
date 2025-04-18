@@ -5,16 +5,16 @@ using System.Data;
 using EDBTypes;
 
 
-namespace EnterpriseDB.EDBClient.Tests.Types
-{
+namespace EnterpriseDB.EDBClient.Tests.Types;
+
 	/// <summary>
 	/// Tests for EDBLine
 	/// </summary>
 	/// 
 	[TestFixture]
-    [NonParallelizable]
+[NonParallelizable]
 	public class EDBLineTest : TestBase
-    {
+{
 		EDBConnection? con = null;
 		
 		[SetUp]
@@ -157,4 +157,3 @@ namespace EnterpriseDB.EDBClient.Tests.Types
 			TestUtil.closeDB(con);
 		}
 	}
-}

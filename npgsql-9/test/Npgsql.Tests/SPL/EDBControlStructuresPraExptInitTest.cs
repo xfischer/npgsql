@@ -184,7 +184,7 @@ internal class EDBControlStructuresPraExptInitTest : EPASTestBase
             notice = args.Notice;
             mre.Set();
         };
-        conn.Notice += action;
+        conn!.Notice += action;
         try
         {
             using (var cstmt = new EDBCommand(commandText, conn))

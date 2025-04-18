@@ -1,6 +1,7 @@
 ﻿using System;
 using NUnit.Framework;
 using System.Data;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 
 //EC-2584: Regression Tests for Basic Statement in SPL
@@ -8,6 +9,8 @@ using System.Data;
 //Port JDBC tests to .NET from enhancements\spl\BasicStatementTest.java
 namespace EnterpriseDB.EDBClient.Tests.SPL;
 
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+#pragma warning disable CS8604 
 [TestFixture]
 [NonParallelizable]
 public class EDBBasicStatementTest : EPASTestBase
@@ -329,8 +332,10 @@ public class EDBBasicStatementTest : EPASTestBase
     {
         //Call a procedure has assignment statement
         var commandText = "dept_salary_rpt(:param1,:param2,:param3,:param4,:param5,:param6)";
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1001));
@@ -349,6 +354,7 @@ public class EDBBasicStatementTest : EPASTestBase
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
+
 
         var date = DateTime.Parse(cstmt.Parameters[1].Value.ToString());
         var title = cstmt.Parameters[2].Value.ToString();
@@ -375,8 +381,10 @@ public class EDBBasicStatementTest : EPASTestBase
         Assert.IsTrue(CheckEmployeeExists(1001));
         var deleteExist = "emp_delete(:param1,:param2)";
 
-        var cstmt = new EDBCommand(deleteExist, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(deleteExist, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1001));
@@ -398,8 +406,10 @@ public class EDBBasicStatementTest : EPASTestBase
         Assert.IsFalse(CheckEmployeeExists(1002));
         var deleteNotExist = "emp_delete(:param1,:param2)";
 
-        var cstmt = new EDBCommand(deleteNotExist, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(deleteNotExist, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1002));
@@ -420,8 +430,10 @@ public class EDBBasicStatementTest : EPASTestBase
         Assert.IsFalse(CheckEmployeeExists(2001));
         var commandText = "emp_insert(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 2001));
@@ -435,7 +447,7 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4",
             ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 200));
 
-        var date = DateTime.Now;// DateOnly.FromDateTime(DateTime.Now);
+        var date = DateTime.Now;
         cstmt.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Date, 10, "param5",
             ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, date));
 
@@ -460,8 +472,10 @@ public class EDBBasicStatementTest : EPASTestBase
         //Call divide_it procedure but NULL statement not executed
         var commandText = "divide_it(:param1,:param2,:param3)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 12));
@@ -485,8 +499,10 @@ public class EDBBasicStatementTest : EPASTestBase
         //Call divide_it procedure and NULL statement executed
         var commandText = "divide_it(:param1,:param2,:param3)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 4));
@@ -509,8 +525,10 @@ public class EDBBasicStatementTest : EPASTestBase
         Assert.IsTrue(CheckEmployeeExists(3001));
         var commandText = "return_into(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 3001));
@@ -568,8 +586,10 @@ public class EDBBasicStatementTest : EPASTestBase
         Assert.IsFalse(CheckEmployeeExists(3002));
         var commandText = "return_into(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 3002));
@@ -611,7 +631,7 @@ public class EDBBasicStatementTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
+    [EDBExplicit("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
     public void ReturningIntoFromDeleteStatementExistsTest()
     {
         //Delete a employee and use return into statement to get information
@@ -619,8 +639,10 @@ public class EDBBasicStatementTest : EPASTestBase
 
         var commandText = "return_into_from_delete";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         EDBCommandBuilder.DeriveParameters(cstmt);
 
@@ -671,8 +693,10 @@ public class EDBBasicStatementTest : EPASTestBase
 
         var commandText = "return_into_from_delete";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         EDBCommandBuilder.DeriveParameters(cstmt);
 
@@ -691,7 +715,7 @@ public class EDBBasicStatementTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
+    [EDBExplicit("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
     public void SelectIntoStatementExistsTest()
     {
         /* This test is not complete and corresponds to the following JDBC test case.
@@ -737,7 +761,7 @@ public class EDBBasicStatementTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
+    [EDBExplicit("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
     public void SelectIntoStatementNotExistsTest()
     {
         /* This test is not complete and corresponds to the following JDBC test case.
@@ -758,13 +782,15 @@ Assert.assertEquals("Employee # 4003 not found", msgNotExists);
     }
 
     [Test]
-public void SelectIntoExceptionStatementTest()
+    public void SelectIntoExceptionStatementTest()
     {
         //Call select into statement without exception
         var commandText = "select_into_exception_query(:param1,:param2,:param3)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 31));
@@ -781,16 +807,18 @@ public void SelectIntoExceptionStatementTest()
         var msg = cstmt.Parameters[2].Value.ToString();
         Assert.AreEqual("WARD", name);
         Assert.AreEqual(string.Empty, msg);
-}
+    }
 
     [Test]
-public void SelectIntoExceptionStatementErrorTest()
+    public void SelectIntoExceptionStatementErrorTest()
     {
         //Call select into statement with TOO_MANY_ROWS exception
         var commandText = "select_into_exception_query(:param1,:param2,:param3)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 41));
@@ -807,17 +835,19 @@ public void SelectIntoExceptionStatementErrorTest()
         var msg = cstmt.Parameters[2].Value.ToString();
         Assert.AreEqual("JONES", name);
         Assert.AreEqual("More than one employee found", msg);
-}
+    }
 
     [Test]
-public void UpdateStatementExistsTest()
+    public void UpdateStatementExistsTest()
     {
         //Update employee and get employee information
         Assert.IsTrue(CheckEmployeeExists(3001));
         var commandText = "emp_comp_update(:param1,:param2,:param3, :param4)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 3001));
@@ -846,18 +876,20 @@ public void UpdateStatementExistsTest()
         Assert.AreEqual(210000, comm, 0.01);
 
         selectResult.Close();
-}
+    }
 
     [Test]
-public void UpdateStatementNotExistsTest()
+    public void UpdateStatementNotExistsTest()
     {
         //Update not existing employee get not found message
         Assert.IsFalse(CheckEmployeeExists(3002));
 
         var commandText = "emp_comp_update(:param1,:param2,:param3, :param4)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 3002));
@@ -875,17 +907,19 @@ public void UpdateStatementNotExistsTest()
         cstmt.ExecuteNonQuery();
         var msgNotExists = cstmt.Parameters[3].Value.ToString();
         Assert.AreEqual("Employee # 3002 not found", msgNotExists);
-}
+    }
 
     [Test]
-public void ResultStatusStatementExistsTest()
+    public void ResultStatusStatementExistsTest()
     {
         //Update employees and get row counts
 
         var commandText = "status_query(:param1,:param2,:param3, :param4)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-    cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 41));
@@ -905,20 +939,22 @@ public void ResultStatusStatementExistsTest()
         var msgFound = cstmt.Parameters[2].Value.ToString();
         var msgNotFound = cstmt.Parameters[3].Value.ToString();
 
-    Assert.AreEqual(2, count);
-    Assert.AreEqual("# rows updated: 2",msgFound);
-    Assert.AreEqual(string.Empty, msgNotFound);
-}
+        Assert.AreEqual(2, count);
+        Assert.AreEqual("# rows updated: 2", msgFound);
+        Assert.AreEqual(string.Empty, msgNotFound);
+    }
 
     [Test]
-public void ResultStatusStatementNotExistsTest()
+    public void ResultStatusStatementNotExistsTest()
     {
         //Update not existing employee get not found message
 
         var commandText = "status_query(:param1,:param2,:param3, :param4)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 42));
@@ -941,6 +977,8 @@ public void ResultStatusStatementNotExistsTest()
         Assert.AreEqual(0, count);
         Assert.AreEqual(string.Empty, msgFound);
         Assert.AreEqual("No rows were updated", msgNotFound);
-}
+    }
 }
 
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+#pragma warning restore CS8604

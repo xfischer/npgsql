@@ -90,6 +90,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         }
         catch
         {
+            // Ignore the error
         }
     }
 
@@ -99,8 +100,10 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         //Test return statement
         var commandText = "emp_comp(:param1,:param2)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1000));
@@ -113,7 +116,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
-        var value = double.Parse(cstmt.Parameters[2].Value.ToString());
+        var value = double.Parse(cstmt.Parameters[2].Value!.ToString()!);
 
         Assert.AreEqual(28800.00, value, 0.01);
     }
@@ -124,8 +127,10 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         //Test goto statement with valid employee
         var commandText = "verify_emp(:param1,:param2)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1001));
@@ -135,7 +140,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
-        var value = cstmt.Parameters[1].Value.ToString();
+        var value = cstmt.Parameters[1].Value!.ToString();
 
         Assert.AreEqual("Employee 1001 validated without errors.", value);
     }
@@ -146,8 +151,10 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         //Test goto statment with null ename
         var commandText = "verify_emp(:param1,:param2)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 4001));
@@ -157,11 +164,9 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
-        var value = cstmt.Parameters[1].Value.ToString();
+        var value = cstmt.Parameters[1].Value!.ToString();
 
         Assert.AreEqual("Employee 4001 is not a valid employee.", value);
-
-        //        Assert.assertEquals("Employee 4001 is not a valid employee.", value);
     }
 
     [Test]
@@ -170,8 +175,10 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         //Test goto statment with null job
         var commandText = "verify_emp(:param1,:param2)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 4002));
@@ -181,7 +188,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
-        var value = cstmt.Parameters[1].Value.ToString();
+        var value = cstmt.Parameters[1].Value!.ToString();
 
         Assert.AreEqual("Employee 4002 is not a valid employee.", value);
     }
@@ -192,8 +199,10 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         //Test goto statment with null hiredate
         var commandText = "verify_emp(:param1,:param2)";
 
-        var cstmt = new EDBCommand(commandText, conn);
-        cstmt.CommandType = CommandType.StoredProcedure;
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
 
         cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
             ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 5001));
@@ -203,7 +212,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
-        var value = cstmt.Parameters[1].Value.ToString();
+        var value = cstmt.Parameters[1].Value!.ToString();
 
         Assert.AreEqual("Employee 5001 is not a valid employee.", value);
     }

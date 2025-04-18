@@ -42,397 +42,397 @@ using System.Reflection;
 using System.Text;
 using NUnit.Framework.Constraints;
 
-namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
-{
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
+
 #pragma warning disable CS8602
-    [TestFixture]
-    [NonParallelizable]
-    public class EDBInsertTests : EPASTestBase
+[TestFixture]
+[NonParallelizable]
+public class EDBInsertTests : EPASTestBase
+{
+    private EDBConnection? con = null;
+
+    #region Setup / Tear Down
+    [SetUp]
+    public void Init()
     {
-        private EDBConnection? con = null;
+        con = CreateConnection();
+    }
 
-        #region Setup / Tear Down
-        [SetUp]
-        public void Init()
-        {
-            con = CreateConnection();
-        }
+    [TearDown]
+    protected void TearDown()
+    {
+        if (con.State != ConnectionState.Closed)
+            con.Close();
+    }
 
-        [TearDown]
-        protected void TearDown()
-        {
-            if (con.State != ConnectionState.Closed)
-                con.Close();
-        }
+    #endregion
 
-        #endregion
+    [Test]
+    public void InsertDoubleValue()
+    {
+        con.Open();
 
-        [Test]
-        public void InsertDoubleValue()
-        {
-            con.Open();
 
+        var command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", con);
+        command.Parameters.Add(new EDBParameter(":a", DbType.Double));
 
-            var command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", con);
-            command.Parameters.Add(new EDBParameter(":a", DbType.Double));
+        command.Parameters[0].Value = 7.4D;
 
-            command.Parameters[0].Value = 7.4D;
+        var rowsAdded = command.ExecuteNonQuery();
 
-            var rowsAdded = command.ExecuteNonQuery();
+        Assert.AreEqual(1, rowsAdded);
 
-            Assert.AreEqual(1, rowsAdded);
+        command.CommandText = "select * from tabled where field_float8 = :a";
 
-            command.CommandText = "select * from tabled where field_float8 = :a";
 
+        var dr = command.ExecuteReader();
+        dr.Read();
 
-            var dr = command.ExecuteReader();
-            dr.Read();
+        var result = dr.GetDouble(2);
+        dr.Close();
 
-            var result = dr.GetDouble(2);
-            dr.Close();
+        command.CommandText = "delete from tabled where field_serial > 2;";
+        command.Parameters.Clear();
+        //command.ExecuteNonQuery();
 
-            command.CommandText = "delete from tabled where field_serial > 2;";
-            command.Parameters.Clear();
-            //command.ExecuteNonQuery();
 
+        Assert.AreEqual(7.4D, result);
 
-            Assert.AreEqual(7.4D, result);
+    }
 
-        }
 
+    [Test]
+    public void InsertDoubleValueEDBDbType()
+    {
+        con.Open();
 
-        [Test]
-        public void InsertDoubleValueEDBDbType()
-        {
-            con.Open();
+        var command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", con);
+        command.Parameters.Add(new EDBParameter(":a", EDBDbType.Double));
 
-            var command = new EDBCommand("INSERT INTO tabled(field_float8) values (:a)", con);
-            command.Parameters.Add(new EDBParameter(":a", EDBDbType.Double));
+        command.Parameters[0].Value = 7.4D;
 
-            command.Parameters[0].Value = 7.4D;
+        var rowsAdded = command.ExecuteNonQuery();
 
-            var rowsAdded = command.ExecuteNonQuery();
+        Assert.AreEqual(1, rowsAdded);
 
-            Assert.AreEqual(1, rowsAdded);
+        command.CommandText = "select * from tabled where field_float8 = :a";
+        
+        var dr = command.ExecuteReader();
+        dr.Read();
 
-            command.CommandText = "select * from tabled where field_float8 = :a";
-            
-            var dr = command.ExecuteReader();
-            dr.Read();
+        var result = dr.GetDouble(2);
+        dr.Close();
+        
+        command.CommandText = "delete from tabled where field_serial > 2;";
+        command.Parameters.Clear();
+        //command.ExecuteNonQuery();
 
-            var result = dr.GetDouble(2);
-            dr.Close();
-            
-            command.CommandText = "delete from tabled where field_serial > 2;";
-            command.Parameters.Clear();
-            //command.ExecuteNonQuery();
+        Assert.AreEqual(7.4D, result);
 
-            Assert.AreEqual(7.4D, result);
+    }
 
-        }
+    [Test]
+    public void InsertNullString()
+    {
+        con.Open();
 
-        [Test]
-        public void InsertNullString()
-        {
-            con.Open();
+        var command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
 
-            var command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
+        command.Parameters.Add(new EDBParameter("a", DbType.String));
 
-            command.Parameters.Add(new EDBParameter("a", DbType.String));
+        command.Parameters[0].Value = DBNull.Value;
 
-            command.Parameters[0].Value = DBNull.Value;
+        var rowsAdded = command.ExecuteNonQuery();
 
-            var rowsAdded = command.ExecuteNonQuery();
+        Assert.AreEqual(1, rowsAdded);
 
-            Assert.AreEqual(1, rowsAdded);
+        command.CommandText = "select count(*) from tablea where field_text is null";
+        command.Parameters.Clear();
 
-            command.CommandText = "select count(*) from tablea where field_text is null";
-            command.Parameters.Clear();
+        var result = (long)command.ExecuteScalar()!;
 
-            var result = (long)command.ExecuteScalar();
+        command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea) and field_serial != 4;";
+        command.ExecuteNonQuery();
 
-            command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea) and field_serial != 4;";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(4, result);
-
-
-
-        }
-
-        [Test]
-        public void InsertNullStringEDBDbType()
-        {
-            con.Open();
-
-            var command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
-
-            command.Parameters.Add(new EDBParameter("a", EDBDbType.Text));
-
-            command.Parameters[0].Value = DBNull.Value;
-
-            var rowsAdded = command.ExecuteNonQuery();
-
-            Assert.AreEqual(1, rowsAdded);
-
-            command.CommandText = "select count(*) from tablea where field_text is null";
-            command.Parameters.Clear();
-
-            var result = (long)command.ExecuteScalar();
-
-            command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea) and field_serial != 4;";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(4, result);
-
-
-
-        }
-
-
-
-        [Test]
-        public void InsertNullDateTime()
-        {
-            con.Open();
-
-            var command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", con);
-
-            command.Parameters.Add(new EDBParameter("a", DbType.DateTime));
-
-            command.Parameters[0].Value = DBNull.Value;
-
-            var rowsAdded = command.ExecuteNonQuery();
-
-            Assert.AreEqual(1, rowsAdded);
-
-            command.CommandText = "select count(*) from tableb where field_timestamp is null";
-            command.Parameters.Clear();
-
-            var result = command.ExecuteScalar();
-
-            command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(4, result);
-
-
-
-        }
-
-
-        [Test]
-        public void InsertNullDateTimeEDBDbType()
-        {
-            con.Open();
-
-            var command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", con);
-
-            command.Parameters.Add(new EDBParameter("a", EDBDbType.Timestamp));
-
-            command.Parameters[0].Value = DBNull.Value;
-
-            var rowsAdded = command.ExecuteNonQuery();
-
-            Assert.AreEqual(1, rowsAdded);
-
-            command.CommandText = "select count(*) from tableb where field_timestamp is null";
-            command.Parameters.Clear();
-
-            var result = command.ExecuteScalar();
-
-            command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(4, result);
-
-
-
-        }
-
-
-
-        [Test]
-        public void InsertNullInt16()
-        {
-            con.Open();
-
-
-            var command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
-
-            command.Parameters.Add(new EDBParameter("a", DbType.Int16));
-
-            command.Parameters[0].Value = DBNull.Value;
-
-            var rowsAdded = command.ExecuteNonQuery();
-
-            Assert.AreEqual(1, rowsAdded);
-
-            command.CommandText = "select count(*) from tableb where field_int2 is null";
-            command.Parameters.Clear();
-
-            var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
-
-            command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(4, result);
-
-
-        }
-
-
-        [Test]
-        public void InsertNullInt16EDBDbType()
-        {
-            con.Open();
-
-
-            var command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
-
-            command.Parameters.Add(new EDBParameter("a", EDBDbType.Smallint));
-
-            command.Parameters[0].Value = DBNull.Value;
-
-            var rowsAdded = command.ExecuteNonQuery();
-
-            Assert.AreEqual(1, rowsAdded);
-
-            command.CommandText = "select count(*) from tableb where field_int2 is null";
-            command.Parameters.Clear();
-
-            var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
-
-            command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(4, result);
-
-
-        }
-
-
-        [Test]
-        public void InsertNullInt32()
-        {
-            con.Open();
-
-
-            var command = new EDBCommand("INSERT INTO tablea(field_int4) values (:a)", con);
-
-            command.Parameters.Add(new EDBParameter("a", DbType.Int32));
-
-            command.Parameters[0].Value = DBNull.Value;
-
-            var rowsAdded = command.ExecuteNonQuery();
-
-            Assert.AreEqual(1, rowsAdded);
-
-            command.CommandText = "select count(*) from tablea where field_int4 is null";
-            command.Parameters.Clear();
-
-            var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
-
-            command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(5, result);
-
-        }
-
-
-        [Test]
-        public void InsertNullNumeric()
-        {
-            con.Open();
-
-
-            var command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", con);
-
-            command.Parameters.Add(new EDBParameter("a", DbType.Decimal));
-
-            command.Parameters[0].Value = DBNull.Value;
-
-            var rowsAdded = command.ExecuteNonQuery();
-
-            Assert.AreEqual(1, rowsAdded);
-
-            command.CommandText = "select count(*) from tableb where field_numeric is null";
-            command.Parameters.Clear();
-
-            var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
-
-            command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(3, result);
-
-        }
-
-        [Test]
-        public void InsertNullBoolean()
-        {
-            con.Open();
-
-
-            var command = new EDBCommand("INSERT INTO tablea(field_bool) values (:a)", con);
-
-            command.Parameters.Add(new EDBParameter("a", DbType.Boolean));
-
-            command.Parameters[0].Value = DBNull.Value;
-
-            var rowsAdded = command.ExecuteNonQuery();
-
-            Assert.AreEqual(1, rowsAdded);
-
-            command.CommandText = "select count(*) from tablea where field_bool is null";
-            command.Parameters.Clear();
-
-            var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
-
-            command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
-            command.ExecuteNonQuery();
-
-            Assert.AreEqual(5, result);
-
-        }
-
-        [Test]
-        public void InsertAnsiString()
-        {
-            try
-            {
-                con.Open();
-
-                var command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
-
-                command.Parameters.Add(new EDBParameter("a", DbType.AnsiString));
-
-                command.Parameters[0].Value = "TesteAnsiString";
-
-                var rowsAdded = command.ExecuteNonQuery();
-
-                Assert.AreEqual(1, rowsAdded);
-
-                command.CommandText = string.Format("select count(*) from tablea where field_text = '{0}'", command.Parameters[0].Value);
-                command.Parameters.Clear();
-
-                var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
-
-                command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
-                command.ExecuteNonQuery();
-
-                Assert.AreEqual(1, result);
-            }
-            catch (EDBException ex)
-            {
-                Console.Error.WriteLine(ex.StackTrace);
-            }
-
-        }
+        Assert.AreEqual(4, result);
 
 
 
     }
-#pragma warning restore CS8602
+
+    [Test]
+    public void InsertNullStringEDBDbType()
+    {
+        con.Open();
+
+        var command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
+
+        command.Parameters.Add(new EDBParameter("a", EDBDbType.Text));
+
+        command.Parameters[0].Value = DBNull.Value;
+
+        var rowsAdded = command.ExecuteNonQuery();
+
+        Assert.AreEqual(1, rowsAdded);
+
+        command.CommandText = "select count(*) from tablea where field_text is null";
+        command.Parameters.Clear();
+
+        var result = (long)command.ExecuteScalar()!;
+
+        command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea) and field_serial != 4;";
+        command.ExecuteNonQuery();
+
+        Assert.AreEqual(4, result);
+
+
+
+    }
+
+
+
+    [Test]
+    public void InsertNullDateTime()
+    {
+        con.Open();
+
+        var command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", con);
+
+        command.Parameters.Add(new EDBParameter("a", DbType.DateTime));
+
+        command.Parameters[0].Value = DBNull.Value;
+
+        var rowsAdded = command.ExecuteNonQuery();
+
+        Assert.AreEqual(1, rowsAdded);
+
+        command.CommandText = "select count(*) from tableb where field_timestamp is null";
+        command.Parameters.Clear();
+
+        var result = command.ExecuteScalar();
+
+        command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
+        command.ExecuteNonQuery();
+
+        Assert.AreEqual(4, result);
+
+
+
+    }
+
+
+    [Test]
+    public void InsertNullDateTimeEDBDbType()
+    {
+        con.Open();
+
+        var command = new EDBCommand("INSERT INTO tableb(field_timestamp) values (:a)", con);
+
+        command.Parameters.Add(new EDBParameter("a", EDBDbType.Timestamp));
+
+        command.Parameters[0].Value = DBNull.Value;
+
+        var rowsAdded = command.ExecuteNonQuery();
+
+        Assert.AreEqual(1, rowsAdded);
+
+        command.CommandText = "select count(*) from tableb where field_timestamp is null";
+        command.Parameters.Clear();
+
+        var result = command.ExecuteScalar();
+
+        command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
+        command.ExecuteNonQuery();
+
+        Assert.AreEqual(4, result);
+
+
+
+    }
+
+
+
+    [Test]
+    public void InsertNullInt16()
+    {
+        con.Open();
+
+
+        var command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
+
+        command.Parameters.Add(new EDBParameter("a", DbType.Int16));
+
+        command.Parameters[0].Value = DBNull.Value;
+
+        var rowsAdded = command.ExecuteNonQuery();
+
+        Assert.AreEqual(1, rowsAdded);
+
+        command.CommandText = "select count(*) from tableb where field_int2 is null";
+        command.Parameters.Clear();
+
+        var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+
+        command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
+        command.ExecuteNonQuery();
+
+        Assert.AreEqual(4, result);
+
+
+    }
+
+
+    [Test]
+    public void InsertNullInt16EDBDbType()
+    {
+        con.Open();
+
+
+        var command = new EDBCommand("INSERT INTO tableb(field_int2) values (:a)", con);
+
+        command.Parameters.Add(new EDBParameter("a", EDBDbType.Smallint));
+
+        command.Parameters[0].Value = DBNull.Value;
+
+        var rowsAdded = command.ExecuteNonQuery();
+
+        Assert.AreEqual(1, rowsAdded);
+
+        command.CommandText = "select count(*) from tableb where field_int2 is null";
+        command.Parameters.Clear();
+
+        var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+
+        command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
+        command.ExecuteNonQuery();
+
+        Assert.AreEqual(4, result);
+
+
+    }
+
+
+    [Test]
+    public void InsertNullInt32()
+    {
+        con.Open();
+
+
+        var command = new EDBCommand("INSERT INTO tablea(field_int4) values (:a)", con);
+
+        command.Parameters.Add(new EDBParameter("a", DbType.Int32));
+
+        command.Parameters[0].Value = DBNull.Value;
+
+        var rowsAdded = command.ExecuteNonQuery();
+
+        Assert.AreEqual(1, rowsAdded);
+
+        command.CommandText = "select count(*) from tablea where field_int4 is null";
+        command.Parameters.Clear();
+
+        var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+
+        command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
+        command.ExecuteNonQuery();
+
+        Assert.AreEqual(5, result);
+
+    }
+
+
+    [Test]
+    public void InsertNullNumeric()
+    {
+        con.Open();
+
+
+        var command = new EDBCommand("INSERT INTO tableb(field_numeric) values (:a)", con);
+
+        command.Parameters.Add(new EDBParameter("a", DbType.Decimal));
+
+        command.Parameters[0].Value = DBNull.Value;
+
+        var rowsAdded = command.ExecuteNonQuery();
+
+        Assert.AreEqual(1, rowsAdded);
+
+        command.CommandText = "select count(*) from tableb where field_numeric is null";
+        command.Parameters.Clear();
+
+        var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+
+        command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
+        command.ExecuteNonQuery();
+
+        Assert.AreEqual(3, result);
+
+    }
+
+    [Test]
+    public void InsertNullBoolean()
+    {
+        con.Open();
+
+
+        var command = new EDBCommand("INSERT INTO tablea(field_bool) values (:a)", con);
+
+        command.Parameters.Add(new EDBParameter("a", DbType.Boolean));
+
+        command.Parameters[0].Value = DBNull.Value;
+
+        var rowsAdded = command.ExecuteNonQuery();
+
+        Assert.AreEqual(1, rowsAdded);
+
+        command.CommandText = "select count(*) from tablea where field_bool is null";
+        command.Parameters.Clear();
+
+        var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+
+        command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
+        command.ExecuteNonQuery();
+
+        Assert.AreEqual(5, result);
+
+    }
+
+    [Test]
+    public void InsertAnsiString()
+    {
+        try
+        {
+            con.Open();
+
+            var command = new EDBCommand("INSERT INTO tablea(field_text) values (:a)", con);
+
+            command.Parameters.Add(new EDBParameter("a", DbType.AnsiString));
+
+            command.Parameters[0].Value = "TesteAnsiString";
+
+            var rowsAdded = command.ExecuteNonQuery();
+
+            Assert.AreEqual(1, rowsAdded);
+
+            command.CommandText = string.Format("select count(*) from tablea where field_text = '{0}'", command.Parameters[0].Value);
+            command.Parameters.Clear();
+
+            var result = command.ExecuteScalar(); // The missed cast is needed as Server7.2 returns Int32 and Server7.3+ returns Int64
+
+            command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
+            command.ExecuteNonQuery();
+
+            Assert.AreEqual(1, result);
+        }
+        catch (EDBException ex)
+        {
+            Console.Error.WriteLine(ex.StackTrace);
+        }
+
+    }
+
+
+
 }
+#pragma warning restore CS8602
+

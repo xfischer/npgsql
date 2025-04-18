@@ -195,8 +195,11 @@ public static class TestUtil
         // ((EnterpriseDB.EDBClient.PostgresDatabaseInfo)conn.Connector.DatabaseInfo).LongVersionv 
     }
 
-    public static bool MinimumPgVersion(EDBConnection conn, string minVersion, string? ignoreText = null)
+    public static bool MinimumPgVersion(EDBConnection? conn, string minVersion, string? ignoreText = null)
     {
+        if (conn is null)
+            throw new ArgumentNullException(nameof(conn));
+
         var min = new Version(minVersion);
         if (conn.PostgreSqlVersion < min)
         {
