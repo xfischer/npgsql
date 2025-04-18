@@ -1,167 +1,94 @@
 using System;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient;
-using System.Data;
 
-namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
+
+
+/// <summary>
+/// This Class contains functions for unit testing of .Net Driver.D:\shared\EDBNunit\
+/// </summary>
+[TestFixture]
+[NonParallelizable]
+public class EDBConnectionTests : TestBase
 {
-#pragma warning disable CS8602
-    /// <summary>
-    /// This Class contains functions for unit testing of .Net Driver.D:\shared\EDBNunit\
-    /// </summary>
-    [TestFixture]
-    [NonParallelizable]
-	public class EDBConnectionTests : TestBase
+    EDBConnection? con = null;
+
+    [SetUp]
+    public void Init()
     {
-		EDBConnection? con = null;
+        con = OpenConnection();
+        Console.WriteLine(con.ConnectionString.ToString());
+    }
 
-		[SetUp]
-		public void Init()
-		{			
-			con = OpenConnection();
-			Console.WriteLine(con.ConnectionString.ToString());
-		}
+    [Test]
+    public void TestConnecting()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            con = OpenConnection();
+        }
+        , "Exception was thrown while opening connection");
+    }
 
-		[Test]
-		public void _testConnecting()
-		{
-			try 
-			{
-				con = OpenConnection();
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}
-		}
+    [Test]
+    public void ChangeDatabase()
+    {
 
-		[Test]
-		public void _testConnectingWithoutPooling()
-		{
-			try 
-			{
-			//	con = OpenConnectionwithoutPooling();
-			}
-			catch(EDBException e)
-			{
-				throw new Exception(e.ToString());
-			}
-		}
-		[Test]
-		public void Open()
-		{
-			try
-			{
-				//con.Open();
-				//Assert.AreEqual("ConnectionOpen", ConnectionState.Open, con.State);
-			}
-			catch (Exception e)
-			{
-				Console.WriteLine(e.ToString());
-			}
+        con!.ChangeDatabase("template1");
 
+        var command = new EDBCommand("select current_database()", con);
 
-		}
+        var result = (string)command.ExecuteScalar()!;
+        Console.WriteLine(result);
+        Assert.AreEqual("template1", result);
 
-		[Test]
-		public void ChangeDatabase()
-		{
+    }
 
-			con.ChangeDatabase("template1");
+    [TearDown]
+    public void Dispose()
+    {
+        TestUtil.closeDB(con);
+    }
 
-			var command = new EDBCommand("select current_database()", con);
+    //Haroon
+    [Test]
+    public void TestEDBCommandStatement()
+    {
 
-			var result = (string)command.ExecuteScalar()!;
-			Console.WriteLine(result);
-			Assert.AreEqual("template1", result);
+        var Command = new EDBCommand("", con);
+        Assert.IsNotNull(Command);
+        Command.Dispose();
 
-		}
-
-		[Test]		
-		public void NestedTransaction()
-		{
-			//con.Open();
-
-			/*EDBTransaction t = null;
-			try
-			{
-				t = con.BeginTransaction();
-
-				t = con.BeginTransaction();
-			}
-			catch(EDBException e)
-			{
-				// Catch exception so we call rollback the transaction initiated.
-				// This way, the connection pool doesn't get a connection with a transaction
-				// started.
-				t.Rollback();
-				//throw e;
-			}*/
-
-		}
-
-		[Test]
-		public void SequencialTransaction()
-		{
-			/*con.Open();
-
-			EDBTransaction t = con.BeginTransaction();
-
-			t.Rollback();
-
-			t = con.BeginTransaction();
-
-			t.Rollback();*/
-			
+        //Ask for Updateable ResultSets
+    }
 
 
-		}
+    [Test]
+    public void TestIsClosed()
+    {
+        var Con = OpenConnection();
 
-		[TearDown] 
-		public void Dispose()
-		{
-			TestUtil.closeDB(con);
-		}
+        // Should not say closed
+        Console.WriteLine(Con.State.ToString());
 
-		//Haroon
-		[Test]
-		public void TestEDBCommandStatement() 
-		{
-			
-			var Command=new EDBCommand("",con);	
-			Assert.IsNotNull(Command);
-			Command.Dispose();
-		
-			//Ask for Updateable ResultSets
-		}
+        Assert.AreEqual("OPEN", Con.State.ToString().ToUpper());
 
-		
-		[Test]
-		public void TestIsClosed()
-		{
-		 var Con = OpenConnection();
+        TestUtil.closeDB(Con);
+        Console.WriteLine(Con.State.ToString());
 
-		// Should not say closed
-			Console.WriteLine(Con.State.ToString());
+        // Should now say closed
+        Assert.AreEqual("CLOSED", Con.State.ToString().ToUpper());
+    }
 
-		Assert.AreEqual("OPEN",Con.State.ToString().ToUpper());
+    [Test]
+    public void TestDoubleClose()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            var Con = OpenConnection();
+            Con.Close();
+            Con.Close();
+        });
+    }
 
-		TestUtil.closeDB(Con);
-			Console.WriteLine(Con.State.ToString());
-
-		// Should now say closed
-		Assert.AreEqual("CLOSED",Con.State.ToString().ToUpper());
-		}
-		
-		[Test]
-		public void TestDoubleClose()
-		{
-			var Con = OpenConnection();
-			Con.Close();
-			Con.Close();
-		}
-
-	}
-
-#pragma warning restore CS8602
 }

@@ -7,8 +7,6 @@ using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
-#pragma warning disable CS8604
-#pragma warning disable CS8602
     /// <summary>
     /// Tests for EDBLine
     /// </summary>
@@ -18,7 +16,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     public class EDBLargeObjectTests : EPASTestBase
     {
         EDBConnection? con = null;
-        string testPath = @"C:\Windows\media\Windows Background.wav";
+        readonly string testPath = @"C:\Windows\media\Windows Background.wav";
 
         [SetUp]
         public void Init()
@@ -32,6 +30,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         }
 
         [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+        [Obsolete("EDBLargeObjectManager is obsoleted by community")]
         public void LOCreateTest()
         {
             // Retrieve a Large Object Manager for this connection
@@ -45,32 +44,33 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(1, rowsAdded);
 
             command = new EDBCommand("select f1 from LOTest;", con);
-            var oid2 = (uint)command.ExecuteScalar();
-            Assert.True(0 != oid, "Invalid OID value");
+            var oid2 = (uint)command.ExecuteScalar()!;
+            Assert.NotZero(oid2, "Invalid OID value");
         }
 
         [Test]
+        [Obsolete("EDBLargeObjectManager is obsoleted by community")]
         public void LOImportTest()
         {
             // Retrieve a Large Object Manager for this connection
             var manager = new EDBLargeObjectManager(con);
 
             // Create a new empty file, returning the identifier to later access it
-            //uint oid = manager.Create();
             var command = new EDBCommand("INSERT INTO LOTest VALUES(1, lo_import('" + testPath + "')); ", con);
 
             var rowsAdded = command.ExecuteNonQuery();
             Assert.AreEqual(1, rowsAdded);
 
             command = new EDBCommand("select f1 from LOTest;", con);
-            var oid = (uint)command.ExecuteScalar();
-            Assert.True(0 != oid, "Invalid OID value");
+            var oid = (uint)command.ExecuteScalar()!;
+            Assert.NotZero(oid, "Invalid OID value");
         }
 
         [Test]
+        [Obsolete("EDBLargeObjectManager is obsoleted by community")]
         public void CreateTest()
         {
-            try
+            Assert.DoesNotThrow(() =>
             {
                 // Retrieve a Large Object Manager for this connection
                 var manager = new EDBLargeObjectManager(con);
@@ -89,19 +89,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                         stream.Seek(0, System.IO.SeekOrigin.Begin);
 
                         var buf2 = new byte[buf.Length];
-                        stream.Read(buf2, 0, buf2.Length);
+                        _ = stream.Read(buf2, 0, buf2.Length);
 
                         // buf2 now contains 1, 2, 3
                     }
                     // Save the changes to the object
                     transaction.Commit();
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-
+            });
         }
 
         [TearDown]
@@ -114,6 +109,4 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             TestUtil.closeDB(con);
         }
     }
-#pragma warning restore CS8604
-#pragma warning restore CS8602
 }

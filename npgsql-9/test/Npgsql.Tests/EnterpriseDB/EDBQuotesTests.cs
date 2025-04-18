@@ -26,626 +26,439 @@ using System.Collections;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using EnterpriseDB.EDBClient;
 using NUnit.Framework;
 using System.Data;
 
-
-namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
-{
-#pragma warning disable CS8600
 #pragma warning disable CS8602
-    [TestFixture]
-    [NonParallelizable]
-    public class EDBQuotesTests : EPASTestBase
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
+
+[TestFixture]
+[NonParallelizable]
+public class EDBQuotesTests : EPASTestBase
+{
+
+    [OneTimeSetUp]
+    public void Setup()
     {
-        private EDBConnection? con = null;
-
-        #region Setup / Tear Down
-
-        [SetUp]
-        public void Init()
-        {
-            con = CreateConnection();
-        }
-
-        [TearDown]
-        protected void TearDown()
-        {
-            if (con.State != ConnectionState.Closed)
-                con.Close();
-        }
-        #endregion
-
-
-        [Test]
-        public void QuoteHandling1()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar));
-            com.Parameters[0].Value = "SMITH";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetDecimal(0));
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling2()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            com.CommandText = "select id from Quote where b= :No";
-            com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar));
-            com.Parameters[0].Value = "t";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling3()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, 4));
-            com.Parameters[0].Value = "SMITH";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling4()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            com.CommandText = "select id from Quote where b= :No";
-            com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, 1));
-            com.Parameters[0].Value = "t";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling5()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, 5));
-            com.Parameters[0].Value = "SMITH";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetDecimal(0));
-
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling6()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            EDBDataReader? Reader = null;
-            com.CommandText = "select id from Quote where b= :No";
-
-
-            com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Char, 1));
-            com.Parameters[0].Value = "t";
-            Reader = com.ExecuteReader();
-
-
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-
-        [Test]
-        public void QuoteHandling7()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            EDBDataReader? Reader = null;
-            com.CommandText = "select id from Quote where b= :No";
-            try
-            {
-                com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Char));
-                com.Parameters[0].Value = "t";
-                Reader = com.ExecuteReader();
-
-
-            }
-
-            catch (EDBException)
-            {
-                //Console.WriteLine(exp.Message);
-                com.CommandText = "DROP TABLE Quote";
-                com.ExecuteNonQuery();
-                con.Close();
-                return;
-            }
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling8()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            EDBDataReader? Reader = null;
-            com.CommandText = "select id from Quote where b= :No";
-            try
-            {
-                com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar));
-                com.Parameters[0].Value = "t";
-                Reader = com.ExecuteReader();
-
-            }
-
-            catch (EDBException)
-            {
-                //Console.WriteLine(exp.Message);
-                com.CommandText = "DROP TABLE Quote";
-                com.ExecuteNonQuery();
-                con.Close();
-                return;
-            }
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling9()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            EDBDataReader? Reader = null;
-            com.CommandText = "select id from Quote where b= :No";
-            try
-            {
-                com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Char, -1));
-                com.Parameters[0].Value = "t";
-                Reader = com.ExecuteReader();
-
-
-                //Assert.Fail("should fail for negative value of size");
-            }
-
-            catch (EDBException)
-            {
-                //Console.WriteLine(exp.Message);
-                com.CommandText = "DROP TABLE Quote";
-                com.ExecuteNonQuery();
-                con.Close();
-                return;
-            }
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling10()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, -4));
-            com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = null;
-            try
-            {
-                Reader = com.ExecuteReader();
-
-            }
-
-            catch (EDBException)
-            {
-                con.Close();
-                return;
-            }
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-
-        [Test]
-        public void QuoteHandling11()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, -4));
-            com.Parameters[0].Value = "SMITH";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetDecimal(0));
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling12()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            com.CommandText = "select id from Quote where b= :No";
-            com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, -1));
-            com.Parameters[0].Value = "t";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-
-        [Test]
-        public void QuoteHandling13()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, -4));
-            com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = null;
-            try
-            {
-                Reader = com.ExecuteReader();
-
-            }
-
-            catch (Exception)
-            {
-                return;
-            }
-
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetDecimal(0));
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling14()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            com.CommandText = "select id from Quote where b= :No";
-            com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, -1));
-            com.Parameters[0].Value = "t";
-            EDBDataReader Reader = null;
-            try
-            {
-                Reader = com.ExecuteReader();
-
-            }
-
-            catch (Exception)
-            {
-                com.CommandText = "DROP TABLE Quote";
-                com.ExecuteNonQuery();
-
-                return;
-            }
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-
-        [Test]
-        public void QuoteHandling15()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            EDBDataReader Reader = null;
-            com.CommandText = "select id from Quote where b= :No";
-            try
-            {
-                com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Char, 0));
-                com.Parameters[0].Value = "t";
-                Reader = com.ExecuteReader();
-
-
-                //Assert.Fail("should fail for negative value of size");
-            }
-
-            catch (EDBException)
-            {
-                //Console.WriteLine(exp.Message);
-                com.CommandText = "DROP TABLE Quote";
-                com.ExecuteNonQuery();
-                con.Close();
-                return;
-            }
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling16()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, 4));
-            com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = null;
-            try
-            {
-                Reader = com.ExecuteReader();
-
-            }
-
-            catch (EDBException)
-            {
-                con.Close();
-                return;
-            }
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-
-        [Test]
-        public void QuoteHandling17()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, 4));
-            com.Parameters[0].Value = "SMITH";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetDecimal(0));
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling18()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            com.CommandText = "select id from Quote where b= :No";
-            com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, 0));
-            com.Parameters[0].Value = "t";
-            var Reader = com.ExecuteReader();
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
-
-        [Test]
-        public void QuoteHandling19()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "select empno from emp where ename= :Name";
-            com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, 4));
-            com.Parameters[0].Value = "SMITH";
-            EDBDataReader Reader = null;
-            try
-            {
-                Reader = com.ExecuteReader();
-
-            }
-
-            catch (Exception)
-            {
-                return;
-            }
-
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            con.Close();
-        }
-
-        [Test]
-        public void QuoteHandling20()
-        {
-            con.Open();
-
-            var com = new EDBCommand("", con);
-            com.CommandText = "CREATE TABLE Quote(id int4, b char)";
-            com.ExecuteNonQuery();
-            com.CommandText = "INSERT INTO Quote values(1, 't')";
-            com.ExecuteNonQuery();
-            com.CommandText = "select id from Quote where b= :No";
-            com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, 0));
-            com.Parameters[0].Value = "t";
-            EDBDataReader Reader = null;
-            try
-            {
-                Reader = com.ExecuteReader();
-
-            }
-
-            catch (Exception)
-            {
-                com.CommandText = "DROP TABLE Quote";
-                com.ExecuteNonQuery();
-
-                return;
-            }
-
-            while (Reader.Read())
-            {
-                Console.WriteLine(Reader.GetInt32(0));
-            }
-            Reader.Close();
-            com.CommandText = "DROP TABLE Quote";
-            com.ExecuteNonQuery();
-            con.Close();
-        }
-
+        using var con = OpenConnection();
+        DropTableQuote(con);
+        con.Close();
     }
-#pragma warning restore CS8600
-#pragma warning restore CS8602
+
+    private static void DropTableQuote(EDBConnection con)
+    {
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "DROP TABLE Quote"
+        };
+        try
+        {
+            com.ExecuteNonQuery();
+        }
+        catch (Exception)
+        {
+            // swallow
+        }
+    }
+
+    [Test]
+    public void QuoteHandling1()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "select empno from emp where ename= :Name"
+        };
+        com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar));
+        com.Parameters[0].Value = "SMITH";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows);
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+        }
+        Reader.Close();
+        con.Close();
+    }
+
+    [Test]
+    public void QuoteHandling2()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        com.CommandText = "select id from Quote where b= :No";
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar));
+        com.Parameters[0].Value = "t";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows);
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+        }
+        Reader.Close();
+        DropTableQuote(con);
+    }
+
+    [Test]
+    public void QuoteHandling3()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "select empno from emp where ename= :Name"
+        };
+        com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, 5));
+        com.Parameters[0].Value = "SMITH";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        con.Close();
+    }
+
+    [Test]
+    public void QuoteHandling4()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        com.CommandText = "select id from Quote where b= :No";
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, 1));
+        com.Parameters[0].Value = "t";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        DropTableQuote(con);
+    }
+
+    [Test]
+    public void QuoteHandling5()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "select empno from emp where ename= :Name"
+        };
+        com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, 5));
+        com.Parameters[0].Value = "SMITH";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+        }
+        Reader.Close();
+        con.Close();
+    }
+
+    [Test]
+    public void QuoteHandling6()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        EDBDataReader? Reader = null;
+        com.CommandText = "select id from Quote where b= :No";
+
+
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Char, 1));
+        com.Parameters[0].Value = "t";
+        Reader = com.ExecuteReader();
+
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        DropTableQuote(con);
+    }
+
+
+    [Test]
+    public void QuoteHandling7()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        EDBDataReader? Reader = null;
+        com.CommandText = "select id from Quote where b= :No";
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Char));
+        com.Parameters[0].Value = "t";
+        Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        DropTableQuote(con);
+    }
+
+    [Test]
+    public void QuoteHandling8()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        EDBDataReader? Reader = null;
+        com.CommandText = "select id from Quote where b= :No";
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar));
+        com.Parameters[0].Value = "t";
+        Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+
+        Reader.Close();
+        DropTableQuote(con);
+    }
+
+    [Test]
+    public void QuoteHandling9()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        EDBDataReader? Reader = null;
+        com.CommandText = "select id from Quote where b= :No";
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Char, -1));
+        com.Parameters[0].Value = "t";
+        Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        DropTableQuote(con);
+    }
+
+    [Test]
+    public void QuoteHandling10()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "select empno from emp where ename= :Name"
+        };
+        com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, -4));
+        com.Parameters[0].Value = "SMITH";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        con.Close();
+    }
+
+
+    [Test]
+    public void QuoteHandling11()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "select empno from emp where ename= :Name"
+        };
+        com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, -4));
+        com.Parameters[0].Value = "SMITH";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+        }
+        Reader.Close();
+        con.Close();
+    }
+
+    [Test]
+    public void QuoteHandling12()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        com.CommandText = "select id from Quote where b= :No";
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, -1));
+        com.Parameters[0].Value = "t";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        DropTableQuote(con);
+    }
+
+    
+    [Test]
+    public void QuoteHandling15()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        
+        com.CommandText = "select id from Quote where b= :No";
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Char, 0));
+        com.Parameters[0].Value = "t";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        DropTableQuote(con);
+    }
+
+    [Test]
+    public void QuoteHandling16()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "select empno from emp where ename= :Name"
+        };
+        com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Char, 5));
+        com.Parameters[0].Value = "SMITH";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        con.Close();
+    }
+
+
+    [Test]
+    public void QuoteHandling17()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "select empno from emp where ename= :Name"
+        };
+        com.Parameters.Add(new EDBParameter("Name", EDBTypes.EDBDbType.Varchar, 5));
+        com.Parameters[0].Value = "SMITH";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+        }
+        Reader.Close();
+        con.Close();
+    }
+
+    [Test]
+    public void QuoteHandling18()
+    {
+        using var con = OpenConnection();
+
+        var com = new EDBCommand("", con)
+        {
+            CommandText = "CREATE TABLE Quote(id int4, b char)"
+        };
+        com.ExecuteNonQuery();
+        com.CommandText = "INSERT INTO Quote values(1, 't')";
+        com.ExecuteNonQuery();
+        com.CommandText = "select id from Quote where b= :No";
+        com.Parameters.Add(new EDBParameter("No", EDBTypes.EDBDbType.Varchar, 0));
+        com.Parameters[0].Value = "t";
+        var Reader = com.ExecuteReader();
+
+        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        while (Reader.Read())
+        {
+            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+        }
+        Reader.Close();
+        DropTableQuote(con);
+    }
 }

@@ -1,320 +1,282 @@
 using System;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient;
 using System.Data;
-using NUnit;
 
 
-namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
+namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
+
+/// <summary>
+/// it creates a new table importing the schema of an existing table
+/// </summary>
+[TestFixture]
+[NonParallelizable]
+public class EDBImportExistingSchema : EPASTestBase
 {
-	/// <summary>
-	/// it creates a new table importing the schema of an existing table
-	/// </summary>
-	[TestFixture]
-    [NonParallelizable]
-	public class EDBImportExistingSchema : EPASTestBase
-    {
-		
-		EDBConnection? con=null;
 
-        [SetUp]
-        public void SetUp()
+    EDBConnection? con = null;
+
+    [SetUp]
+    public void SetUp()
+    {
+        con = OpenConnection();
+    }
+
+    [Test]
+    public void CreateTable()
+    {
+        try
         {
-            con = OpenConnection();
+
+            //create the table
+            var create = "CREATE TABLE NewTable AS Select * From emp";
+            var Command = new EDBCommand("", con)
+            {
+                CommandText = create,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
+
+            //test the existence of the new table
+
+            var Select = "SELECT * FROM NewTable";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = Select,
+                CommandType = CommandType.Text
+            };
+
+            var Reader = Command.ExecuteReader();
+
+            Assert.IsTrue(Reader.Read(), "No data returned from Select");
+
+            Reader.Close();
+            var DropTable = "Drop TABLE NewTable";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = DropTable,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
+
+
+        }
+        catch (EDBException exp)
+        {
+            Console.WriteLine(exp.Message);
+            throw new Exception(exp.ToString());
         }
 
-        [Test]
-		public void CreateTable()
-		{
-			try
+    }
+
+    [Test]
+
+    public void CreateViewOnImportedSchema()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            var createTable = "CREATE TABLE TableForView AS Select * From dept";
+            var Command = new EDBCommand("", con)
             {
+                CommandText = createTable,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-                //create the table
-                var create="CREATE TABLE NewTable AS Select * From emp";
-                var Command = new EDBCommand("",con);
-				Command.CommandText=create;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
-
-				//test the existence of the new table
-
-				var Select="SELECT * FROM NewTable";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Select;
-				Command.CommandType=CommandType.Text;
-
-				var Reader=Command.ExecuteReader();
-
-				Assert.IsTrue(Reader.Read(),"No data returned from Select");
-
-                Reader.Close();
-				var DropTable="Drop TABLE NewTable";
-				Command=new EDBCommand("",con);
-				Command.CommandText=DropTable;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
-
-
-			}
-			catch(EDBException exp)
+            var CreateView = "CREATE OR REPLACE VIEW ImportedSchemaView AS Select * From TableForView";
+            Command = new EDBCommand("", con)
             {
-                Console.WriteLine(exp.Message);
-                throw new Exception(exp.ToString());
-			}
+                CommandText = CreateView
+            };
+            Command.ExecuteNonQuery();
 
-		}
-
-		[Test]
-			
-		public void CreateViewOnImportedSchema()
-		{
-			try
+            var Select = "SELECT * FROM ImportedSchemaView";
+            Command = new EDBCommand("", con)
             {
+                CommandText = Select,
+                CommandType = CommandType.Text
+            };
 
-                var createTable="CREATE TABLE TableForView AS Select * From dept";
-                var Command = new EDBCommand("",con);
-				Command.CommandText=createTable;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+            var Reader = Command.ExecuteReader();
 
-				var CreateView="CREATE OR REPLACE VIEW ImportedSchemaView AS Select * From TableForView";
-				Command=new EDBCommand("",con);
-				Command.CommandText=CreateView;
-				Command.ExecuteNonQuery();
+            Reader.Close();
 
-				var Select="SELECT * FROM ImportedSchemaView";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Select;
-				Command.CommandType=CommandType.Text;
-
-				var Reader=Command.ExecuteReader();
-
-				//Assert.IsTrue(Reader.Read(),"No data returned from Select");
-
-                Reader.Close();
-				
-				var DropView ="Drop View ImportedSchemaView";
-				Command=new EDBCommand("",con);
-				Command.CommandText=DropView;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
-
-				var Drop="Drop TABLE TableForView";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Drop;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
-				
-			}
-			catch (EDBException exp)
-			{
-                Console.WriteLine(exp.Message);
-				throw new Exception(exp.ToString());
-			}
-		}
-
-		[TearDown]
-		public void Dispose()
-		{
-			TestUtil.closeDB(con);
-
-		}
-
-		[Test]
-
-		public void ExecuteSelectOnImportedSchema()
-		{
-			try
-			{
-
-                //create the table
-                var create="CREATE TABLE NewTable AS Select * From emp";
-                var Command = new EDBCommand("",con);
-				Command.CommandText=create;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
-
-				//test the existence of the new table
-
-				var Select="SELECT * FROM NewTable";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Select;
-				Command.CommandType=CommandType.Text;
-
-				var Reader=Command.ExecuteReader();
-
-				Assert.IsTrue(Reader.Read(),"No data returned from Select");
-                Reader.Close();
-
-				var DropTable="Drop TABLE NewTable";
-				Command=new EDBCommand("",con);
-				Command.CommandText=DropTable;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
-
-
-			}
-			catch(EDBException exp)
+            var DropView = "Drop View ImportedSchemaView";
+            Command = new EDBCommand("", con)
             {
-                Console.WriteLine(exp.Message);
-                throw new Exception(exp.ToString());
-			}
-		}
+                CommandText = DropView,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-		[Test]
+            var Drop = "Drop TABLE TableForView";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = Drop,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-		public void ExecuteDeleteOnImportedSchema()
-		{
-			try 
-			{
-				var create="CREATE TABLE DeleteTable AS Select * From emp";
-				var Command=new EDBCommand("",con);
-				Command.CommandText=create;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+        });
+    }
 
-				//test the existence of the new table
+    [TearDown]
+    public void Dispose()
+    {
+        TestUtil.closeDB(con);
+    }
 
-				var Select="Delete  FROM DeleteTable where empno=10";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Select;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+    [Test]
 
-				var DropTable="Drop TABLE DeleteTable";
-				Command=new EDBCommand("",con);
-				Command.CommandText=DropTable;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+    public void ExecuteSelectOnImportedSchema()
+    {
+        try
+        {
 
+            //create the table
+            var create = "CREATE TABLE NewTable AS Select * From emp";
+            var Command = new EDBCommand("", con)
+            {
+                CommandText = create,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-			}
-			catch(EDBException exp)
-			{
-                 throw new Exception("\n Couldn't complete delete operation!!\n"+exp.ToString());
-			}
+            //test the existence of the new table
 
-		}
+            var Select = "SELECT * FROM NewTable";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = Select,
+                CommandType = CommandType.Text
+            };
 
-		[Test]
+            var Reader = Command.ExecuteReader();
 
-		public void ExecuteInsertOnImportedSchema()
-		{
-			try 
-			{
-                TestUtil.dropTable(con, "InsertTable");
-                var create="CREATE TABLE InsertTable AS Select * From dept";
-				var Command=new EDBCommand("",con);
-				Command.CommandText=create;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+            Assert.IsTrue(Reader.Read(), "No data returned from Select");
+            Reader.Close();
 
-				//test the existence of the new table
-
-				var Select="INSERT INTO InsertTable VALUES(80,'Documentation','Hamburg')";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Select;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
-
-				var DropTable="Drop TABLE InsertTable";
-				Command=new EDBCommand("",con);
-				Command.CommandText=DropTable;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+            var DropTable = "Drop TABLE NewTable";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = DropTable,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
 
-			}
-			catch(EDBException exp)
-			{
-				throw new Exception("\n Couldn't complete Insert operation!!\n"+exp.ToString());
-			}
+        }
+        catch (EDBException exp)
+        {
+            Console.WriteLine(exp.Message);
+            throw new Exception(exp.ToString());
+        }
+    }
 
-		}
+    [Test]
 
-		[Test]
+    public void ExecuteDeleteOnImportedSchema()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            var create = "CREATE TABLE DeleteTable AS Select * From emp";
+            var Command = new EDBCommand("", con)
+            {
+                CommandText = create,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-		public void ExecuteUpdateOnImportedSchema()
-		{
-			try 
-			{
-				var create="CREATE TABLE UpdateTable AS Select * From dept";
-				var Command=new EDBCommand("",con);
-				Command.CommandText=create;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+            //test the existence of the new table
 
-				//test the existence of the new table
+            var Select = "Delete  FROM DeleteTable where empno=10";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = Select,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-				var Select="UPDATE UpdateTable SET loc='ISBD' WHERE deptno=20";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Select;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+            var DropTable = "Drop TABLE DeleteTable";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = DropTable,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-				var DropTable="Drop TABLE UpdateTable";
-				Command=new EDBCommand("",con);
-				Command.CommandText=DropTable;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+        });
+    }
 
+    [Test]
 
-			}
-			catch(EDBException exp)
-			{
-				throw new Exception("\n Couldn't complete Update operation!!\n"+exp.ToString());
-			}
+    public void ExecuteInsertOnImportedSchema()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            TestUtil.dropTable(con, "InsertTable");
+            var create = "CREATE TABLE InsertTable AS Select * From dept";
+            var Command = new EDBCommand("", con)
+            {
+                CommandText = create,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-		}
-			
-		/*[Test]
-		public void CreateMaterializedViewOnImportedSchema()
-		{
-			try
-			{
-				string createTable="CREATE TABLE TableForMatView AS Select * From dept";
-				EDBCommand Command=new EDBCommand("",con);
-				Command.CommandText=createTable;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+            //test the existence of the new table
 
-				string CreateView="CREATE MATERIALIZED VIEW MatView REFRESH force AS select * from emp";
-				Command=new EDBCommand("",con);
-				Command.CommandText=CreateView;
-				Command.ExecuteNonQuery();
+            var Select = "INSERT INTO InsertTable VALUES(80,'Documentation','Hamburg')";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = Select,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
-				string Select="SELECT * FROM MatView";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Select;
-				Command.CommandType=CommandType.Text;
-
-				EDBDataReader Reader=Command.ExecuteReader();
-
-				Assert.IsTrue(Reader.Read(),"No data returned from Select");
-
-				
-				
-				string DropView ="Drop View MatView";
-				Command=new EDBCommand("",con);
-				Command.CommandText=DropView;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
-
-				string Drop="Drop TABLE TableForMatView";
-				Command=new EDBCommand("",con);
-				Command.CommandText=Drop;
-				Command.CommandType=CommandType.Text;
-				Command.ExecuteNonQuery();
+            var DropTable = "Drop TABLE InsertTable";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = DropTable,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
 
 
-				
-			}
-			catch (EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}*/
-			
-		
-	}
+        });
+    }
+
+    [Test]
+
+    public void ExecuteUpdateOnImportedSchema()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            var create = "CREATE TABLE UpdateTable AS Select * From dept";
+            var Command = new EDBCommand("", con)
+            {
+                CommandText = create,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
+
+            //test the existence of the new table
+
+            var Select = "UPDATE UpdateTable SET loc='ISBD' WHERE deptno=20";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = Select,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
+
+            var DropTable = "Drop TABLE UpdateTable";
+            Command = new EDBCommand("", con)
+            {
+                CommandText = DropTable,
+                CommandType = CommandType.Text
+            };
+            Command.ExecuteNonQuery();
+
+
+        });
+    }
 }

@@ -72,14 +72,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TearDown]
         public void Dispose()
         {
-            //EDBCommand com = new EDBCommand("",con);
-            //com.CommandType = CommandType.Text;
-
-            //com.CommandText = "DROP PACKAGE PKG_INVOKE_exec_pro;";
-            //com.ExecuteNonQuery();
-            //com.CommandText = "DROP PACKAGE PKG_Variable_Test;";
-            //com.ExecuteNonQuery();
-
             TestUtil.closeDB(con);
         }
 
@@ -90,12 +82,12 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         //////////////////////////After Execution No error should occur
         /// </summary>
         [Test]
-        public void testPackageWithoutBody()
+        public void TestPackageWithoutBody()
         {
             //////prereq
             var command = new EDBCommand("", con);
             command.CommandType = CommandType.Text;
-            try
+            Assert.DoesNotThrow(() =>
             {
                 var strSql = "CREATE TABLE Test_Table( c1 CHAR(10))";///////";
                 command.CommandText = strSql;
@@ -116,12 +108,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.CommandText = "Drop Package check_package";
                 command.ExecuteNonQuery();
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
-
+            });
         }
 
         #region Procedures with in Packages
@@ -132,7 +119,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureINTWithInInoutOut()
+        public void TestPackageProcedureINTWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -146,7 +133,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.CommandText = strSql;
             command.ExecuteNonQuery();
             //////////////code
-            try
+            Assert.DoesNotThrow(() =>
             {
                 command = new EDBCommand("check_packagePI1.get_c1(:v_in,:v_inout,:v_out)", con);
                 command.CommandType = CommandType.StoredProcedure;
@@ -161,11 +148,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 Assert.AreEqual(1, int.Parse(command.Parameters[0].Value.ToString()));
                 Assert.AreEqual(1, int.Parse(command.Parameters[1].Value.ToString()));
                 Assert.AreEqual(2, int.Parse(command.Parameters[2].Value.ToString()));
-            }
-            catch (EDBException e)
-            {
-                throw new Exception(e.ToString());
-            }
+            });
 
             //////////tear down
             ///
@@ -181,7 +164,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureINT4WithInInoutOut()
+        public void TestPackageProcedureINT4WithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -229,7 +212,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureINT8WithInInoutOut()
+        public void TestPackageProcedureINT8WithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -280,7 +263,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureNUMERICWithInInoutOut()
+        public void TestPackageProcedureNUMERICWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -332,7 +315,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureFLOATWithInInoutOut()
+        public void TestPackageProcedureFLOATWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -379,7 +362,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureREALWithInInoutOut()
+        public void TestPackageProcedureREALWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -427,7 +410,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureCHARWithInInoutOut()
+        public void TestPackageProcedureCHARWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -476,7 +459,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureCHARACTERWithInInoutOut()
+        public void TestPackageProcedureCHARACTERWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -528,7 +511,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureVARCHARWithInInoutOut()
+        public void TestPackageProcedureVARCHARWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -576,7 +559,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageProcedureTEXTCHARWithInInoutOut()
+        public void TestPackageProcedureTEXTCHARWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -629,7 +612,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionINTWithInInoutOut()
+        public void TestPackageFunctionINTWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -681,7 +664,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionINT4WithInInoutOut()
+        public void TestPackageFunctionINT4WithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -731,7 +714,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionINT8WithInInoutOut()
+        public void TestPackageFunctionINT8WithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -781,7 +764,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionNUMERICWithInInoutOut()
+        public void TestPackageFunctionNUMERICWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -833,7 +816,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionFLOATWithInInoutOut()
+        public void TestPackageFunctionFLOATWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -873,7 +856,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             //////////tear down
             ///
-            //command.Dispose();
             command = new EDBCommand("", con);
             command.CommandText = "DROP package check_packageF1;";
             command.ExecuteNonQuery();
@@ -884,7 +866,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionREALWithInInoutOut()
+        public void TestPackageFunctionREALWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -937,7 +919,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionCHARWithInInoutOut()
+        public void TestPackageFunctionCHARWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -990,7 +972,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionVARCHARWithInInoutOut()
+        public void TestPackageFunctionVARCHARWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -1044,7 +1026,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         /// ////////////////////////DB feature used = Procedure
         /// </summary>
         [Test]
-        public void testPackageFunctionTEXTWithInInoutOut()
+        public void TestPackageFunctionTEXTWithInInoutOut()
         {
             //////prereq
             var command = new EDBCommand("", con);
@@ -1091,113 +1073,43 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         #endregion
 
-        ////////
-
-        //		[Test]
-        //		public void testProcedures()
-        //		{
-        //			/*try 
-        //			{
-        //				EDBCommand command = new EDBCommand("PKG_INVOKE_exec_pro.exec_pro(:namein,:nameout)",con);
-        //				command.CommandType = CommandType.StoredProcedure;
-        //
-        //				command.Parameters.Add(new EDBParameter("namein",EDBTypes.EDBDbType.Varchar2,50));
-        //				command.Parameters[0].Value = "Eminent";
-        //
-        //				command.Parameters.Add(new EDBParameter("nameout", 
-        //										EDBTypes.EDBDbType.Varchar2,50,"nameout",
-        //										ParameterDirection.Output,false, 10, 10,
-        //										DataRowVersion.Current,""));
-        //
-        //				command.Prepare();
-        //				command.ExecuteNonQuery();
-        //
-        //				Assert.AreEqual("Imonint",command.Parameters[1].Value.ToString());	
-        //			}
-        //			catch(EDBException e)
-        //			{			
-        //				throw new Exception(e.ToString());
-        //			}*/
-        //		}
-        //		[Test]
-        //		public void testVariables()
-        //		{
-        //			try 
-        //			{
-        //				EDBCommand command = new EDBCommand("PKG_Variable_Test.proc(:aa,:bb)",con);
-        //				command.CommandType = CommandType.StoredProcedure;
-        //
-        //				command.Parameters.Add(new EDBParameter("aa", 
-        //					EDBTypes.EDBDbType.Varchar,10,"aa",
-        //					ParameterDirection.Output,false ,2,2,
-        //					System.Data.DataRowVersion.Current,1));
-        //
-        //				command.Parameters.Add(new EDBParameter("bb", 
-        //					EDBTypes.EDBDbType.Numeric,10,"bb",
-        //					ParameterDirection.Output,false ,2,2,
-        //					System.Data.DataRowVersion.Current,1));
-        //
-        //				command.Prepare();
-        //				//command.ExecuteNonQuery();
-        //				
-        //				EDBDataReader ab = command.ExecuteReader();
-        //				while(ab.Read())
-        //				{
-        //					Console.WriteLine(ab.GetValue(1).ToString());
-        //					Console.WriteLine(ab.GetValue(0).ToString());
-        //				}
-        //
-        ////				Assert.AreEqual("alpha",ab.GetValue(0).ToString());
-        ////				Assert.AreEqual("2",int.Parse(ab.GetValue(1).ToString()));
-        //			}
-        //			catch(EDBException e)
-        //			{			
-        //				throw new Exception(e.ToString());
-        //			}
-        //		}
 
         #region TERSE Tests
 
         [Test]
         public void TERSE_PKG_PROC_NATIVE_INPUT_TYPES()
-
         {
-            try
+            EDBCommand command;
+
+            command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+
+            command.ExecuteNonQuery();
+            command.Dispose();
+
+            command = new EDBCommand("BEGIN;", con);
+
+            command.ExecuteNonQuery();
+            command.Dispose();
+
+            Assert.Throws<PostgresException>(() =>
             {
-                EDBCommand Command;
+                command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+            });
+            Assert.DoesNotThrow(() =>
+            {
 
-                Command = new EDBCommand("BEGIN;", con);
-
-                Command.ExecuteNonQuery();
-                Command.Dispose();
-
-                try
-                {
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-
-                    Command.ExecuteNonQuery();
-                    Command.Dispose();
-
-                }
-
-                catch (EDBException)
-
-                {
-                }
-
-                Command = new EDBCommand("create or replace package terse_pkg1 is " +
+                command = new EDBCommand("create or replace package terse_pkg1 is " +
                                          "  procedure terse_p1( a integer, b integer ); " +
                                          "end terse_pkg1;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg1 is " +
+                command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg1 is " +
                                          "  procedure terse_p1( a integer, b integer ) is " +
                                          "  begin " +
                                          "      dbms_output.put_line('a = ' || a); " +
@@ -1205,39 +1117,31 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                                          "  end; " +
                                          "end terse_pkg1;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("terse_pkg1.terse_p1(:a,:b)", con);
+                command = new EDBCommand("terse_pkg1.terse_p1(:a,:b)", con);
 
-                Command.CommandType = CommandType.StoredProcedure;
+                command.CommandType = CommandType.StoredProcedure;
 
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
 
-                Command.Parameters[0].Value = 50;
+                command.Parameters[0].Value = 50;
 
-                Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
 
-                Command.Parameters[1].Value = 51;
+                command.Parameters[1].Value = 51;
 
-                Command.Prepare();
+                command.Prepare();
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("END;", con);
+                command = new EDBCommand("END;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
-
-            }
-
-            catch (EDBException exp)
-
-            {
-                throw new Exception(exp.ToString());
-
-            }
+                command.ExecuteNonQuery();
+                command.Dispose();
+            });
 
         }
 
@@ -1247,26 +1151,26 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                EDBCommand Command;
+                EDBCommand command;
 
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("BEGIN;", con);
+                command = new EDBCommand("BEGIN;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("create or replace package terse_pkg2 is " +
+                command = new EDBCommand("create or replace package terse_pkg2 is " +
                                          "  procedure terse_p1( a out integer, b out integer ); " +
                                          "end terse_pkg2;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg2 is " +
+                command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg2 is " +
                                          "  procedure terse_p1( a out integer, b out integer ) is " +
                                          "  begin " +
                                          "      a := 10; " +
@@ -1274,48 +1178,43 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                                          "  end; " +
                                          "end terse_pkg2;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
-                    Command.ExecuteNonQuery();
-                    Command.Dispose();
+                    command.ExecuteNonQuery();
+                    command.Dispose();
 
-                }
+                });
 
-                catch (EDBException)
+                command = new EDBCommand("terse_pkg2.terse_p1(:a,:b)", con);
 
-                {
-                }
+                command.CommandType = CommandType.StoredProcedure;
 
-                Command = new EDBCommand("terse_pkg2.terse_p1(:a,:b)", con);
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
 
-                Command.CommandType = CommandType.StoredProcedure;
+                command.Parameters[0].Direction = ParameterDirection.Output;
 
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
 
-                Command.Parameters[0].Direction = ParameterDirection.Output;
+                command.Parameters[1].Direction = ParameterDirection.Output;
 
-                Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
+                command.Prepare();
 
-                Command.Parameters[1].Direction = ParameterDirection.Output;
+                command.ExecuteNonQuery();
+                Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
 
-                Command.Prepare();
+                Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
 
-                Command.ExecuteNonQuery();
-                Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
+                command.Dispose();
 
-                Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
+                command = new EDBCommand("END;", con);
 
-                Command.Dispose();
-
-                Command = new EDBCommand("END;", con);
-
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
             }
 
@@ -1364,18 +1263,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
                     command.ExecuteNonQuery();
                     command.Dispose();
 
-                }
-
-                catch (EDBException)
-                {
-                }
+                });
 
                 command = new EDBCommand("terse_pkg3.multipleInOutArg_test(:a,:b,:c,:d)", con);
 
@@ -1461,18 +1356,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
                     command.ExecuteNonQuery();
                     command.Dispose();
 
-                }
-
-                catch (EDBException)
-                {
-                }
+                });
 
                 command = new EDBCommand("terse_pkg4.cursortest2(:cur1,:cur2)", con);
 
@@ -1575,15 +1466,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                     command.ExecuteNonQuery();
                     command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
+
+                });
 
                 command = new EDBCommand("terse_pkg5.refcur_callee2(:b,:a,:c)", con);
                 command.CommandType = CommandType.StoredProcedure;
@@ -1640,23 +1530,23 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                EDBCommand Command;
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                EDBCommand command;
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("BEGIN;", con);
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command = new EDBCommand("BEGIN;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("create or replace package terse_pkg6 is " +
+                command = new EDBCommand("create or replace package terse_pkg6 is " +
                                          "  procedure terse_p2( a integer, b integer default 10); " +
                                          "end terse_pkg6;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg6 is " +
+                command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg6 is " +
                                          "  procedure terse_p2( a integer, b integer default 10) is " +
                                          "  begin " +
                                          "      dbms_output.put_line('a = ' || a); " +
@@ -1664,32 +1554,31 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                                          "  end; " +
                                          "end terse_pkg6;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
-                    Command.ExecuteNonQuery();
-                    Command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
-                Command = new EDBCommand("terse_pkg6.terse_p2(:a)", con);
-                Command.CommandType = CommandType.StoredProcedure;
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
-                Command.Parameters[0].Value = 50;
+                    command.ExecuteNonQuery();
+                    command.Dispose();
 
-                Command.Prepare();
+                });
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command = new EDBCommand("terse_pkg6.terse_p2(:a)", con);
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+                command.Parameters[0].Value = 50;
 
-                Command = new EDBCommand("END;", con);
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.Prepare();
+
+                command.ExecuteNonQuery();
+                command.Dispose();
+
+                command = new EDBCommand("END;", con);
+                command.ExecuteNonQuery();
+                command.Dispose();
             }
             catch (EDBException exp)
             {
@@ -1713,36 +1602,35 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                command = new EDBCommand("create or replace package terse_pkg8 is " +
+                command = new EDBCommand("create or replace package terse_pkg14 is " +
                                          "  Function FunconeInArg_test2(a IN NUMERIC) return INTEGER; " +
-                                         "end terse_pkg8;", con);
+                                         "end terse_pkg14;", con);
 
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg8 is " +
+                command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg14 is " +
                                          "  Function FunconeInArg_test2(a IN NUMERIC) return INTEGER is " +
                                          "      b NUMBER(2); " +
                                          "  begin " +
                                          "      b := a; " +
                                          "      return 30; " +
                                          "  end; " +
-                                         "end terse_pkg8;", con);
+                                         "end terse_pkg14;", con);
 
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                     command.ExecuteNonQuery();
                     command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
 
-                command = new EDBCommand("terse_pkg8.FunconeInArg_test2(:param1)", con);
+                });
+
+                command = new EDBCommand("terse_pkg14.FunconeInArg_test2(:param1)", con);
                 command.CommandType = CommandType.StoredProcedure;
 
                 command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1));
@@ -1800,15 +1688,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                     command.ExecuteNonQuery();
                     command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
+
+                });
 
                 command = new EDBCommand("terse_pkg7.FunconeInArg_test(:param1)", con);
                 command.CommandType = CommandType.StoredProcedure;
@@ -1840,40 +1727,35 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                EDBCommand Command;
+                EDBCommand command;
 
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("BEGIN;", con);
+                command = new EDBCommand("BEGIN;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
-                    Command.ExecuteNonQuery();
-                    Command.Dispose();
+                    command.ExecuteNonQuery();
+                    command.Dispose();
 
-                }
+                });
 
-                catch (EDBException)
-
-                {
-                }
-
-                Command = new EDBCommand("create or replace package terse_pkg8 is " +
+                command = new EDBCommand("create or replace package terse_pkg8 is " +
                                          "  Function terse_f1( a out integer, b out integer ) return VARCHAR; " +
                                          "end terse_pkg8;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg8 is " +
+                command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg8 is " +
                                          "  Function terse_f1( a out integer, b out integer ) return VARCHAR IS " +
                                          "  begin " +
                                          "      a := 10; " +
@@ -1882,49 +1764,39 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                                          "  end; " +
                                          "end terse_pkg8;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("terse_pkg8.terse_f1(:a,:b)", con);
+                command = new EDBCommand("terse_pkg8.terse_f1(:a,:b)", con);
 
-                Command.CommandType = CommandType.StoredProcedure;
+                command.CommandType = CommandType.StoredProcedure;
 
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
 
-                Command.Parameters[0].Direction = ParameterDirection.Output;
+                command.Parameters[0].Direction = ParameterDirection.Output;
 
-                Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
 
-                Command.Parameters[1].Direction = ParameterDirection.Output;
-
-                //Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
-
-                //Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
-
-                //Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer));
-
-                //Command.Parameters[2].Direction = ParameterDirection.ReturnValue;
-
-                Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 10, "v_ret",
+                command.Parameters[1].Direction = ParameterDirection.Output;
+                
+                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Varchar, 10, "v_ret",
                     ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
-                Command.Prepare();
+                command.Prepare();
 
-                Command.ExecuteNonQuery();
-                Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
+                command.ExecuteNonQuery();
+                Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
 
-                Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
+                Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
 
-                Assert.AreEqual("30", Command.Parameters[2].Value.ToString());
+                Assert.AreEqual("30", command.Parameters[2].Value.ToString());
 
-                Command.Dispose();
+                command.Dispose();
 
-                Command = new EDBCommand("END;", con);
+                command = new EDBCommand("END;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
             }
 
@@ -1943,84 +1815,79 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                EDBCommand Command;
+                EDBCommand command;
 
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("BEGIN;", con);
+                command = new EDBCommand("BEGIN;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
-                    Command.ExecuteNonQuery();
-                    Command.Dispose();
+                    command.ExecuteNonQuery();
+                    command.Dispose();
 
-                }
+                });
 
-                catch (EDBException)
-
-                {
-                }
-
-                Command = new EDBCommand("create or replace package terse_pkg8 is " +
+                command = new EDBCommand("create or replace package terse_pkg15 is " +
                                          "  Function terse_f1( a IN OUT integer, b IN OUT integer ) return integer; " +
-                                         "end terse_pkg8;", con);
+                                         "end terse_pkg15;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg8 is " +
+                command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg15 is " +
                                          "  Function terse_f1( a IN OUT integer, b IN OUT integer ) return integer IS " +
                                          "  begin " +
                                          "      a := 10; " +
                                          "      b := 20; " +
                                          "      return 30; " +
                                          "  end; " +
-                                         "end terse_pkg8;", con);
+                                         "end terse_pkg15;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("terse_pkg8.terse_f1(:a,:b)", con);
+                command = new EDBCommand("terse_pkg15.terse_f1(:a,:b)", con);
 
-                Command.CommandType = CommandType.StoredProcedure;
+                command.CommandType = CommandType.StoredProcedure;
 
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
 
-                Command.Parameters[0].Direction = ParameterDirection.InputOutput;
-                Command.Parameters[0].Value = 400;
+                command.Parameters[0].Direction = ParameterDirection.InputOutput;
+                command.Parameters[0].Value = 400;
 
-                Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
-                Command.Parameters[1].Value = 400;
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
+                command.Parameters[1].Value = 400;
 
-                Command.Parameters[1].Direction = ParameterDirection.InputOutput;
+                command.Parameters[1].Direction = ParameterDirection.InputOutput;
 
 
-                Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret",
+                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret",
                     ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
-                Command.Prepare();
+                command.Prepare();
 
-                Command.ExecuteNonQuery();
-                Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
+                command.ExecuteNonQuery();
+                Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
 
-                Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
+                Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
 
-                Assert.AreEqual(30, int.Parse(Command.Parameters[2].Value.ToString()));
+                Assert.AreEqual(30, int.Parse(command.Parameters[2].Value.ToString()));
 
-                Command.Dispose();
+                command.Dispose();
 
-                Command = new EDBCommand("END;", con);
+                command = new EDBCommand("END;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
             }
 
@@ -2039,87 +1906,76 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
             try
             {
-                EDBCommand Command;
+                EDBCommand command;
 
-                Command = new EDBCommand("set edb_stmt_level_tx to on;", con);
+                command = new EDBCommand("set edb_stmt_level_tx to on;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("BEGIN;", con);
+                command = new EDBCommand("BEGIN;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
-                    Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+                    command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
-                    Command.ExecuteNonQuery();
-                    Command.Dispose();
+                    command.ExecuteNonQuery();
+                    command.Dispose();
 
-                }
+                });
 
-                catch (EDBException)
-
-                {
-                }
-
-                Command = new EDBCommand("create or replace package terse_pkg8 is " +
+                command = new EDBCommand("create or replace package terse_pkg13 is " +
                                          "  Function terse_f1( a out integer, b out integer ) return integer; " +
-                                         "end terse_pkg8;", con);
+                                         "end terse_pkg13;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg8 is " +
+                command = new EDBCommand("CREATE OR REPLACE PACKAGE BODY terse_pkg13 is " +
                                          "  Function terse_f1( a out integer, b out integer ) return integer IS " +
                                          "  begin " +
                                          "      a := 10; " +
                                          "      b := 20; " +
                                          "      return 30; " +
                                          "  end; " +
-                                         "end terse_pkg8;", con);
+                                         "end terse_pkg13;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
-                Command = new EDBCommand("terse_pkg8.terse_f1(:a,:b)", con);
+                command = new EDBCommand("terse_pkg13.terse_f1(:a,:b)", con);
 
-                Command.CommandType = CommandType.StoredProcedure;
+                command.CommandType = CommandType.StoredProcedure;
 
-                Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
+                command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer));
 
-                Command.Parameters[0].Direction = ParameterDirection.Output;
+                command.Parameters[0].Direction = ParameterDirection.Output;
 
-                Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
+                command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer));
 
-                Command.Parameters[1].Direction = ParameterDirection.Output;
+                command.Parameters[1].Direction = ParameterDirection.Output;
 
-                //Command.Parameters.Add(new EDBParameter("a", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
-
-                //Command.Parameters.Add(new EDBParameter("b", EDBTypes.EDBDbType.Integer, 10, "v_ret",
-                //    ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
-
-                Command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret",
+                command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Integer, 10, "v_ret",
                     ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
-                Command.Prepare();
+                command.Prepare();
 
-                Command.ExecuteNonQuery();
-                Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
+                command.ExecuteNonQuery();
+                Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
 
-                Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
+                Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
 
-                Assert.AreEqual(30, int.Parse(Command.Parameters[2].Value.ToString()));
+                Assert.AreEqual(30, int.Parse(command.Parameters[2].Value.ToString()));
 
-                Command.Dispose();
+                command.Dispose();
 
-                Command = new EDBCommand("END;", con);
+                command = new EDBCommand("END;", con);
 
-                Command.ExecuteNonQuery();
-                Command.Dispose();
+                command.ExecuteNonQuery();
+                command.Dispose();
 
             }
 
@@ -2167,19 +2023,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
                     command.ExecuteNonQuery();
                     command.Dispose();
 
-                }
-
-                catch (EDBException)
-
-                {
-                }
+                });
 
                 command = new EDBCommand("terse_pkg9.functionsanity(:param1,:param2,:param3,:param4)", con);
 
@@ -2263,15 +2114,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 var tran = con.BeginTransaction();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     com = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                     com.ExecuteNonQuery();
                     com.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
+
+                });
 
                 var command = new EDBCommand("terse_pkg10.RefCursorsOUT(:v_id)", con);
 
@@ -2298,7 +2148,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 Assert.IsFalse((bool)cur[1]);
                 Assert.IsInstanceOf(typeof(byte[]), cur[2]);
                 Assert.AreEqual("a", cur[3]);
-                Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0), cur[4]);
+                Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
                 Assert.AreEqual(1.1, cur[5]);
 
                 Assert.AreEqual(1, cur[6]);
@@ -2313,7 +2163,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual("Shehzad", cur[11]);
 
-                Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0), cur[12]);
+                Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
 
                 Assert.AreEqual("Hashim", cur[13]);
 
@@ -2327,7 +2177,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual("b", cur[3]);
 
-                Assert.AreEqual(new DateTime(2007, 10, 10, 0, 0, 0), cur[4]);
+                Assert.AreEqual(new DateTime(2007, 10, 10, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
 
                 Assert.AreEqual(1.2, cur[5]);
 
@@ -2343,7 +2193,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual("EnterpriseDB", cur[11]);
 
-                Assert.AreEqual(new DateTime(2005, 2, 3, 0, 0, 0), cur[12]);
+                Assert.AreEqual(new DateTime(2005, 2, 3, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
 
                 Assert.AreEqual("Great", cur[13]);
 
@@ -2357,7 +2207,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual("c", cur[3]);
 
-                Assert.AreEqual(new DateTime(2007, 11, 1, 0, 0, 0), cur[4]);
+                Assert.AreEqual(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
 
                 Assert.AreEqual(1.3, cur[5]);
 
@@ -2373,7 +2223,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual("Islamabad", cur[11]);
 
-                Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0), cur[12]);
+                Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
 
                 Assert.AreEqual("Sirsyed", cur[13]);
 
@@ -2387,7 +2237,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual("d", cur[3]);
 
-                Assert.AreEqual(new DateTime(1997, 2, 3, 0, 0, 0), cur[4]);
+                Assert.AreEqual(new DateTime(1997, 2, 3, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
 
                 Assert.AreEqual(1.4, cur[5]);
 
@@ -2403,7 +2253,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                 Assert.AreEqual("Pakistan", cur[11]);
 
-                Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0), cur[12]);
+                Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
 
                 Assert.AreEqual("Endnews", cur[13]);
 
@@ -2462,17 +2312,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
                     command.ExecuteNonQuery();
                     command.Dispose();
 
-                }
-                catch (EDBException)
-                {
-                }
+                });
 
                 command = new EDBCommand("terse_pkg11.refcur_callee2_func(:b,:a,:c)", con);
                 command.CommandType = CommandType.StoredProcedure;
@@ -2560,16 +2407,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 command.ExecuteNonQuery();
                 command.Dispose();
 
-                try
+                Assert.Throws<PostgresException>(() =>
                 {
                     command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
                     command.ExecuteNonQuery();
                     command.Dispose();
-                }
-                catch (EDBException)
-                {
-                }
+
+                });
 
                 command = new EDBCommand("terse_pkg12.terse_func_defvals(:param1)", con);
                 command.CommandType = CommandType.StoredProcedure;

@@ -13,8 +13,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
     /// Testing Functions with Different combination of parameters
     /// </summary>
     [TestFixture]
-    //[NonParallelizable] // Manipulates the EnableStoredProcedureCompatMode global flag
-
     public class EDBFunctionTests : EPASTestBase
     {
         #region Setup / Teardown
@@ -185,9 +183,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
             Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
 
-            command.Dispose();
             con.Close();
-
         }
 
         /* To verify the sanity of functions without parameters*/
@@ -232,7 +228,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testThreeInArg()
         {
             using var con = OpenConnection();
-            //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
             using var command = new EDBCommand("public.funcThreeInArg(:param1, :param2, :param3)", con);
 
             command.CommandType = CommandType.StoredProcedure;
@@ -251,7 +246,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             using var result = command.ExecuteReader();
             while (result.Read())
-            { }
+            {
+                // dummy read
+            }
             result.Close();
 
             Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
@@ -265,7 +262,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testThreeInArg_SELECT()
         {
             using var con = OpenConnection();
-            //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
             var command = new EDBCommand("SELECT * FROM public.funcThreeInArg(:param1, :param2, :param3)", con);
 
             command.CommandType = CommandType.Text;
@@ -295,7 +291,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         public void testThreeInArg_SELECT_Scalar()
         {
             using var con = OpenConnection();
-            //var command = new EDBCommand("public.funcThreeInArg(:param1,:param2,:param3)", con); 
             var command = new EDBCommand("SELECT * FROM public.funcThreeInArg(:param1, :param2, :param3)", con);
 
             command.CommandType = CommandType.Text;
@@ -331,10 +326,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters.Add(new EDBParameter("paramOut", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Output });
             command.Parameters.Add(new EDBParameter("paramIn", 10m) { EDBDbType = EDBTypes.EDBDbType.Numeric, Size = 10, Direction = ParameterDirection.Input });
             command.Parameters.Add(new EDBParameter("paramRetVal", 4) { Direction = ParameterDirection.ReturnValue });
-            //command.Parameters.Add(new EDBParameter("paramInOut", EDBTypes.EDBDbType.Numeric, 10, "paramInOut", ParameterDirection.InputOutput, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-            //command.Parameters.Add(new EDBParameter("paramOut", EDBTypes.EDBDbType.Numeric, 10, "paramOut", ParameterDirection.Output, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-            //command.Parameters.Add(new EDBParameter("paramIn", EDBTypes.EDBDbType.Numeric, 10, "paramIn", ParameterDirection.Input, false, 4, 4, System.Data.DataRowVersion.Current, 1));
-            //command.Parameters.Add(new EDBParameter("paramRetVal", EDBTypes.EDBDbType.Integer, 4, "paramRetVal", ParameterDirection.ReturnValue, false, 2, 2, System.Data.DataRowVersion.Current, 1));
 
             command.Prepare();
 
@@ -371,9 +362,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             reader.Close();
             Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
 
-            command.Dispose();
             con.Close();
-            con.Dispose();
 
         }
 
@@ -422,10 +411,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             reader.Close();
             Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
 
-            command.Dispose();
             con.Close();
-            con.Dispose();
-
         }
 
         [Test]
@@ -433,7 +419,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
 
             using var con = await OpenConnectionAsync();
-            var command = new EDBCommand("public.mixArgFuncNull_test(:paramInOut, :paramOut, :paramIn)", con);
+            using var command = new EDBCommand("public.mixArgFuncNull_test(:paramInOut, :paramOut, :paramIn)", con);
 
             command.CommandType = CommandType.StoredProcedure;
 
@@ -476,9 +462,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             await reader.CloseAsync();
             Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
 
-            await command.DisposeAsync();
             await con.CloseAsync();
-            await con.DisposeAsync();
 
         }
 
@@ -522,19 +506,17 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [Test, Timeout(6000)]
         public void testretValFuncNoBindingNonQuery_test()
         {
-            using var con = OpenConnection();
-            using var command = new EDBCommand("public.retValFunc_test()", con);
+            Assert.DoesNotThrow(() =>
+            {
+                using var con = OpenConnection();
+                using var command = new EDBCommand("public.retValFunc_test()", con);
 
-            command.CommandType = CommandType.StoredProcedure;
+                command.CommandType = CommandType.StoredProcedure;
 
-            // this should be added normally, and this works
-            // but if omitted, the command hangs => BUG
-            //command.Parameters.Add(new EDBParameter("paramRetVal", null) { Direction = ParameterDirection.ReturnValue });
+                command.Prepare();
 
-            command.Prepare();
-
-            command.ExecuteNonQuery();
-
+                command.ExecuteNonQuery();
+            });
         }
 
         [Test, Timeout(15000)]
@@ -542,25 +524,26 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         [TestCase(false)]
         public void testretValFuncNoBindingReader_test(bool bindValue)
         {
-            using var con = OpenConnection();
-            using var command = new EDBCommand("public.retValFunc_test()", con);
-
-            command.CommandType = CommandType.StoredProcedure;
-
-            // this should be added normally, and this works
-            // but if omitted, the command hangs => BUG
-            if (bindValue)
+            Assert.DoesNotThrow(() =>
             {
-                command.Parameters.Add(new EDBParameter("paramRetVal", null) { Direction = ParameterDirection.ReturnValue });
-            }
+                using var con = OpenConnection();
+                using var command = new EDBCommand("public.retValFunc_test()", con);
 
-            command.Prepare();
+                command.CommandType = CommandType.StoredProcedure;
 
-            using var reader = command.ExecuteReader();
-            reader.Read();
-            reader.Close();
+                // this should be added normally, and this works
+                // but if omitted, the command hangs => BUG
+                if (bindValue)
+                {
+                    command.Parameters.Add(new EDBParameter("paramRetVal", null) { Direction = ParameterDirection.ReturnValue });
+                }
 
-            command.Dispose();
+                command.Prepare();
+
+                using var reader = command.ExecuteReader();
+                reader.Read();
+                reader.Close();
+            });
         }
 
 
@@ -2246,161 +2229,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
         }
 
-        /// <summary>
-        /// ////////////////////////Calling a procedure within a package with argument CHAR type
-        /// ////////////////////////and with Parameter types IN, INOUT, OUT
-        /// ////////////////////////DB feature used = Procedure
-        /// </summary>
-		[Test, Ignore("Umar: Temp")]
-        public void testMaxParametersSupportInFunctionWithTextAsInAndOut()
-        {
-            using var con = OpenConnection();
-            //////prereq
-            var command = new EDBCommand("", con);
-            command.CommandType = CommandType.Text;
-
-
-            var strSql = "CREATE OR REPLACE FUNCTION MaxFuncTextInOut(param1 out Text, param2 inout Text,param3 in Text ,param4 out Text, param5 inout Text,param6 in Text,param7 out Text, param8 inout Text,param9 in Text,param10 out Text, param11 inout Text,param12 in Text,param13 out Text, param14 inout Text,param15 in Text,param16 out Text, param17 inout Text,param18 in Text,param19 out Text, param20 inout Text,param21 in Text,param22 out Text, param23 inout Text,param24 in Text,param25 out Text, param26 inout Text,param27 in Text,param28 out Text, param29 inout Text,param30 in Text,param31 out Text, param32 inout Text,param33 in Text,param34 out Text, param35 inout Text,param36 in Text,param37 out Text, param38 inout Text,param39 in Text,param40 out Text, param41 inout Text,param42 in Text,param43 out Text, param44 inout Text,param45 in Text,param46 out Text, param47 inout Text,param48 in Text,param49 out Text, param50 inout Text,param51 in Text,param52 out Text, param53 inout Text,param54 in Text,param55 out Text, param56 inout Text,param57 in Text,param58 out Text, param59 inout Text,param60 in Text,param61 out Text, param62 inout Text,param63 in Text,param64 out Text, param65 inout Text,param66 in Text,param67 out Text, param68 inout Text,param69 in Text,param70 out Text, param71 inout Text,param72 in Text,param73 out Text, param74 inout Text,param75 in Text,param76 out Text, param77 inout Text,param78 in Text,param79 out Text, param80 inout Text,param81 in Text,param82 out Text, param83 inout Text,param84 in Text,param85 out Text, param86 inout Text,param87 in Text,param88 out Text, param89 inout Text,param90 in Text,param91 out Text, param92 inout Text,param93 in Text,param94 out Text, param95 inout Text,param96 in Text"
-                + " ,param97 out Text, param98 inout Text,param99 in Text,param100 out Text, param101 inout Text,param102 in Text,param103 out Text, param104 inout Text,param105 in Text,param106 out Text, param107 inout Text,param108 in Text,param109 out Text, param110 inout Text,param111 in Text,param112 out Text, param113 inout Text,param114 in Text,param115 out Text, param116 inout Text,param117 in Text,param118 out Text, param119 inout Text,param120 in Text,param121 out Text, param122 inout Text,param123 in Text,param124 out Text, param125 inout Text,param126 in Text,param127 out Text, param128 inout Text) return Text"
-                + " IS \n"
-                + " BEGIN \n"
-                + "param1 := param2; param2 := param3; param4 := param5; param5 := param6; param7 := param8; param8 := param9; param10 := param11; param11 := param12; param13 := param14; param14 := param15; param16 := param17; param17 := param18; param19 := param20; param20 := param21; param22 := param23; param23 := param24; param25 := param26; param26 := param27; param28 := param29; param29 := param30; param31 := param32; param32 := param33; param34 := param35; param35 := param36; param37 := param38; param38 := param39; param40 := param41; param41 := param42; param43 := param44; param44 := param45; param46 := param47; param47 := param48; param49 := param50; param50 := param51; param52 := param53; param53 := param54; param55 := param56; param56 := param57; param58 := param59; param59 := param60; param61 := param62; param62 := param63; param64 := param65; param65 := param66; param67 := param68; param68 := param69; param70 := param71; param71 := param72; param73 := param74; param74 := param75; param76 := param77; param77 := param78; param79 := param80; param80 := param81; param82 := param83; param83 := param84; param85 := param86; param86 := param87; param88 := param89; param89 := param90; param91 := param92; param92 := param93; param94 := param95; param95 := param96; param97 := param98; param98 := param99; param100 := param101; param101 := param102; param103 := param104; param104 := param105; param106 := param107; param107 := param108; param109 := param110; param110 := param111; param112 := param113; param113 := param114; param115 := param116; param116 := param117; param118 := param119; param119 := param120; param121 := param122; param122 := param123; param124 := param125; param125 := param126; param127 := param128; param128 := 'Hashim'; return 'Ran Away'; END;";
-            command.CommandText = strSql;
-            command.ExecuteNonQuery();
-
-
-            //////////////code
-
-            command = new EDBCommand("MaxFuncTextInOut(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10,:param11,:param12,:param13,:param14,:param15,:param16,:param17,:param18,:param19,:param20,:param21,:param22,:param23,:param24,:param25,:param26,:param27,:param28,:param29,:param30,:param31,:param32,:param33,:param34,:param35,:param36,:param37,:param38,:param39,:param40,:param41,:param42,:param43,:param44,:param45,:param46,:param47,:param48,:param49,:param50,:param51,:param52,:param53,:param54,:param55,:param56,:param57,:param58,:param59,:param60,:param61,:param62,:param63,:param64,:param65,:param66,:param67,:param68,:param69,:param70,:param71,:param72,:param73,:param74,:param75,:param76,:param77,:param78,:param79,:param80,:param81,:param82,:param83,:param84,:param85,:param86,:param87,:param88,:param89,:param90,:param91,:param92,:param93,:param94,:param95,:param96,:param97,:param98,:param99,:param100,:param101,:param102,:param103,:param104,:param105,:param106,:param107,:param108,:param109,:param110,:param111,:param112,:param113,:param114,:param115,:param116,:param117,:param118,:param119,:param120,:param121,:param122,:param123,:param124,:param125,:param126,:param127,:param128)", con);
-            command.CommandType = CommandType.StoredProcedure;
-            for (var i = 0; i < 128; i++)
-            {
-                var paramValue = i.ToString();
-                var paramName = "param" + (i + 1).ToString();
-                var direction = ParameterDirection.Output;
-                if (i % 3 == 2)
-                    direction = ParameterDirection.InputOutput;
-                if (i % 3 == 2)
-                    direction = ParameterDirection.Input;
-                command.Parameters.Add(new EDBParameter(paramName, EDBTypes.EDBDbType.Text, 10, paramName, direction, false, 2, 2, DataRowVersion.Current, paramValue));
-            }
-            command.Parameters.Add(new EDBParameter("param128", EDBTypes.EDBDbType.Text, 10, "param128", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, ""));
-
-            command.Prepare();
-            command.ExecuteNonQuery();
-            for (var i = 0; i < 127; i++)
-            {
-                var expectedValue = (i + 1).ToString();
-                if (i % 3 == 2)
-                    expectedValue = (i).ToString();
-                Assert.AreEqual(expectedValue, command.Parameters[i].Value.ToString());
-            }
-            Assert.AreEqual("Hashim", command.Parameters[127].Value.ToString());
-            Assert.AreEqual("Ran Away", command.Parameters[128].Value.ToString());
-
-
-
-        }
-
-        /* To verify the sanity of IN, INOUT and OUT parameters in functions with Date datatype */
-        /*		[Test]
-                public void testFunctionWithDateAsInInoutOut()
-                {
-                    //////prereq
-                    var command = new EDBCommand("",con);
-                    command.CommandType = CommandType.Text;
-
-                    var strSql ="CREATE OR REPLACE FUNCTION FunctionWithDate(p_in in Date,p_inout inout Date,p_out out Date) return Date  IS   BEGIN  p_out:=p_inout; p_inout:=p_in; return p_out;  END;";
-                    command.CommandText = strSql;
-                    command.ExecuteNonQuery();
-
-                    DateTime v_in=DateTime.Parse("Dec 30, 1200 12:00:00 PM").ToUniversalTime();
-                    DateTime v_inout=DateTime.Parse("Jan 31, 2006 10:01:50 PM").ToUniversalTime();
-                    DateTime v_out=DateTime.Parse("Sep 06, 1100 11:50:25 PM").ToUniversalTime();
-                    DateTime v_ret=DateTime.Parse("Sep 21, 2008 10:58:20 PM").ToUniversalTime();
-
-                    //////////////code
-                    
-                        command = new EDBCommand("FunctionWithDate(:v_in,:v_inout,:v_out)",con);
-                        command.CommandType = CommandType.StoredProcedure;
-
-                        command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Date,100,"v_in",ParameterDirection.Input,false, 12, 12,DataRowVersion.Current,v_in));
-                        command.Parameters.Add(new EDBParameter("v_inout",	EDBTypes.EDBDbType.Date,100,"v_inout",ParameterDirection.InputOutput,false, 12, 12,DataRowVersion.Current,v_inout));
-                        command.Parameters.Add(new EDBParameter("v_out",	EDBTypes.EDBDbType.Date,100,"v_out",ParameterDirection.Output,false, 12, 12,DataRowVersion.Current,v_out));
-                        command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Date,100,"v_ret",ParameterDirection.ReturnValue,false,12,12,System.Data.DataRowVersion.Current,v_ret)); 
-                        command.Prepare();
-
-                        command.ExecuteNonQuery();
-
-                        Assert.AreEqual(1000,DateTime.Parse(command.Parameters[0].Value.ToString()));
-                        Assert.AreEqual(1000,int.Parse(command.Parameters[1].Value.ToString()));	
-                        Assert.AreEqual(20000,int.Parse(command.Parameters[2].Value.ToString()));	
-                        Assert.AreEqual(1010,int.Parse(command.Parameters[3].Value.ToString()));	
-                    }
-                    catch(EDBException e)
-                    {			
-                        throw new Exception(e.ToString());
-                    }
-
-                    //////////tear down
-                    command.Dispose();
-                    command = new EDBCommand("",con);
-                    command.CommandText = "DROP Function FunctionWithDate(Date,Date,Date);";
-                    command.ExecuteNonQuery();
-
-                }
-
-                /* To verify the sanity of IN, INOUT and OUT parameters in functions with Binary datatype */
-        /*		[Test]
-                public void testFunctionWithBinaryAsInInoutOut()
-                {
-                    //////prereq
-                    var command = new EDBCommand("",con);
-                    command.CommandType = CommandType.Text;
-
-                    var strSql ="CREATE OR REPLACE FUNCTION FunctionWithBinary(p_in in Binary,p_inout inout Binary,p_out out Binary) return Binary  IS   BEGIN  p_out:=p_inout; p_inout:=p_in; return p_out;  END;";
-                    command.CommandText = strSql;
-                    command.ExecuteNonQuery();
-
-                    //////////////code
-                    
-                        command = new EDBCommand("FunctionWithBinary(:v_in,:v_inout,:v_out)",con);
-                        command.CommandType = CommandType.StoredProcedure;
-
-                        Byte a = Byte.Parse("4");
-                        Byte b = Byte.Parse("3");
-                        Byte c = Byte.Parse("2");
-                        Byte d = Byte.Parse("1");
-
-                        command.Parameters.Add(new EDBParameter("v_in",	EDBTypes.EDBDbType.Bytea,10,"v_in",ParameterDirection.Input,false, 12, 12,DataRowVersion.Current,a));
-                        command.Parameters.Add(new EDBParameter("v_inout",	EDBTypes.EDBDbType.Bytea,10,"v_inout",ParameterDirection.InputOutput,false, 12, 12,DataRowVersion.Current,b));
-                        command.Parameters.Add(new EDBParameter("v_out",	EDBTypes.EDBDbType.Bytea,10,"v_out",ParameterDirection.Output,false, 12, 12,DataRowVersion.Current,c));
-                        command.Parameters.Add(new EDBParameter("v_ret", EDBTypes.EDBDbType.Bytea,10,"v_ret",ParameterDirection.ReturnValue,false,12,12,System.Data.DataRowVersion.Current,d)); 
-                        command.Prepare();
-
-                        command.ExecuteNonQuery();
-                        Console.WriteLine("Alpha");
-                        Assert.AreEqual(1000,command.Parameters[0].Value);
-                        Assert.AreEqual(1000,command.Parameters[1].Value);	
-                        Assert.AreEqual(20000,command.Parameters[2].Value);	
-                        Assert.AreEqual(1010,command.Parameters[3].Value);	
-                    }
-                    catch(EDBException e)
-                    {			
-                        Console.WriteLine(e.Message); 
-                    }
-
-                    //////////tear down
-                    command.Dispose();
-                    command = new EDBCommand("",con);
-                    command.CommandText = "DROP Function FunctionWithBinary(Binary,Binary,Binary);";
-                    command.ExecuteNonQuery();
-
-                }
-                */
-
-
-
         #region TERSE
 
         [Test]
@@ -2418,19 +2246,16 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             command.ExecuteNonQuery();
             command.Dispose();
-            try
+
+            Assert.Throws<PostgresException>(() =>
             {
 
                 command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
 
                 command.ExecuteNonQuery();
-
                 command.Dispose();
 
-            }
-            catch (EDBException)
-            {
-            }
+            });
 
             command = new EDBCommand("public.FunconeInArg_test(:param1)", con);
 
@@ -2447,7 +2272,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var result = command.ExecuteReader();
 
             while (result.Read())
-            { }
+            {
+                // read to end
+            }
 
             Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
 
@@ -2481,15 +2308,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Command.ExecuteNonQuery();
             Command.Dispose();
 
-            try
+            Assert.Throws<PostgresException>(() =>
             {
+
                 Command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                 Command.ExecuteNonQuery();
                 Command.Dispose();
-            }
-            catch (EDBException)
-            {
-            }
+
+            });
 
             Command = new EDBCommand("create or replace function terse_f1( a out integer, b out integer ) return integer is " +
                                      "begin " +
@@ -2514,7 +2341,6 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Command.ExecuteNonQuery();
             Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
             Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
-            // Assert.AreEqual(30, int.Parse(Command.Parameters[2].Value.ToString()));
             Command.Dispose();
 
             Command = new EDBCommand("END;", con);
@@ -2540,15 +2366,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
             command.Dispose();
 
-            try
+            Assert.Throws<PostgresException>(() =>
             {
+
                 command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                 command.ExecuteNonQuery();
                 command.Dispose();
-            }
-            catch (EDBException)
-            {
-            }
+
+            });
 
             command = new EDBCommand("public.functionsanity(:param1,:param2,:param3,:param4)", con);
             command.CommandType = CommandType.StoredProcedure;
@@ -2567,7 +2393,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
             var result = command.ExecuteReader();
             while (result.Read())
-            { }
+            {
+                // read to end
+            }
 
             Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
             Assert.AreEqual(200, int.Parse(command.Parameters[1].Value.ToString()));
@@ -2626,15 +2454,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             com.Dispose();
 
             var tran = con.BeginTransaction();
-            try
+            Assert.Throws<PostgresException>(() =>
             {
+
                 com = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                 com.ExecuteNonQuery();
                 com.Dispose();
-            }
-            catch (EDBException)
-            {
-            }
+
+            });
 
             var command = new EDBCommand("RefCursorsOUT(:v_id)", con);
             command.CommandType = CommandType.StoredProcedure;
@@ -2655,7 +2483,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.IsFalse((bool)cur[1]);
             Assert.IsInstanceOf(typeof(byte[]), cur[2]);
             Assert.AreEqual("a", cur[3]);
-            Assert.AreEqual(new DateTime(2006, 1, 1), cur[4]);
+            Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
             Assert.AreEqual(1.1, cur[5]);
             Assert.AreEqual(1, cur[6]);
             Assert.AreEqual(1, cur[7]);
@@ -2663,7 +2491,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(2.2f, cur[9]);
             Assert.AreEqual(1, cur[10]);
             Assert.AreEqual("Shehzad", cur[11]);
-            Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
+            Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
             Assert.AreEqual("Hashim", cur[13]);
 
             cur.Read();
@@ -2671,7 +2499,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.IsTrue((bool)cur[1]);
             Assert.IsInstanceOf(typeof(byte[]), cur[2]);
             Assert.AreEqual("b", cur[3]);
-            Assert.AreEqual(new DateTime(2007, 10, 10), cur[4]);
+            Assert.AreEqual(new DateTime(2007, 10, 10, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
             Assert.AreEqual(1.2, cur[5]);
             Assert.AreEqual(2, cur[6]);
             Assert.AreEqual(2, cur[7]);
@@ -2679,7 +2507,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(3.3f, cur[9]);
             Assert.AreEqual(2, cur[10]);
             Assert.AreEqual("EnterpriseDB", cur[11]);
-            Assert.AreEqual(new DateTime(2005, 2, 3), cur[12]);
+            Assert.AreEqual(new DateTime(2005, 2, 3, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
             Assert.AreEqual("Great", cur.GetString(13));
 
             cur.Read();
@@ -2687,7 +2515,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.IsTrue((bool)cur[1]);
             Assert.IsInstanceOf(typeof(byte[]), cur[2]);
             Assert.AreEqual("c", cur[3]);
-            Assert.AreEqual(new DateTime(2007, 11, 1), cur[4]);
+            Assert.AreEqual(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
             Assert.AreEqual(1.3, cur[5]);
             Assert.AreEqual(3, cur[6]);
             Assert.AreEqual(3, cur[7]);
@@ -2695,7 +2523,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(2.2f, cur[9]);
             Assert.AreEqual(1, cur[10]);
             Assert.AreEqual("Islamabad", cur[11]);
-            Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
+            Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
             Assert.AreEqual("Sirsyed", cur[13]);
 
             cur.Read();
@@ -2703,7 +2531,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.IsFalse((bool)cur[1]);
             Assert.IsInstanceOf(typeof(byte[]), cur[2]);
             Assert.AreEqual("d", cur[3]);
-            Assert.AreEqual(new DateTime(1997, 2, 3), cur[4]);
+            Assert.AreEqual(new DateTime(1997, 2, 3, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
             Assert.AreEqual(1.4, cur[5]);
             Assert.AreEqual(4, cur[6]);
             Assert.AreEqual(5, cur[7]);
@@ -2711,7 +2539,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Assert.AreEqual(2.2f, cur[9]);
             Assert.AreEqual(1, cur[10]);
             Assert.AreEqual("Pakistan", cur[11]);
-            Assert.AreEqual(new DateTime(2006, 1, 1), cur[12]);
+            Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
             Assert.AreEqual("Endnews", cur[13]);
 
             cur.Close();
@@ -2748,15 +2576,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
             command.Dispose();
 
-            try
+            Assert.Throws<PostgresException>(() =>
             {
+
                 command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                 command.ExecuteNonQuery();
                 command.Dispose();
-            }
-            catch (EDBException)
-            {
-            }
+
+            });
             command = new EDBCommand("refcur_callee2_func(:b,:a,:c)", con);
             command.CommandType = CommandType.StoredProcedure;
 
@@ -2824,15 +2652,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.ExecuteNonQuery();
             command.Dispose();
 
-            try
+            Assert.Throws<PostgresException>(() =>
             {
+
                 command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
+
                 command.ExecuteNonQuery();
                 command.Dispose();
-            }
-            catch (EDBException)
-            {
-            }
+
+            });
 
             command = new EDBCommand("terse_func_defvals(:param1)", con);
             command.CommandType = CommandType.StoredProcedure;
@@ -2843,7 +2671,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             command.Parameters[0].Value = 3;
             var result = command.ExecuteReader();
             while (result.Read())
-            { }
+            {
+                // read to end
+            }
 
             Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
             Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
