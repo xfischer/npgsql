@@ -2,8 +2,8 @@
   "extra_args": "",
   "false_positives": [
     {
-      "pattern": "^Server=127.0.0.1$",
-      "description": "Connection string starts with localhost"
+      "pattern": "edb",
+      "description": " exclusion patterhn for sqlserver://:edb"
     }
   ]
 }
