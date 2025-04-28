@@ -25,65 +25,37 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-#nullable disable
-namespace EnterpriseDB.EDBClient
+
+namespace EnterpriseDB.EDBClient;
+
+/// <summary>
+/// Provides EnqueueOptions available.
+/// </summary>
+public class EDBAQEnqueueOptions
 {
     /// <summary>
-    /// Provides EnqueueOptions available.
+    /// 
     /// </summary>
-    public class EDBAQEnqueueOptions
-    {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <value>This is set from EDBAQVisibility. It represents whether the new message is enqueued or not as part of the current transaction.</value>
-        public int Visibility { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <value>The relative message identifier.</value>
-        public byte[] RelativeMsgid { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <value>The sequence when the message should be dequeued.</value>
-        public int? SequenceDeviation { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <value>The transformation that will be applied before enqueuing the message.</value>
-        public string Transformation { get; set; }
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <value>The delivery mode of the enqueued message.</value>
-        public int DeliveryMode { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="visibility"></param>
-        /// <param name="relative_msgid"></param>
-        /// <param name="sequence_deviation"></param>
-        /// <param name="transformation"></param>
-        /// <param name="delivery_mode"></param>
-        public EDBAQEnqueueOptions(int visibility, byte[] relative_msgid, int? sequence_deviation, string transformation, int delivery_mode)
-        {
-            Visibility = visibility;
-            RelativeMsgid = relative_msgid;
-            SequenceDeviation = sequence_deviation;
-            Transformation = transformation;
-            DeliveryMode = delivery_mode;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public EDBAQEnqueueOptions()
-        {
-
-        }
-    }
-
+    /// <value>This is set from EDBAQVisibility. It represents whether the new message is enqueued or not as part of the current transaction.</value>
+    public int Visibility { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <value>The relative message identifier.</value>
+    public byte[]? RelativeMsgid { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <value>The sequence when the message should be dequeued.</value>
+    public int? SequenceDeviation { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <value>The transformation that will be applied before enqueuing the message.</value>
+    public string? Transformation { get; set; }
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <value>The delivery mode of the enqueued message.</value>
+    public int DeliveryMode { get; set; }
 }
-#nullable restore

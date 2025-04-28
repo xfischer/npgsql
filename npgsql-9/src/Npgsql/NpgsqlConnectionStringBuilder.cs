@@ -1212,7 +1212,6 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     bool _noResetOnClose;
 
     /// <summary>
-	/// <summary>
     /// Property specifying whether connection is with PGPOOL or EPAS.
     /// Default is false which means EPAS.
     /// </summary>

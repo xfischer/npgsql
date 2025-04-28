@@ -1187,12 +1187,12 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             if (!isParamData)
             {
                 var colLength = buf.ReadInt32();
-                Debug.Assert(RowDescription.Count == 1);
+                Debug.Assert(RowDescription?.Count == 1);
                 var fieldDescription = RowDescription._fields[0];
 
-                var converter = fieldDescription.ObjectInfo.Converter;
-                var bufferRequirement = fieldDescription.ObjectInfo.BufferRequirement;
-                var format = fieldDescription.DataFormat;
+                var converter = fieldDescription!.ObjectInfo.Converter;
+                var bufferRequirement = fieldDescription!.ObjectInfo.BufferRequirement;
+                var format = fieldDescription!.DataFormat;
 
                 buf.PgReader.Init(colLength, format);
                 buf.PgReader.StartRead(bufferRequirement);

@@ -131,13 +131,13 @@ namespace EnterpriseDB.EDBClient
                 }
                 if (typeInfo.Type == typeof(BitArray))
                 {
-                    if (typeInfo?.PgTypeId!.Value.Oid == 1560) /*bit or bit array*/
+                    if (typeInfo.PgTypeId!.Value.Oid == 1560) /*bit or bit array*/
                     {
                         return token.Length == 1 ?
                             token == "1" // bit
                             : new BitArray(token.Select(c => c == '1').ToArray());
                     }
-                    else if (typeInfo?.PgTypeId!.Value.Oid == 1562) /*bitvarying*/
+                    else if (typeInfo.PgTypeId!.Value.Oid == 1562) /*bitvarying*/
                     {
                         return new BitArray(token.Select(c => c == '1').ToArray());
                     }

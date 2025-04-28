@@ -1,111 +1,133 @@
-﻿#region License
-// The PostgreSQL License
-//
-// Copyright (C) 2018 The EnterpriseDB.EDBClient Development Team
-//
-// Permission to use, copy, modify, and distribute this software and its
-// documentation for any purpose, without fee, and without a written
-// agreement is hereby granted, provided that the above copyright notice
-// and this paragraph and the following two paragraphs appear in all copies.
-//
-// IN NO EVENT SHALL THE EnterpriseDB.EDBClient DEVELOPMENT TEAM BE LIABLE TO ANY PARTY
-// FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
-// INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-// DOCUMENTATION, EVEN IF THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS BEEN ADVISED OF
-// THE POSSIBILITY OF SUCH DAMAGE.
-//
-// THE EnterpriseDB.EDBClient DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
-// ON AN "AS IS" BASIS, AND THE EnterpriseDB.EDBClient DEVELOPMENT TEAM HAS NO OBLIGATIONS
-// TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-#endregion
-using System;
+﻿using System;
 using System.Data;
-using System.Text;
-#nullable disable
-namespace EnterpriseDB.EDBClient
+
+namespace EnterpriseDB.EDBClient;
+
+/// <summary>
+/// Represents a SQL statement  to execute
+/// DMBS_AQ functionality on a PostgreSQL database.
+/// </summary>
+/// <remarks>
+/// Constructor.
+/// </remarks>
+public class EDBAQQueue(string name, EDBConnection con) : IDisposable, ICloneable
 {
+    private bool disposedValue;
+
     /// <summary>
-    /// Represents a SQL statement  to execute
-    /// DMBS_AQ functionality on a PostgreSQL database.
+    /// Connection to be used for AQ operations
     /// </summary>
-    /// <remarks>
-    /// Constructor.
-    /// </remarks>
-    public class EDBAQQueue(string name, EDBConnection con) : IDisposable, ICloneable
+    /// <value>The connection to be used.</value>
+    public EDBConnection Connection { get; set; } = con;
+
+    /// <summary>
+    /// Name of the queue
+    /// </summary>
+    /// <value>.</value>
+    public string Name { get; set; } = name;
+
+    /// <summary>
+    /// MessageType of the message.
+    /// </summary>
+    /// <value>The name of the queue.</value>
+    [System.ComponentModel.DefaultValue(EDBAQMessageType.Udt)]
+    public EDBAQMessageType MessageType { get; set; } = EDBAQMessageType.Udt;
+
+    /// <summary>
+    /// Name of the user defined type.
+    /// </summary>
+    /// <value>The message type that is enqueued/dequeued from this queue. For example EDBAQMessageType.Udt.</value>
+    public string? UdtTypeName { get; set; }
+
+    /// <summary>
+    /// EDBAQEnqueueOptions to be used.
+    /// </summary>
+    /// <value>The enqueue options to be used.</value>
+    public EDBAQEnqueueOptions EnqueueOptions { get; set; } = new EDBAQEnqueueOptions();
+    /// <summary>
+    /// EDBAQDequeueOptions to be used 
+    /// </summary>
+    /// <value>The dequeue options to be used.</value>
+    public EDBAQDequeueOptions DequeueOptions { get; set; } = new EDBAQDequeueOptions() { DequeueMode = EDBAQDequeueMode.REMOVE };
+    /// <summary>
+    /// EDBAQMessageProperties to be used 
+    /// </summary>
+    /// <value>The message properties to be used.</value>
+    public EDBAQMessageProperties MessageProperties { get; set; } = new EDBAQMessageProperties();
+
+    /// <summary>
+    /// Enques the provided message in queue.
+    /// </summary>
+    public void Enqueue(EDBAQMessage msg)
     {
-        /// <summary>
-        /// Connection to be used for AQ operations
-        /// </summary>
-        /// <value>The connection to be used.</value>
-        public EDBConnection Connection { get; set; } = con;
-
-        /// <summary>
-        /// Name of the queue
-        /// </summary>
-        /// <value>.</value>
-        public string Name { get; set; } = name;
-
-        /// <summary>
-        /// MessageType of the message.
-        /// </summary>
-        /// <value>The name of the queue.</value>
-        [System.ComponentModel.DefaultValue(EDBAQMessageType.Udt)]
-        public EDBAQMessageType MessageType { get; set; } = EDBAQMessageType.Udt;
-
-        /// <summary>
-        /// Name of the user defined type.
-        /// </summary>
-        /// <value>The message type that is enqueued/dequeued from this queue. For example EDBAQMessageType.Udt.</value>
-        public string UdtTypeName { get; set; }
-
-        /// <summary>
-        /// EDBAQEnqueueOptions to be used.
-        /// </summary>
-        /// <value>The enqueue options to be used.</value>
-        public EDBAQEnqueueOptions EnqueueOptions { get; set; } = new EDBAQEnqueueOptions(visibility: 0,
-                                                     relative_msgid: null,
-                                                     sequence_deviation: null,
-                                                     transformation: null,
-                                                     delivery_mode: 0);
-        /// <summary>
-        /// EDBAQDequeueOptions to be used 
-        /// </summary>
-        /// <value>The dequeue options to be used.</value>
-        public EDBAQDequeueOptions DequeueOptions { get; set; } = new EDBAQDequeueOptions(consumer_name: null,
-                                                     dequeue_mode: EDBAQDequeueMode.REMOVE,
-                                                     navigation: 0,
-                                                     visibility: 0,
-                                                     wait: 0,
-                                                     msgid: null,
-                                                     correlation: null,
-                                                     deq_condition: null,
-                                                     transformation: null,
-                                                     delivery_mode: 0);
-        /// <summary>
-        /// EDBAQMessageProperties to be used 
-        /// </summary>
-        /// <value>The message properties to be used.</value>
-        public EDBAQMessageProperties MessageProperties { get; set; } = new EDBAQMessageProperties(priority: 1,
-                                                           delay: 0,
-                                                           expiration: null,
-                                                           correlation: null,
-                                                           attempts: null,
-                                                           recipient_list: null,
-                                                           exception_queue: null,
-                                                           enqueue_time: null,
-                                                           state: null,
-                                                           original_msgid: null,
-                                                           transaction_group: null,
-                                                           delivery_mode: 0);
-
-        /// <summary>
-        /// Enques the provided message in queue.
-        /// </summary>
-        public void Enqueue(EDBAQMessage msg)
+        string dataTypeName;
+        if (MessageType == EDBAQMessageType.Udt)
         {
-            string dataTypeName = null;
+            if (UdtTypeName == null || UdtTypeName.Length == 0)
+            {
+                throw new InvalidCastException("Type name must be set for user defined types");
+            }
+            dataTypeName = UdtTypeName;
+        }
+        else
+        {
+            throw new InvalidCastException("Message Type must be user defined type");
+        }
+        if (msg.Payload == null)
+        {
+            throw new InvalidCastException("Payload must be set");
+        }
+
+        if (Connection == null || Connection.State == ConnectionState.Closed)
+        {
+            throw new InvalidOperationException("Connection is not open");
+        }
+        try
+        {
+            var command = new EDBCommand("DBMS_AQ.ENQUEUE(:queue_name, :enqueue_options, :message_properties, :payload, :MsgId)", Connection);
+            command.CommandType = CommandType.StoredProcedure;
+            command.AllResultTypesAreUnknown = false;
+            var nameParam = command.Parameters.Add(new EDBParameter("queue_name", EDBTypes.EDBDbType.Varchar, 10, "queue_name", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            nameParam.Value = Name;
+            command.Parameters.Add(new EDBParameter
+            {
+                ParameterName = "enqueue_options",
+                IsNullable = true,
+                DataTypeName = "dbms_aq.enqueue_options_t",
+                Value = EnqueueOptions
+            });
+            var msgProps = command.Parameters.Add(new EDBParameter("message_properties", EDBTypes.EDBDbType.Unknown, 110, "message_properties", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            msgProps.DataTypeName = "dbms_aq.message_properties_t";
+            msgProps.Value = MessageProperties.ToTextParam();
+
+
+            command.Parameters.Add(new EDBParameter
+            {
+                ParameterName = "payload",
+                IsNullable = true,
+                DataTypeName = dataTypeName,
+                Value = msg.Payload
+            });
+
+            var msgIdParam = command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Prepare();
+            command.ExecuteNonQuery();
+            msg.MessageId = Convert.ToBase64String((byte[])msgIdParam.Value!);
+        }
+        catch (Exception ex)
+        {
+            throw new EDBException("Error while enqueuing message: " + ex.Message, ex);
+        }
+    }
+
+    /// <summary>
+    /// Dequeues the message from provided queue.
+    /// </summary>
+    public EDBAQMessage Dequeue()
+    {
+        try
+        {
+            string dataTypeName;
             if (MessageType == EDBAQMessageType.Udt)
             {
                 if (UdtTypeName == null || UdtTypeName.Length == 0)
@@ -118,180 +140,113 @@ namespace EnterpriseDB.EDBClient
             {
                 throw new InvalidCastException("Message Type must be user defined type");
             }
-            if (msg.Payload == null)
-            {
-                throw new InvalidCastException("Payload must be set");
-            }
 
             if (Connection == null || Connection.State == ConnectionState.Closed)
             {
                 throw new InvalidOperationException("Connection is not open");
             }
-            try
+            var msg = new EDBAQMessage();
+
+            var command = new EDBCommand("DBMS_AQ.DEQUEUE(:queue_name, :dequeue_options, :message_properties, :payload, :MsgId)", Connection);
+            command.CommandType = CommandType.StoredProcedure;
+            command.AllResultTypesAreUnknown = false;
+            command.Parameters.AddWithValue("queue_name", Name);
+            command.Parameters.Add(new EDBParameter
             {
-                var command = new EDBCommand("DBMS_AQ.ENQUEUE(:queue_name, :enqueue_options, :message_properties, :payload, :MsgId)", Connection);
-                command.CommandType = CommandType.StoredProcedure;
-                command.AllResultTypesAreUnknown = false;
-                command.Parameters.Add(new EDBParameter("queue_name", EDBTypes.EDBDbType.Varchar, 10, "queue_name", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters[0].Value = Name;
-                command.Parameters.Add(new EDBParameter
-                {
-                    ParameterName = "enqueue_options",
-                    IsNullable = true,
-                    DataTypeName = "dbms_aq.enqueue_options_t",
-                    Value = EnqueueOptions
-                });
-                command.Parameters.Add(new EDBParameter("message_properties", EDBTypes.EDBDbType.Unknown, 110, "message_properties", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters[2].DataTypeName = "dbms_aq.message_properties_t";
-                command.Parameters[2].Value = MessageProperties.ToTextParam();
-
-
-                command.Parameters.Add(new EDBParameter
-                {
-                    ParameterName = "payload",
-                    IsNullable = true,
-                    DataTypeName = dataTypeName,
-                    Value = msg.Payload
-                });
-
-                command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Prepare();
-                command.ExecuteNonQuery();
-                msg.MessageId = Convert.ToBase64String((byte[])command.Parameters[4].Value);
-            }
-            catch (Exception ex)
+                ParameterName = "dequeue_options",
+                IsNullable = true,
+                DataTypeName = "dbms_aq.dequeue_options_t",
+                Value = DequeueOptions
+            });
+            var messageProps = command.Parameters.Add(new EDBParameter("message_properties", EDBTypes.EDBDbType.Unknown, 110, "message_properties", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            messageProps.DataTypeName = "dbms_aq.message_properties_t";
+            command.Parameters.Add(new EDBParameter
             {
-                throw new EDBException("Error while enqueuing message: " + ex.Message, ex);
-            }
+                ParameterName = "payload",
+                Direction = ParameterDirection.Output,
+                DataTypeName = dataTypeName
+            });
+            var msgIdParam = command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            command.Prepare();
+            command.ExecuteNonQuery();
+            msg.MessageId = Convert.ToBase64String((byte[])msgIdParam.Value!);
+            msg.Payload = command.Parameters[3].Value;
+            MessageProperties = MessageProperties.ToObjectParam(messageProps.Value!.ToString()!);
+            return msg;
         }
-
-        /// <summary>
-        /// Dequeues the message from provided queue.
-        /// </summary>
-        public EDBAQMessage Dequeue()
+        catch (Exception ex)
         {
-            try
-            {
-                string dataTypeName = null;
-                if (MessageType == EDBAQMessageType.Udt)
-                {
-                    if (UdtTypeName == null || UdtTypeName.Length == 0)
-                    {
-                        throw new InvalidCastException("Type name must be set for user defined types");
-                    }
-                    dataTypeName = UdtTypeName;
-                }
-                else
-                {
-                    throw new InvalidCastException("Message Type must be user defined type");
-                }
-
-                if (Connection == null || Connection.State == ConnectionState.Closed)
-                {
-                    throw new InvalidOperationException("Connection is not open");
-                }
-                var msg = new EDBAQMessage();
-
-                var command = new EDBCommand("DBMS_AQ.DEQUEUE(:queue_name, :dequeue_options, :message_properties, :payload, :MsgId)", Connection);
-                command.CommandType = CommandType.StoredProcedure;
-                command.AllResultTypesAreUnknown = false;
-                command.Parameters.Add(new EDBParameter("queue_name", EDBTypes.EDBDbType.Varchar, 10, "queue_name", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters[0].Value = Name;
-                command.Parameters.Add(new EDBParameter
-                {
-                    ParameterName = "dequeue_options",
-                    IsNullable = true,
-                    DataTypeName = "dbms_aq.dequeue_options_t",
-                    Value = DequeueOptions
-                });
-                command.Parameters.Add(new EDBParameter("message_properties", EDBTypes.EDBDbType.Unknown, 110, "message_properties", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Parameters[2].DataTypeName = "dbms_aq.message_properties_t";
-                command.Parameters.Add(new EDBParameter
-                {
-                    ParameterName = "payload",
-                    Direction = ParameterDirection.Output,
-                    DataTypeName = dataTypeName
-                });
-                command.Parameters.Add(new EDBParameter("MsgId", EDBTypes.EDBDbType.Bytea, 10, "MsgId", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                command.Prepare();
-                var reader = command.ExecuteNonQuery();
-                msg.MessageId = msg.MessageId = Convert.ToBase64String((byte[])command.Parameters[4].Value);
-                msg.Payload = command.Parameters[3].Value;
-                MessageProperties = MessageProperties.ToObjectParam(command.Parameters[2].Value.ToString());
-                return msg;
-            }
-            catch (Exception ex)
-            {
-                throw new EDBException("Error while dequeuing message: " + ex.Message, ex);
-            }
-        }
-
-        /// <summary>
-        /// Listens to the queue for available messages.
-        /// </summary>
-        /// <param name="waitTime"></param>
-        /// <returns></returns>
-        public string Listen(int waitTime)
-        {
-            var dqMode = DequeueOptions.DequeueMode;
-            var wait = DequeueOptions.Wait;
-
-            try
-            {
-                DequeueOptions.Wait = waitTime;
-                DequeueOptions.DequeueMode = EDBAQDequeueMode.BROWSE;
-                EDBAQMessage msg = Dequeue();
-
-                return msg.MessageId;
-            }
-            catch (EDBException ex) when (ex.InnerException is PostgresException pgException)
-            {
-                if (pgException.SqlState == "P0002")
-                {
-                    return null;
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            finally
-            {
-                DequeueOptions.DequeueMode = dqMode;
-                DequeueOptions.Wait = wait;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        private void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (EnqueueOptions != null)
-                {
-                    EnqueueOptions = null;
-                }
-            }
-        }
-
-        object ICloneable.Clone() => Clone();
-
-        /// <summary>
-        /// Create a new EDBAQQueue based on this one.
-        /// </summary>
-        /// <returns></returns>
-        public EDBAQQueue Clone()
-        {
-            var clone = new EDBAQQueue(Name, Connection);
-            return clone;
+            throw new EDBException("Error while dequeuing message: " + ex.Message, ex);
         }
     }
+
+    /// <summary>
+    /// Listens to the queue for available messages.
+    /// </summary>
+    /// <param name="waitTime"></param>
+    /// <returns></returns>
+    public string? Listen(int waitTime)
+    {
+        var dqMode = DequeueOptions.DequeueMode;
+        var wait = DequeueOptions.Wait;
+
+        try
+        {
+            DequeueOptions.Wait = waitTime;
+            DequeueOptions.DequeueMode = EDBAQDequeueMode.BROWSE;
+            var msg = Dequeue();
+
+            return msg.MessageId;
+        }
+        catch (EDBException ex) when (ex.InnerException is PostgresException pgException)
+        {
+            if (pgException.SqlState == "P0002")
+            {
+                return null;
+            }
+            else
+            {
+                throw;
+            }
+        }
+        finally
+        {
+            DequeueOptions.DequeueMode = dqMode;
+            DequeueOptions.Wait = wait;
+        }
+    }
+    
+    object ICloneable.Clone() => Clone();
+
+    /// <summary>
+    /// Create a new EDBAQQueue based on this one.
+    /// </summary>
+    /// <returns></returns>
+    public EDBAQQueue Clone()
+    {
+        var clone = new EDBAQQueue(Name, Connection);
+        return clone;
+    }
+
+    /// <summary>
+    /// Disposes the queue.
+    /// </summary>
+    /// <param name="disposing"></param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            disposedValue = true;
+        }
+    }
+
+    /// <summary>
+    /// Disposes the queue.
+    /// </summary>
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
 }
-#nullable restore
