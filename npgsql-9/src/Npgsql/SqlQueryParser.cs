@@ -7,18 +7,14 @@ using System.Text;
 
 namespace EnterpriseDB.EDBClient;
 
-sealed class SqlQueryParser
+// EnterpriseDB Team (ctor)
+// When db is in Redwood mode : perfoms SPL detection, but reverts back to plpgsql if detected
+sealed class SqlQueryParser(bool supportsRedwoodDialect)
 {
     static EDBParameterCollection EmptyParameters { get; } = [];
 
     readonly Dictionary<string, int> _paramIndexMap = new(StringComparer.OrdinalIgnoreCase);
     readonly StringBuilder _rewrittenSql = new();
-    readonly bool supportsRedwoodDialect; // EnterpriseDB Team
-
-    // EnterpriseDB Team
-    // Added for best parsing perfs
-    // When db is in Redwood mode : perfoms SPL detection, but reverts back to plpgsql if detected
-    public SqlQueryParser(bool redwoodDialect) => supportsRedwoodDialect = redwoodDialect;
 
     /// <summary>
     /// <p>
@@ -105,8 +101,8 @@ sealed class SqlQueryParser
         _paramIndexMap.Clear();
         _rewrittenSql.Clear();
 
-        //char[] trim = new char[] { ' ', '\r', '\n' };
-        sql = sql.Trim(); //EnterpriseDB Team
+        char[] trim = [' ', '\r', '\n'];
+        sql = sql.Trim(trim); //EnterpriseDB Team
         var currCharOfs = 0;
         var isProcedure = false;//EnterpriseDB Team
         var numActiveBlocks = 0;//EnterpriseDB Team
@@ -118,13 +114,13 @@ sealed class SqlQueryParser
         var currTokenBeg = 0;
         var blockCommentLevel = 0;
         var parenthesisLevel = 0;
-        string sqlString, temp;
+        string temp;
 
-        sqlString = temp = sql; // EnterpriseDB Team
+        temp = sql; // EnterpriseDB Team
 
-        bool isProcedureGlobal = isProcedure = ContainsSPLStartingKeyword(temp);
+        var isProcedureGlobal = isProcedure = ContainsSPLStartingKeyword(temp);
 
-        None:
+    None:
         if (currCharOfs >= end)
         {
             WriteDebug(currCharOfs, "Finish1");
@@ -704,10 +700,8 @@ sealed class SqlQueryParser
 
             statementIndex++;
             //EnterpriseDB Team
-            if (sqlString != null)
-            {
-                temp = sqlString;
-            }
+            temp = sql;
+
             isProcedure = isProcedureGlobal;
             WriteDebug(currCharOfs, "SemiColon -> None MoveToNextBatchCommand");
             MoveToNextBatchCommand();
@@ -748,8 +742,9 @@ sealed class SqlQueryParser
         }
     }
 
+
     //EnterpriseDB Team
-    private bool ContainsSPLStartingKeyword(string temp)
+    internal bool ContainsSPLStartingKeyword(string temp)
     {
         // abort if postgres
         if (!supportsRedwoodDialect)
@@ -760,13 +755,12 @@ sealed class SqlQueryParser
             return false;
 
         return (temp.StartsWith("CREATE", StringComparison.OrdinalIgnoreCase)
-            || temp.StartsWith("DECLARE ", StringComparison.OrdinalIgnoreCase))
-                        && (temp.Contains("PROCEDURE ", StringComparison.OrdinalIgnoreCase)
-                        || temp.Contains("FUNCTION ", StringComparison.OrdinalIgnoreCase)
-                        || temp.Contains("TRIGGER ", StringComparison.OrdinalIgnoreCase)
-                        || temp.Contains("DECLARE ", StringComparison.OrdinalIgnoreCase)
-                        || temp.Contains("PACKAGE ", StringComparison.OrdinalIgnoreCase));
-
+            || temp.StartsWithWord("DECLARE", StringComparison.OrdinalIgnoreCase))
+                        && (temp.ContainsWord("PROCEDURE", StringComparison.OrdinalIgnoreCase)
+                        || temp.ContainsWord("FUNCTION", StringComparison.OrdinalIgnoreCase)
+                        || temp.ContainsWord("TRIGGER", StringComparison.OrdinalIgnoreCase)
+                        || temp.ContainsWord("DECLARE", StringComparison.OrdinalIgnoreCase)
+                        || temp.ContainsWord("PACKAGE", StringComparison.OrdinalIgnoreCase));
     }
 
     // Is ASCII letter comparison optimization https://github.com/dotnet/runtime/blob/60cfaec2e6cffeb9a006bec4b8908ffcf71ac5b4/src/libraries/System.Private.CoreLib/src/System/Char.cs#L236

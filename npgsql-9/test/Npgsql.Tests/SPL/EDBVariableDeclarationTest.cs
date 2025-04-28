@@ -285,7 +285,7 @@ internal class EDBVariableDeclarationTest : EPASTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-2633 && EC-2634")]
+    [EDBExplicit("EC-2633")]
     public void RowTypeVariableOutputTest()
     {
         Execute("DROP PACKAGE BODY pkgRowTypeTest;");
@@ -325,7 +325,7 @@ internal class EDBVariableDeclarationTest : EPASTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-2633 && EC-2634")]
+    [EDBExplicit("EC-2633")]
     public void RecordTypeVariableOutputTest()
     {
         Assert.DoesNotThrow(() =>

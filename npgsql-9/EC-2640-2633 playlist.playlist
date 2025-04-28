@@ -1,0 +1,92 @@
+<Playlist Version="2.0">
+  <Rule Name="Includes" Match="Any">
+    <Rule Match="All">
+      <Property Name="Solution" />
+      <Rule Match="Any">
+        <Rule Match="All">
+          <Property Name="Project" Value="Npgsql.Tests (net9.0)" />
+          <Rule Match="Any">
+            <Rule Match="All">
+              <Property Name="Namespace" Value="EnterpriseDB.EDBClient.Tests.SPL" />
+              <Rule Match="Any">
+                <Rule Match="All">
+                  <Property Name="Class" Value="EDBRefCursorTest" />
+                  <Rule Match="Any">
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="EnterpriseDB.EDBClient.Tests.SPL.EDBRefCursorTest.ModularizingCursorOperationsTest" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="ModularizingCursorOperationsTest" />
+                      </Rule>
+                    </Rule>
+                  </Rule>
+                </Rule>
+                <Rule Match="All">
+                  <Property Name="Class" Value="EDBPackageTest" />
+                  <Rule Match="Any">
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="EnterpriseDB.EDBClient.Tests.SPL.EDBPackageTest.UsingPackagesWithUserDefinedTypesRecordVariableTest" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="UsingPackagesWithUserDefinedTypesRecordVariableTest" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="EnterpriseDB.EDBClient.Tests.SPL.EDBPackageTest.UsingPackagesWithUserDefinedTypesTest" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="UsingPackagesWithUserDefinedTypesTest" />
+                      </Rule>
+                    </Rule>
+                  </Rule>
+                </Rule>
+                <Rule Match="All">
+                  <Property Name="Class" Value="EDBBasicStatementTest" />
+                  <Rule Match="Any">
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="EnterpriseDB.EDBClient.Tests.SPL.EDBBasicStatementTest.ReturningIntoFromDeleteStatementExistsTest" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="ReturningIntoFromDeleteStatementExistsTest" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="EnterpriseDB.EDBClient.Tests.SPL.EDBBasicStatementTest.ReturnIntoFromDeleteStatementNotExistsTest" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="ReturnIntoFromDeleteStatementNotExistsTest" />
+                      </Rule>
+                    </Rule>
+                  </Rule>
+                </Rule>
+              </Rule>
+            </Rule>
+            <Rule Match="All">
+              <Property Name="Namespace" Value="EnterpriseDB.EDBClient.Tests.EnterpriseDB" />
+              <Rule Match="Any">
+                <Rule Match="All">
+                  <Property Name="Class" Value="EDBSqlQueryParserTests" />
+                  <Rule Match="Any">
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="EnterpriseDB.EDBClient.Tests.EnterpriseDB.EDBSqlQueryParserTests.UsingPackagesWithUserDefinedTypesTest" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="UsingPackagesWithUserDefinedTypesTest" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="EnterpriseDB.EDBClient.Tests.EnterpriseDB.EDBSqlQueryParserTests.UsingPackagesWithUserDefinedTypesRecordVariableTest" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="UsingPackagesWithUserDefinedTypesRecordVariableTest" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="EnterpriseDB.EDBClient.Tests.EnterpriseDB.EDBSqlQueryParserTests.ModularizingCursorOperationsTest" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="ModularizingCursorOperationsTest" />
+                      </Rule>
+                    </Rule>
+                  </Rule>
+                </Rule>
+              </Rule>
+            </Rule>
+          </Rule>
+        </Rule>
+      </Rule>
+    </Rule>
+  </Rule>
+</Playlist>

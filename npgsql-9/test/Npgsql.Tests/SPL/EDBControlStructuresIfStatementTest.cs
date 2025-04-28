@@ -113,13 +113,13 @@ public class EDBControlStructuresIfStatementTest : EPASTestBase
         }
         catch
         {
+            // Ignore
         }
 
         return 0;
     }
 
     [Test]
-    //        [Ignore("EC-2638, 42601: syntax error at or near \"v_empno\"")]
     public void IfThenStatementTest()
     {
         //In the following example an IF-THEN statement is used to test and

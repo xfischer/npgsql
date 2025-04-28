@@ -1086,22 +1086,22 @@ public class EDBAS15Tests : EPASTestBase
         rowcount = Execute("INSERT INTO db1425_t1 VALUES(3,2);");
         Assert.AreEqual(1, rowcount);
 
-        var anony = "DECLARE"
-            + "    TYPE rec IS RECORD (x INT, y INT);"
-            + "    rec_var rec;"
-            + "    row_var db1425_t1%ROWTYPE;"
-            + "    comp_var db1425_t1;"
-            + "BEGIN"
-            + "    rec_var = row(1000, 1000);"
-            + "    UPDATE db1425_t1 SET ROW=rec_var WHERE a = 1;"
-
-            + "	row_var.a = 2000;"
-            + "	row_var.b = 2000;"
-            + "    UPDATE db1425_t1 SET ROW=row_var WHERE a = 2;"
-
-            + "	comp_var = row(3000, 3000);"
-            + "    UPDATE db1425_t1 SET ROW=comp_var WHERE a = 3;"
-            + "END;";
+        var anony = """
+            DECLARE    
+            	TYPE rec IS RECORD (x INT, y INT);
+            	rec_var rec;
+            	row_var db1425_t1%ROWTYPE;
+            	comp_var db1425_t1;
+            BEGIN    
+            	rec_var = row(1000, 1000);    
+            	UPDATE db1425_t1 SET ROW=rec_var WHERE a = 1;	
+            	row_var.a = 2000;	
+            	row_var.b = 2000;    
+            	UPDATE db1425_t1 SET ROW=row_var WHERE a = 2;	
+            	comp_var = row(3000, 3000);    
+            	UPDATE db1425_t1 SET ROW=comp_var WHERE a = 3;
+            END;
+            """;
         Execute(anony);
 
         using (var cmd = new EDBCommand("SELECT * FROM db1425_t1 ORDER BY a, b", con))

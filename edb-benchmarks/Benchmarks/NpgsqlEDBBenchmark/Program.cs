@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Configs;
+﻿using System.Diagnostics;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 
 namespace EDBBenchmark
@@ -7,7 +8,7 @@ namespace EDBBenchmark
     {
         static void Main(string[] args)
         {
-#if DEBUG
+#if DEBUG            
             BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, new DebugInProcessConfig());
             Console.ReadLine();
 #else

@@ -6,6 +6,7 @@ using System.Data.SqlTypes;
 using System.Xml.Linq;
 using System.Threading;
 using System.Collections;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -401,29 +402,31 @@ internal class EDBRefCursorTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2634: 42601: missing \";\" at end of SQL statement (parsed as multiple batches, not a single statement)")]
+    [EDBExplicit("EC-2640: 42601: missing \";\" at end of SQL statement (parsed as multiple batches, not a single statement)")]
     public void ModularizingCursorOperationsTest()
     {
         using var conn = OpenConnection();
-        var sqlStr = "DECLARE\n"
-                 + "    gen_refcur      SYS_REFCURSOR;\n"
-                 + "BEGIN\n"
-                 + "    DBMS_OUTPUT.PUT_LINE('ALL EMPLOYEES');\n"
-                 + "    open_all_emp(gen_refcur);\n"
-                 + "    fetch_emp(gen_refcur);\n"
-                 + "    DBMS_OUTPUT.PUT_LINE('****************');\n"
-                 + "\n"
-                 + "    DBMS_OUTPUT.PUT_LINE('EMPLOYEES IN DEPT #10');\n"
-                 + "    open_emp_by_dept(gen_refcur, 10);\n"
-                 + "    fetch_emp(gen_refcur);\n"
-                 + "    DBMS_OUTPUT.PUT_LINE('****************');\n"
-                 + "\n"
-                 + "    DBMS_OUTPUT.PUT_LINE('DEPARTMENTS');\n"
-                 + "    fetch_dept(open_dept(gen_refcur));\n"
-                 + "    DBMS_OUTPUT.PUT_LINE('*****************');\n"
-                 + "\n"
-                 + "    close_refcur(gen_refcur);\n"
-                 + "END;";
+        var sqlStr = """
+            DECLARE
+                gen_refcur      SYS_REFCURSOR;
+            BEGIN
+                DBMS_OUTPUT.PUT_LINE('ALL EMPLOYEES');
+                open_all_emp(gen_refcur);
+                fetch_emp(gen_refcur);
+                DBMS_OUTPUT.PUT_LINE('****************');
+
+                DBMS_OUTPUT.PUT_LINE('EMPLOYEES IN DEPT #10');
+                open_emp_by_dept(gen_refcur, 10);
+                fetch_emp(gen_refcur);
+                DBMS_OUTPUT.PUT_LINE('****************');
+
+                DBMS_OUTPUT.PUT_LINE('DEPARTMENTS');
+                fetch_dept(open_dept(gen_refcur));
+                DBMS_OUTPUT.PUT_LINE('*****************');
+
+                close_refcur(gen_refcur);
+            END;
+            """;
 
         var mre = new ManualResetEvent(false);
         var notices = new ArrayList();

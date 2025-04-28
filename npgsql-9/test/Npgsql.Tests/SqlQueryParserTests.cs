@@ -167,7 +167,7 @@ class SqlQueryParserTests
     [Test]
     public void Reduce_number_of_statements()
     {
-        var parser = new SqlQueryParser(redwoodDialect: true); // EnterpriseDB
+        var parser = new SqlQueryParser(supportsRedwoodDialect: true); // EnterpriseDB
 
         var cmd = new EDBCommand("SELECT 1; SELECT 2");
         parser.ParseRawQuery(cmd);
@@ -196,7 +196,7 @@ class SqlQueryParserTests
     {
         var cmd = new EDBCommand(sql);
         cmd.Parameters.AddRange(parameters);
-        var parser = new SqlQueryParser(redwoodDialect: true); // EnterpriseDB
+        var parser = new SqlQueryParser(supportsRedwoodDialect: true); // EnterpriseDB
         parser.ParseRawQuery(cmd, standardConformingStrings);
         return cmd.InternalBatchCommands;
     }

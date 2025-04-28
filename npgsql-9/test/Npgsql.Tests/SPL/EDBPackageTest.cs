@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Collections;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 //EC-2576: Regression Tests for Package in SPL
 
@@ -521,7 +522,7 @@ internal class EDBPackageTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
+    [EDBExplicit("EC-2640: 42601: missing \";\" at end of SQL statement")]
     public void UsingPackagesWithUserDefinedTypesTest()
     {
         using var conn = OpenConnection();
@@ -530,18 +531,20 @@ internal class EDBPackageTest : EPASTestBase
         //variable v_emp_cur using the package’s public REF CURSOR type, EMP_REFCUR.v_emp_cur
         //contains the pointer to the result set that's passed between the package
         //function and procedures.
-        var sql = "DECLARE\n"
-            + "    v_deptno dept.deptno%TYPE DEFAULT 30;\n"
-            + "    v_emp_cur emp_rpt.EMP_REFCUR;\n"
-            + "BEGIN\n"
-            + "    v_emp_cur := emp_rpt.open_emp_by_dept(v_deptno);\n"
-            + "    DBMS_OUTPUT.PUT_LINE('EMPLOYEES IN DEPT #' || v_deptno ||\n"
-            + "        ': ' || emp_rpt.get_dept_name(v_deptno));\n"
-            + "    emp_rpt.fetch_emp(v_emp_cur);\n"
-            + "    DBMS_OUTPUT.PUT_LINE('**********************');\n"
-            + "    DBMS_OUTPUT.PUT_LINE(v_emp_cur%ROWCOUNT || ' rows were retrieved');\n"
-            + "    emp_rpt.close_refcur(v_emp_cur);\n"
-            + "END;";
+        var sql = """
+            DECLARE
+                v_deptno dept.deptno%TYPE DEFAULT 30;
+                v_emp_cur emp_rpt.EMP_REFCUR;
+            BEGIN
+                v_emp_cur := emp_rpt.open_emp_by_dept(v_deptno);
+                DBMS_OUTPUT.PUT_LINE('EMPLOYEES IN DEPT #' || v_deptno ||
+                    ': ' || emp_rpt.get_dept_name(v_deptno));
+                emp_rpt.fetch_emp(v_emp_cur);
+                DBMS_OUTPUT.PUT_LINE('**********************');
+                DBMS_OUTPUT.PUT_LINE(v_emp_cur%ROWCOUNT || ' rows were retrieved');
+                emp_rpt.close_refcur(v_emp_cur);
+            END;
+            """;
 
         var mre = new ManualResetEvent(false);
         var notices = new ArrayList();
@@ -580,7 +583,7 @@ internal class EDBPackageTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2640: 42601: missing \";\" at end of SQL statement")]
+    [EDBExplicit("EC-2640: 42601: missing \";\" at end of SQL statement")]
     public void UsingPackagesWithUserDefinedTypesRecordVariableTest()
     {
         using var conn = OpenConnection();
@@ -589,25 +592,28 @@ internal class EDBPackageTest : EPASTestBase
         //of these programs is coded directly into the anonymous block. In the anonymous
         //block’s declaration section, note the addition of record variable r_emp,
         //declared using the package’s public record type, EMPREC_TYP.
-        var sql = "DECLARE\n"
-            + "    v_deptno     dept.deptno%TYPE DEFAULT 30;\n"
-            + "    v_emp_cur    emp_rpt.EMP_REFCUR;\n"
-            + "    r_emp        emp_rpt.EMPREC_TYP;\n"
-            + "BEGIN\n"
-            + "    v_emp_cur := emp_rpt.open_emp_by_dept(v_deptno);\n"
-            + "    DBMS_OUTPUT.PUT_LINE('EMPLOYEES IN DEPT #' || v_deptno ||\n"
-            + "        ': ' || emp_rpt.get_dept_name(v_deptno));\n"
-            + "    DBMS_OUTPUT.PUT_LINE('EMPNO ENAME');\n"
-            + "    DBMS_OUTPUT.PUT_LINE('----- -------');\n"
-            + "    LOOP\n"
-            + "        FETCH v_emp_cur INTO r_emp;\n"
-            + "        EXIT WHEN v_emp_cur%NOTFOUND;\n"
-            + "        DBMS_OUTPUT.PUT_LINE(r_emp.empno || '  ' ||\n"
-            + "            r_emp.ename);\n"
-            + "    END LOOP;\n" + "    DBMS_OUTPUT.PUT_LINE('**********************');\n"
-            + "    DBMS_OUTPUT.PUT_LINE(v_emp_cur%ROWCOUNT || ' rows were retrieved');\n"
-            + "    CLOSE v_emp_cur;\n"
-            + "END;";
+        var sql = """
+            DECLARE
+                v_deptno     dept.deptno%TYPE DEFAULT 30;
+                v_emp_cur    emp_rpt.EMP_REFCUR;
+                r_emp        emp_rpt.EMPREC_TYP;
+            BEGIN
+                v_emp_cur := emp_rpt.open_emp_by_dept(v_deptno);
+                DBMS_OUTPUT.PUT_LINE('EMPLOYEES IN DEPT #' || v_deptno ||
+                    ': ' || emp_rpt.get_dept_name(v_deptno));
+                DBMS_OUTPUT.PUT_LINE('EMPNO ENAME');
+                DBMS_OUTPUT.PUT_LINE('----- -------');
+                LOOP
+                    FETCH v_emp_cur INTO r_emp;
+                    EXIT WHEN v_emp_cur%NOTFOUND;
+                    DBMS_OUTPUT.PUT_LINE(r_emp.empno || '  ' ||
+                        r_emp.ename);
+                END LOOP;
+                DBMS_OUTPUT.PUT_LINE('**********************');
+                DBMS_OUTPUT.PUT_LINE(v_emp_cur%ROWCOUNT || ' rows were retrieved');
+                CLOSE v_emp_cur;
+            END;
+            """;
 
         var mre = new ManualResetEvent(false);
         var notices = new ArrayList();

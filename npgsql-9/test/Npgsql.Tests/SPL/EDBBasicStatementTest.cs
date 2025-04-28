@@ -685,7 +685,7 @@ public class EDBBasicStatementTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
+    [EDBExplicit("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
     public void ReturnIntoFromDeleteStatementNotExistsTest()
     {
         //Delete non existing employee return not found message

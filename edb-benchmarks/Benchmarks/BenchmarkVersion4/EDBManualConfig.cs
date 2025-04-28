@@ -24,7 +24,7 @@ namespace EDBBenchmark
 
 #if DEBUG
             //--IterationCount 5 --warmupCount 5 -f *BindVariable*
-            AddJob(Job.Default.WithRuntime(ClrRuntime.Net472).WithId("net472"));
+            AddJob(Job.Default.WithId("net9.0"));
 #else
             switch (assemblyName)
             {
@@ -39,6 +39,7 @@ namespace EDBBenchmark
             AddJob(Job.Default.WithRuntime(ClrRuntime.Net472).WithId("net472"));
             AddJob(Job.Default.WithRuntime(ClrRuntime.Net48).WithId("net48"));
             AddJob(Job.Default.WithRuntime(ClrRuntime.Net481).WithId("net481"));
+            AddJob(Job.Default.WithId("net9.0"));
 #endif
         }
     }
