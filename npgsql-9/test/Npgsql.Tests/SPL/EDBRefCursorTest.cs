@@ -402,7 +402,6 @@ internal class EDBRefCursorTest : EPASTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-2640: 42601: missing \";\" at end of SQL statement (parsed as multiple batches, not a single statement)")]
     public void ModularizingCursorOperationsTest()
     {
         using var conn = OpenConnection();

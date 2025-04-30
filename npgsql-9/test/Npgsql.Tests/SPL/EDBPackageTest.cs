@@ -522,7 +522,6 @@ internal class EDBPackageTest : EPASTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-2640: 42601: missing \";\" at end of SQL statement")]
     public void UsingPackagesWithUserDefinedTypesTest()
     {
         using var conn = OpenConnection();
@@ -583,7 +582,6 @@ internal class EDBPackageTest : EPASTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-2640: 42601: missing \";\" at end of SQL statement")]
     public void UsingPackagesWithUserDefinedTypesRecordVariableTest()
     {
         using var conn = OpenConnection();

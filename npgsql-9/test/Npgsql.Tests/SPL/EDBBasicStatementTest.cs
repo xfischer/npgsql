@@ -2,6 +2,8 @@
 using NUnit.Framework;
 using System.Data;
 using EnterpriseDB.EDBClient.Tests.Support;
+using System.Runtime.Serialization;
+using System.Globalization;
 
 
 //EC-2584: Regression Tests for Basic Statement in SPL
@@ -12,51 +14,62 @@ namespace EnterpriseDB.EDBClient.Tests.SPL;
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #pragma warning disable CS8604 
 [TestFixture]
-[NonParallelizable]
 public class EDBBasicStatementTest : EPASTestBase
 {
-    EDBConnection? conn = null;
+    public class Employee
+    {
+        //empno NUMBER(8),  ename VARCHAR2(10),job VARCHAR2(9),mgr NUMBER(8), hiredate DATE, sal NUMBER(10,2), comm NUMBER(10,2), deptno NUMBER(4)
 
-    [SetUp]
+        public int? empno { get; set; }
+        public string? ename { get; set; }
+        public string? job { get; set; }
+        public int? mgr { get; set; }
+        public DateTime? hiredate { get; set; }
+        public decimal? sal { get; set; }
+        public decimal? comm { get; set; }
+        public int? deptno { get; set; }
+    }
+
+    [OneTimeSetUp]
     public void Init()
     {
-        conn = OpenConnection();
+        using var conn = OpenConnection();
 
-        Execute("DROP PROCEDURE IF EXISTS dept_salary_rpt");
-        Execute("DROP PROCEDURE IF EXISTS emp_delete");
-        Execute("DROP PROCEDURE IF EXISTS emp_insert");
-        Execute("DROP PROCEDURE IF EXISTS divide_it");
-        Execute("DROP PROCEDURE IF EXISTS return_into");
-        Execute("DROP PROCEDURE IF EXISTS return_into_from_delete");
-        Execute("DROP PROCEDURE IF EXISTS select_into_query");
-        Execute("DROP PROCEDURE IF EXISTS select_into_exception_query");
-        Execute("DROP PROCEDURE IF EXISTS emp_comp_update");
-        Execute("DROP PROCEDURE IF EXISTS status_query");
+        Execute("DROP PROCEDURE IF EXISTS dept_salary_rpt", conn);
+        Execute("DROP PROCEDURE IF EXISTS emp_delete", conn);
+        Execute("DROP PROCEDURE IF EXISTS emp_insert", conn);
+        Execute("DROP PROCEDURE IF EXISTS divide_it", conn);
+        Execute("DROP PROCEDURE IF EXISTS return_into", conn);
+        Execute("DROP PROCEDURE IF EXISTS return_into_from_delete", conn);
+        Execute("DROP PROCEDURE IF EXISTS select_into_query", conn);
+        Execute("DROP PROCEDURE IF EXISTS select_into_exception_query", conn);
+        Execute("DROP PROCEDURE IF EXISTS emp_comp_update", conn);
+        Execute("DROP PROCEDURE IF EXISTS status_query", conn);
 
-        Execute("DROP TABLE IF EXISTS emp1 CASCADE");
+        Execute("DROP TABLE IF EXISTS emp1 CASCADE", conn);
 
         Execute("CREATE TABLE emp1(empno NUMBER(8),  ename VARCHAR2(10),job VARCHAR2(9), "
-                + "mgr NUMBER(8), hiredate DATE, sal NUMBER(10,2), comm NUMBER(10,2), deptno NUMBER(4))");
+                + "mgr NUMBER(8), hiredate DATE, sal NUMBER(10,2), comm NUMBER(10,2), deptno NUMBER(4))", conn);
 
         var add1001 = "INSERT INTO emp1(empno,ename,job,mgr, hiredate, sal, comm,  deptno) "
                 + " VALUES(1001,'SMITH','Sales',200,to_date('01-11-07','DD-MM-YY'),120000,0,11)";
-        Execute(add1001);
+        Execute(add1001, conn);
 
         var add3001 = "INSERT INTO emp1(empno,ename,job,mgr, hiredate, sal, comm,  deptno) "
                 + " VALUES(3001,'WARD','Sales',200,to_date('01-11-07','DD-MM-YY'),100000,0,31)";
-        Execute(add3001);
+        Execute(add3001, conn);
 
         var add4001 = "INSERT INTO emp1(empno,ename,job,mgr, hiredate, sal, comm,  deptno) "
                 + " VALUES(4001,'JONES','Sales',200,to_date('01-11-07','DD-MM-YY'),120000,0,41)";
-        Execute(add4001);
+        Execute(add4001, conn);
 
         var add4002 = "INSERT INTO emp1(empno,ename,job,mgr, hiredate, sal, comm,  deptno) "
                 + " VALUES(4002,'MARTIN','Sales',200,to_date('01-11-07','DD-MM-YY'),100000,0,41)";
-        Execute(add4002);
+        Execute(add4002, conn);
 
         var add5001 = "INSERT INTO emp1(empno,ename,job,mgr, hiredate, sal, comm,  deptno) "
                 + " VALUES(5001,'BLAKE','Sales',200,to_date('01-11-07','DD-MM-YY'),120000,0,51)";
-        Execute(add5001);
+        Execute(add5001, conn);
 
         //The assignment statement sets a variable or a formal parameter of
         //mode OUT or IN OUT specified on the left side of the assignment
@@ -78,7 +91,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                   + "    base_comm_rate := 1.33;\n"
                                   + "    base_annual := ROUND(base_sal * base_comm_rate, 2);\n"
                                   + "END;";
-        Execute(deptSaleyProcedure);
+        Execute(deptSaleyProcedure, conn);
 
         //You can use an expression in the SPL language wherever an expression
         //is allowed in the SQL DELETE command. Thus, you can use SPL variables
@@ -97,7 +110,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                   + "        msg='Employee # ' || p_empno || ' not found';\n"
                                   + "    END IF;\n"
                                   + "END;";
-        Execute(empDeleteProcedure);
+        Execute(empDeleteProcedure, conn);
 
         //You can use an expression in the SPL language wherever an expression is allowed
         //the SQL INSERT command. Thus, you can use SPL variables and parameters
@@ -131,7 +144,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                   + "        DBMS_OUTPUT.PUT_LINE('SQLCODE : ' || SQLCODE);\n"
                                   + "        DBMS_OUTPUT.PUT_LINE('SQLERRM : ' || SQLERRM);\n"
                                   + "END;";
-        Execute(empInsertProcedure);
+        Execute(empInsertProcedure, conn);
 
         //The simplest statement is the NULL statement.
         //This statement is an executable statement that does nothing.
@@ -148,7 +161,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                        + "        p_result := p_numerator / p_denominator;\n"
                                        + "    END IF;\n"
                                         + "END;";
-        Execute(nullStatementProcedure);
+        Execute(nullStatementProcedure, conn);
 
         //You can append the INSERT, UPDATE, and DELETE commands with the optional RETURNING INTO
         //clause. This clause allows the SPL program to capture the newly added, modified,
@@ -189,7 +202,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                    + "        v_msg := 'Employee # ' || p_empno || ' not found';\n"
                                    + "    END IF;\n"
                                    + "END;";
-        Execute(returnIntoProcedure);
+        Execute(returnIntoProcedure, conn);
 
         //The following example modifies the emp_delete procedure, adding the RETURNING INTO clause
         //using record types:
@@ -212,7 +225,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                              + "        msg := 'Employee # ' || p_empno || ' not found';\n"
                                              + "    END IF;\n"
                                              + "END;";
-        Execute(returnIntoFromDeleteProcedure);
+        Execute(returnIntoFromDeleteProcedure, conn);
 
         //The SELECT INTO statement is an SPL variation of the SQL SELECT command. The differences are:
         //    SELECT INTO assigns the results to variables or records where they can then be used
@@ -235,7 +248,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                     + "    WHEN NO_DATA_FOUND THEN\n"
                                     + "        v_msg := 'Employee # ' || p_empno || ' not found';\n"
                                     + "END;";
-        Execute(selectIntoQueryProcedure);
+        Execute(selectIntoQueryProcedure, conn);
 
         //Another conditional clause useful in the EXCEPTION section with SELECT INTO is the TOO_MANY_ROWS
         //exception. If more than one row is selected by the SELECT INTO statement, SPL throws an exception.
@@ -251,7 +264,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                             + "    WHEN TOO_MANY_ROWS THEN\n"
                                             + "        v_msg := 'More than one employee found';\n"
                                             + "END;";
-        Execute(selectIntoExceptionProcedure);
+        Execute(selectIntoExceptionProcedure, conn);
 
         //You can use an expression in the SPL language wherever an expression is allowed in
         //the SQL UPDATE command. Thus, you can use SPL variables and parameters to supply
@@ -272,7 +285,7 @@ public class EDBBasicStatementTest : EPASTestBase
                                       + "        msg := 'Employee # ' || p_empno || ' not found';\n"
                                       + "    END IF;\n"
                                       + "END;";
-        Execute(empCompUpdateProcedure);
+        Execute(empCompUpdateProcedure, conn);
 
         //You can use several attributes to determine the effect of a command.
         //SQL%FOUND is a Boolean that returns TRUE if at least one row was affected by an INSERT,
@@ -297,13 +310,10 @@ public class EDBBasicStatementTest : EPASTestBase
                                      + "        msg_not_found :='No rows were updated';\n"
                                      + "    END IF;"
                                      + "END;";
-        Execute(statusQueryprocedure);
+        Execute(statusQueryprocedure, conn);
     }
 
-    [TearDown]
-    public void Dispose() => TestUtil.closeDB(conn);
-
-    private void Execute(string query)
+    private void Execute(string query, EDBConnection conn)
     {
         try
         {
@@ -313,11 +323,13 @@ public class EDBBasicStatementTest : EPASTestBase
         }
         catch
         {
+            // Ignore
         }
     }
 
     private bool CheckEmployeeExists(int empno)
     {
+        using var conn = OpenConnection();
         var command = "select count(*) from emp1 where empno=" + empno;
         var selectCommand = new EDBCommand(command, conn);
         var selectResult = selectCommand.ExecuteReader();
@@ -330,6 +342,7 @@ public class EDBBasicStatementTest : EPASTestBase
     [Test]
     public void AssignmentStatementTest()
     {
+        using var conn = OpenConnection();
         //Call a procedure has assignment statement
         var commandText = "dept_salary_rpt(:param1,:param2,:param3,:param4,:param5,:param6)";
         var cstmt = new EDBCommand(commandText, conn)
@@ -337,46 +350,44 @@ public class EDBBasicStatementTest : EPASTestBase
             CommandType = CommandType.StoredProcedure
         };
 
-        cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
-            ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 1001));
+        cstmt.Parameters.AddWithValue("param1", 1001);
 
         cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Date, 10, "param2",
             ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
 
-        cstmt.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar, 10, "param3",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
-        cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Integer, 10, "param4",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
-        cstmt.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Numeric, 10, "param5",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
-        cstmt.Parameters.Add(new EDBParameter("param6", EDBTypes.EDBDbType.Numeric, 10, "param6",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+        cstmt.Parameters.Add(new EDBParameter("param3", null!) { Direction = ParameterDirection.Output });
+        cstmt.Parameters.Add(new EDBParameter("param4", null!) { Direction = ParameterDirection.Output });
+        cstmt.Parameters.Add(new EDBParameter("param5", null!) { Direction = ParameterDirection.Output });
+        cstmt.Parameters.Add(new EDBParameter("param6", null!) { Direction = ParameterDirection.Output });
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
 
 
-        var date = DateTime.Parse(cstmt.Parameters[1].Value.ToString());
+        var date = cstmt.Parameters[1].Value as DateTime?;
         var title = cstmt.Parameters[2].Value.ToString();
-        var baseSal = int.Parse(cstmt.Parameters[3].Value.ToString());
-        var comRate = double.Parse(cstmt.Parameters[4].Value.ToString());
-        var baseAnnual = double.Parse(cstmt.Parameters[5].Value.ToString());
+        var baseSal = cstmt.Parameters[3].Value as int?;
+        var comRate = cstmt.Parameters[4].Value as decimal?;
+        var baseAnnual = cstmt.Parameters[5].Value as decimal?;
 
         var today = DateTime.Now;
-        Assert.AreEqual(today.ToShortDateString(), date.ToShortDateString());
+        Assert.AreEqual(today.ToShortDateString(), date?.ToShortDateString());
 
         Assert.IsTrue(title.StartsWith("Report For Department # 1001"));
 
         Assert.AreEqual(35525, baseSal);
 
-        Assert.AreEqual(1.33, comRate, 0.01);
+        Assert.NotNull(comRate);
+        Assert.AreEqual(1.33, (double)comRate!.Value, 0.01);
 
-        Assert.AreEqual(47248.25, baseAnnual, 0.01);
+        Assert.NotNull(baseAnnual);
+        Assert.AreEqual(47248.25, (double)baseAnnual!.Value, 0.01);
     }
 
     [Test]
     public void DeleteStatementExistsTest()
     {
+        using var conn = OpenConnection();
         //Use delete statement to delete a employee from database
         Assert.IsTrue(CheckEmployeeExists(1001));
         var deleteExist = "emp_delete(:param1,:param2)";
@@ -402,6 +413,7 @@ public class EDBBasicStatementTest : EPASTestBase
     [Test]
     public void DeleteStatementNotExistsTest()
     {
+        using var conn = OpenConnection();
         // Delete non exist employee will return not found message
         Assert.IsFalse(CheckEmployeeExists(1002));
         var deleteNotExist = "emp_delete(:param1,:param2)";
@@ -426,6 +438,7 @@ public class EDBBasicStatementTest : EPASTestBase
     [Test]
     public void InsertStatementTest()
     {
+        using var conn = OpenConnection();
         //User insert statement to insert a employee into database
         Assert.IsFalse(CheckEmployeeExists(2001));
         var commandText = "emp_insert(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8)";
@@ -469,6 +482,7 @@ public class EDBBasicStatementTest : EPASTestBase
     [Test]
     public void NullStatementNotNullTest()
     {
+        using var conn = OpenConnection();
         //Call divide_it procedure but NULL statement not executed
         var commandText = "divide_it(:param1,:param2,:param3)";
 
@@ -496,6 +510,7 @@ public class EDBBasicStatementTest : EPASTestBase
     [Test]
     public void NullStatementTest()
     {
+        using var conn = OpenConnection();
         //Call divide_it procedure and NULL statement executed
         var commandText = "divide_it(:param1,:param2,:param3)";
 
@@ -521,6 +536,7 @@ public class EDBBasicStatementTest : EPASTestBase
     [Test]
     public void ReturningIntoStatementExistsTest()
     {
+        using var conn = OpenConnection();
         //Update employee and use returing into statement to get employee information
         Assert.IsTrue(CheckEmployeeExists(3001));
         var commandText = "return_into(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10)";
@@ -582,6 +598,7 @@ public class EDBBasicStatementTest : EPASTestBase
     [Test]
     public void ReturningIntoStatementNotExistsTest()
     {
+        using var conn = OpenConnection();
         //Update not existing employee get not found message
         Assert.IsFalse(CheckEmployeeExists(3002));
         var commandText = "return_into(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10)";
@@ -631,9 +648,14 @@ public class EDBBasicStatementTest : EPASTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
     public void ReturningIntoFromDeleteStatementExistsTest()
     {
+        var ds = CreateDataSourceBuilder()
+            .ConfigureTypeLoading(b => b.EnableTableCompositesLoading())
+            .MapComposite<Employee>("emp1")
+            .Build();
+        using var conn = ds.OpenConnection();
+
         //Delete a employee and use return into statement to get information
         Assert.IsTrue(CheckEmployeeExists(5001));
 
@@ -644,50 +666,37 @@ public class EDBBasicStatementTest : EPASTestBase
             CommandType = CommandType.StoredProcedure
         };
 
-        EDBCommandBuilder.DeriveParameters(cstmt);
+        cstmt.Parameters.AddWithValue("p_empno", 5001);
+        cstmt.Parameters.Add(new EDBParameter("r_emp", null!) { Direction = ParameterDirection.Output });
+        cstmt.Parameters.Add(new EDBParameter("msg", null!) { Direction = ParameterDirection.Output });
 
-        /* This test is not complete and corresponds to the following JDBC test case.
-         * It needs to be completed when there is a solution to %ROWTYPE mapping.
-         * 
-        String commandExists = "{call  return_into_from_delete(?,?,?)}";
-    CallableStatement cstmtExists = con.prepareCall(commandExists);
-    cstmtExists.setInt(1, 5001);
-    cstmtExists.registerOutParameter(2, Types.STRUCT);
-    cstmtExists.registerOutParameter(3, Types.VARCHAR);
-    cstmtExists.execute();
-    Struct emp = (Struct)cstmtExists.getObject(2);
-    Object[] data = emp.getAttributes();
-    String name = (String)data[1];
-    Assert.assertEquals("BLAKE", name);
-    String job = (String)data[2];
-    Assert.assertEquals("Sales", job);
-    java.sql.Timestamp date = (java.sql.Timestamp)data[4];
-    java.sql.Timestamp sqlDate = null;
-    try {
-        String strDate = "2007-11-01 00:00:00";
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-    java.util.Date utilDate = sdf.parse(strDate);
-    sqlDate = new java.sql.Timestamp(utilDate.getTime());
-    }catch(Exception e){
-        e.printStackTrace();
-    }
-    Assert.assertEquals(sqlDate, date);
-    BigDecimal sal = (BigDecimal)data[5];
-    Assert.assertEquals(120000, sal.doubleValue(), 0.01);
-    BigDecimal comm = (BigDecimal)data[6];
-    Assert.assertEquals("0.00", comm.toString());
-    BigDecimal deptNo = (BigDecimal)data[7];
-    Assert.assertEquals(51, deptNo.intValue());
-    String msg = cstmtExists.getString(3);
-    Assert.assertEquals("Deleted Employee # : 5001", msg);
-    Assert.assertFalse(CheckEmployeeExists(5001));
-        */
+        cstmt.Prepare();
+        cstmt.ExecuteNonQuery();
+
+        var emp = cstmt.Parameters[1].Value as Employee;
+        var msg = cstmt.Parameters[2].Value.ToString();
+
+        Assert.IsNotNull(emp);
+
+        Assert.AreEqual("BLAKE", emp.ename);
+        Assert.AreEqual("Sales", emp.job);
+        Assert.AreEqual(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified), emp.hiredate);
+        Assert.AreEqual(120000, emp.sal);
+        Assert.AreEqual(0, emp.comm);
+        Assert.AreEqual(51, emp.deptno);
+
+        Assert.AreEqual("Deleted Employee # : 5001", msg);
+        Assert.IsFalse(CheckEmployeeExists(5001));
     }
 
     [Test]
-    [EDBExplicit("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
     public void ReturnIntoFromDeleteStatementNotExistsTest()
     {
+        var ds = CreateDataSourceBuilder()
+            .ConfigureTypeLoading(b => b.EnableTableCompositesLoading())
+            .MapComposite<Employee>("emp1")
+            .Build();
+        using var conn = ds.OpenConnection();
         //Delete non existing employee return not found message
         Assert.IsFalse(CheckEmployeeExists(5002));
 
@@ -700,90 +709,97 @@ public class EDBBasicStatementTest : EPASTestBase
 
         EDBCommandBuilder.DeriveParameters(cstmt);
 
-        /* This test is not complete and corresponds to the following JDBC test case.
-         * It needs to be completed when there is a solution to %ROWTYPE mapping.
-         * 
-    String commandNotExists = "{call return_into_from_delete(?,?,?)}";
-    CallableStatement cstmtNotExists = con.prepareCall(commandNotExists);
-    cstmtNotExists.setInt(1, 5002);
-    cstmtNotExists.registerOutParameter(2, Types.STRUCT);
-    cstmtNotExists.registerOutParameter(3, Types.VARCHAR);
-    cstmtNotExists.execute();
-    String msgNotExists = cstmtNotExists.getString(3);
-    Assert.assertEquals("Employee # 5002 not found", msgNotExists);
-        */
+        cstmt.Parameters[0].Value = 5002;
+
+        cstmt.Prepare();
+        cstmt.ExecuteNonQuery();
+
+        var emp = cstmt.Parameters[1].Value as Employee;
+        var msgNotExists = cstmt.Parameters[2].Value.ToString();
+
+        Assert.AreEqual("Employee # 5002 not found", msgNotExists);
     }
 
     [Test]
-    [EDBExplicit("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
     public void SelectIntoStatementExistsTest()
     {
-        /* This test is not complete and corresponds to the following JDBC test case.
-         * It needs to be completed when there is a solution to %ROWTYPE mapping.
-         * 
+        var ds = CreateDataSourceBuilder()
+            .ConfigureTypeLoading(b => b.EnableTableCompositesLoading())
+            .MapComposite<Employee>("emp1")
+            .Build();
+        using var conn = ds.OpenConnection();
+
         //Update employee and use select into statement to get employee information
-        Assert.assertTrue(CheckEmployeeExists(4001));
-    String commandExists = "{call  select_into_query(?,?,?,?)}";
-    CallableStatement cstmtExists = con.prepareCall(commandExists);
-    cstmtExists.setInt(1, 4001);
-    cstmtExists.registerOutParameter(2, Types.STRUCT);
-    cstmtExists.registerOutParameter(3, Types.NUMERIC);
-    cstmtExists.registerOutParameter(4, Types.VARCHAR);
-    cstmtExists.execute();
-    Struct emp = (Struct)cstmtExists.getObject(2);
-    Object[] data = emp.getAttributes();
-    String name = (String)data[1];
-    Assert.assertEquals("JONES", name);
-    String job = (String)data[2];
-    Assert.assertEquals("Sales", job);
-    java.sql.Timestamp date = (java.sql.Timestamp)data[4];
-    java.sql.Timestamp sqlDate = null;
-    try {
-        String strDate = "2007-11-01 00:00:00";
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-    java.util.Date utilDate = sdf.parse(strDate);
-    sqlDate = new java.sql.Timestamp(utilDate.getTime());
-    }catch(Exception e){
-        e.printStackTrace();
-    }
-    Assert.assertEquals(sqlDate, date);
-    BigDecimal sal = (BigDecimal)data[5];
-    Assert.assertEquals(120000, sal.doubleValue(), 0.01);
-    BigDecimal comm = (BigDecimal)data[6];
-    Assert.assertEquals("0.00", comm.toString());
-    BigDecimal deptNo = (BigDecimal)data[7];
-    Assert.assertEquals(41, deptNo.intValue());
-    BigDecimal avgSalDept41 = cstmtExists.getBigDecimal(3);
-    Assert.assertEquals(avgSalDept41.doubleValue(), 110000, 0.01);
-    String msg = cstmtExists.getString(4);
-    Assert.assertNull(msg);
-        */
+        Assert.IsTrue(CheckEmployeeExists(4001));
+
+        var commandText = "select_into_query";
+
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cstmt.Parameters.AddWithValue("empno", 4001);
+        var empParam = cstmt.Parameters.Add(new EDBParameter("emp", null!) { Direction = ParameterDirection.Output });
+        var avgsal = cstmt.Parameters.Add(new EDBParameter("avgsal", null!) { Direction = ParameterDirection.Output });
+        var msg = cstmt.Parameters.Add(new EDBParameter("msg", null!) { Direction = ParameterDirection.Output });
+
+        cstmt.Prepare();
+        cstmt.ExecuteNonQuery();
+
+
+        Assert.IsNotNull(empParam.Value);
+        var emp = empParam.Value as Employee;
+
+        Assert.AreEqual("JONES", emp.ename);
+        Assert.AreEqual("Sales", emp.job);
+        Assert.AreEqual(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified), emp.hiredate);
+        Assert.AreEqual(120000, emp.sal);
+        Assert.AreEqual(0, emp.comm);
+        Assert.AreEqual(41, emp.deptno);
+
+        Assert.IsNotNull(avgsal);
+        Assert.IsNotNull(avgsal!.Value);
+        Assert.AreEqual(110000, (double)(decimal)avgsal!.Value!, 0.01);
+
+        Assert.IsTrue(string.IsNullOrEmpty(msg.Value!.ToString()));
+
     }
 
     [Test]
-    [EDBExplicit("EC-2633: Could not find a way to map %ROWTYPE. DeriveParameters also fails to find a mapping.")]
     public void SelectIntoStatementNotExistsTest()
     {
-        /* This test is not complete and corresponds to the following JDBC test case.
-         * It needs to be completed when there is a solution to %ROWTYPE mapping.
-         * 
-//Update non existing employee get not found message
-Assert.assertFalse(CheckEmployeeExists(4003));
-String commandNotExists = "{call select_into_query(?,?,?,?)}";
-CallableStatement cstmtNotExists = con.prepareCall(commandNotExists);
-cstmtNotExists.setInt(1, 4003);
-cstmtNotExists.registerOutParameter(2, Types.STRUCT);
-cstmtNotExists.registerOutParameter(3, Types.NUMERIC);
-cstmtNotExists.registerOutParameter(4, Types.VARCHAR);
-cstmtNotExists.execute();
-String msgNotExists = cstmtNotExists.getString(4);
-Assert.assertEquals("Employee # 4003 not found", msgNotExists);
-        */
+        var ds = CreateDataSourceBuilder()
+            .ConfigureTypeLoading(b => b.EnableTableCompositesLoading())
+            .MapComposite<Employee>("emp1")
+            .Build();
+        using var conn = ds.OpenConnection();
+
+        //Update non existing employee get not found message
+        Assert.IsFalse(CheckEmployeeExists(4003));
+
+        var commandText = "select_into_query";
+
+        var cstmt = new EDBCommand(commandText, conn)
+        {
+            CommandType = CommandType.StoredProcedure
+        };
+
+        cstmt.Parameters.AddWithValue("empno", 4003);
+        cstmt.Parameters.Add(new EDBParameter("emp", null!) { Direction = ParameterDirection.Output });
+        cstmt.Parameters.Add(new EDBParameter("avgsal", null!) { Direction = ParameterDirection.Output });
+        var msg = cstmt.Parameters.Add(new EDBParameter("msg", null!) { Direction = ParameterDirection.Output });
+
+        cstmt.Prepare();
+        cstmt.ExecuteNonQuery();
+
+        Assert.AreEqual("Employee # 4003 not found", msg.Value.ToString());
     }
 
     [Test]
     public void SelectIntoExceptionStatementTest()
     {
+        using var conn = OpenConnection();
         //Call select into statement without exception
         var commandText = "select_into_exception_query(:param1,:param2,:param3)";
 
@@ -812,6 +828,7 @@ Assert.assertEquals("Employee # 4003 not found", msgNotExists);
     [Test]
     public void SelectIntoExceptionStatementErrorTest()
     {
+        using var conn = OpenConnection();
         //Call select into statement with TOO_MANY_ROWS exception
         var commandText = "select_into_exception_query(:param1,:param2,:param3)";
 
@@ -840,6 +857,7 @@ Assert.assertEquals("Employee # 4003 not found", msgNotExists);
     [Test]
     public void UpdateStatementExistsTest()
     {
+        using var conn = OpenConnection();
         //Update employee and get employee information
         Assert.IsTrue(CheckEmployeeExists(3001));
         var commandText = "emp_comp_update(:param1,:param2,:param3, :param4)";
@@ -881,6 +899,7 @@ Assert.assertEquals("Employee # 4003 not found", msgNotExists);
     [Test]
     public void UpdateStatementNotExistsTest()
     {
+        using var conn = OpenConnection();
         //Update not existing employee get not found message
         Assert.IsFalse(CheckEmployeeExists(3002));
 
@@ -912,6 +931,7 @@ Assert.assertEquals("Employee # 4003 not found", msgNotExists);
     [Test]
     public void ResultStatusStatementExistsTest()
     {
+        using var conn = OpenConnection();
         //Update employees and get row counts
 
         var commandText = "status_query(:param1,:param2,:param3, :param4)";
@@ -947,6 +967,7 @@ Assert.assertEquals("Employee # 4003 not found", msgNotExists);
     [Test]
     public void ResultStatusStatementNotExistsTest()
     {
+        using var conn = OpenConnection();
         //Update not existing employee get not found message
 
         var commandText = "status_query(:param1,:param2,:param3, :param4)";
