@@ -1,7 +1,0 @@
-using System.Runtime.CompilerServices;
-using NUnit.Framework;
-
-[assembly: Parallelizable(ParallelScope.Children), Timeout(30000)]
-//[assembly: NonParallelizable(), Timeout(30000)]
-
-[assembly: InternalsVisibleTo("Npgsql.PluginTests, PublicKey=00240000048000009400000006020000002400005253413100040000010001003999b71ac966040a7519e6f9477b14b7080202c6ffbdeb5478a222fda14e40d5816ef32c67ac06a8f1fa5414676e7e0dea2faf971198ec851667345c42adb5d46b614ddffbaa14953edb80757264edf30a79947ae21fbd19c696acec630ae65e88943cf12c35e9204234aec63841c1d6e060e3fbeae5e7c100cc94d864bb3cae")]

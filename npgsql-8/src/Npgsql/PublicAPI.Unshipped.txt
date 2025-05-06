@@ -1,5 +1,0 @@
-﻿#nullable enable
-EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableGeometricTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
-EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableJsonTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
-EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableNetworkTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
-EnterpriseDB.EDBClient.Replication.PgOutput.ReplicationValue.GetFieldName() -> string!
