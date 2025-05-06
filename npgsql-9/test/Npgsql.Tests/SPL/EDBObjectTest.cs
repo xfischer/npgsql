@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Data;
 using System.Threading;
+using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 
 //EC-2641: Regression Tests for Object types and objects in SPL
@@ -268,13 +269,13 @@ internal class EDBObjectTest : EPASTestBase
         mre.Close();
     }
 
-    [Test, Ignore("Composite type functionality has changed. Need to look into")]
+    [Test, EDBExplicit("Composite type functionality has changed. Need to look into")]
     public void MemberMethodTest()
     {
         DoMemberMethodTest("emp_obj_typ.display_emp01");
     }
 
-    [Test, Ignore("Composite type functionality has changed. Need to look into")]
+    [Test, EDBExplicit("Composite type functionality has changed. Need to look into")]
     public void MemberMememberMethodUsingSelfParameterTestthodTest()
     {
         DoMemberMethodTest("emp_obj_typ.display_emp02");

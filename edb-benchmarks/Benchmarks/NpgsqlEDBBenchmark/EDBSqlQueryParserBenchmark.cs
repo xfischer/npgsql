@@ -43,12 +43,10 @@ public class EDBSqlQueryParserBenchmark
     [BenchmarkCategory("EDBQueryParser")]
     public void ParseUsingSpans()
     {
-        char[] trim = [' ', '\r', '\n'];
-        var trimSpan = trim.AsSpan();
         foreach (var query in queries)
         {
             var parser = new SqlQueryParser(supportsRedwoodDialect: true);
-            var sql = query.Trim(trim);
+            var sql = query.Trim(StringExtensions.BlankChars);
             
             parser.ContainsSPLStartingKeyword(sql);
         }

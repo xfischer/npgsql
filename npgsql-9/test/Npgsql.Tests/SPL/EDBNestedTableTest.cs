@@ -1295,56 +1295,7 @@ internal class EDBNestedTableTest : EPASTestBase
         };
 
         await DomainTypeNestedTableTest_RawStrings<string>("name", testArrayStrDeclaration, testArray);
-    }
-
-    [Test]
-    [Ignore("Not supported: error 42602 table definition cannot be an array type")]
-    public async Task DomainTypeNestedTableTest_Array()
-    {
-        // 
-        var testArray = new[] {
-            new int[] { 1, 2, 3 }
-            ,new int[] { 1, -2, 3 }
-        };
-
-        var testArrayStrDeclaration = new string[] {
-        "{{1,2,3},{1,-2,3}}::integer"
-        };
-
-        await DomainTypeNestedTableTest_RawStrings<int[]>("integer[]", testArrayStrDeclaration, testArray);
-    }
-
-    [Test]
-    [Ignore("Not supported: error 42602: table definition should be a primitive or composite type")]
-    public async Task DomainTypeNestedTableTest_Range()
-    {
-        // 
-        var testArray = new EDBRange<int>[] {
-            new EDBRange<int>(1,true, 10, false)
-        };
-
-        var testArrayStrDeclaration = new string[] {
-        "[1,10)::int4range"
-        };
-
-        await DomainTypeNestedTableTest_RawStrings<EDBRange<int>>("int4range", testArrayStrDeclaration, testArray);
-    }
-
-    [Test]
-    [Ignore("Not supported: error 42602: table definition should be a primitive or composite type")]
-    public async Task DomainTypeNestedTableTest_Record()
-    {
-        // 
-        var testArray = new Tuple<int, string>[] {
-            new Tuple<int, string>(1, "foo")
-        };
-
-        var testArrayStrDeclaration = new string[] {
-        "(1,'foo'::text)::record"
-        };
-
-        await DomainTypeNestedTableTest_RawStrings<Tuple<int, string>>("record", testArrayStrDeclaration, testArray);
-    }
+    }    
 
     [Test]
     public async Task DomainTypeNestedTableTest_Char()
@@ -1412,7 +1363,7 @@ internal class EDBNestedTableTest : EPASTestBase
     }
 
 
-    [Test, Explicit("Should be tested with data from DB that should be timestamp with EPAS redwood")]
+    [Test]
     public async Task DomainTypeNestedTableTest_TimeTz()
     {
         var testArray = new DateTimeOffset[] { DateTimeOffset.Now.RemoveSecondsFraction()

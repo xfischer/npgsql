@@ -8,7 +8,7 @@ namespace System;
 #pragma warning disable RS0016 // Not part of the public API
 public static class StringExtensions
 {
-    static readonly char[] BlankChars = [' ', '\r', '\n'];
+    public static readonly char[] BlankChars = [' ', '\r', '\n', '\f', '\t'];
 
     /// <summary>
     /// Checks if the string contains a word followed by a blank character.

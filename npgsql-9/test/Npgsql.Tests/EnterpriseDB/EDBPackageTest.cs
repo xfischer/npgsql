@@ -1852,7 +1852,7 @@ public class EDBPackageTest : EPASTestBase
 
     }
 
-    [Test, EDBExplicit("Works in community")]
+    [Test]
     public void TERSE_PKG_FUNC_NATIVE_OUTPUT_TYPES_RETURN_VARCHAR()
 
     {
@@ -2122,7 +2122,7 @@ public class EDBPackageTest : EPASTestBase
 
     }
 
-    [Test, Ignore("Investigate exception caught")]
+    [Test]
     public void TERSE_PKG_FUNC_MIXED_NATIVE_TYPES()
     {
         try

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.Threading;
 using System.IO;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
@@ -706,7 +707,7 @@ internal class EDBAS17Tests : EPASTestBase
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
-    [Ignore("")]
+    [EDBExplicit("No reason")]
     [Test]
     public async Task DB_1961_SqlInjectionTest1()
     {
@@ -767,7 +768,7 @@ internal class EDBAS17Tests : EPASTestBase
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
-    [Ignore("")]
+    [EDBExplicit("No reason")]
     [Test]
     public async Task DB_1961_SqlInjectionTest2()
     {

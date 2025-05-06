@@ -1,9 +1,8 @@
 using System;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient;
 using System.Data;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
@@ -211,7 +210,7 @@ public class EDBAS14Tests : EPASTestBase
         await ExecuteReader("select read_bin_file();", true);
     }
 
-    [Test, Ignore("Similar to EC-1339 as this is anonymous block")]
+    [Test]
     public async Task ChangeDBMS_SQLNUMBERInsteadOfINTEGER()
     {
         var conn = await OpenConnectionAsync();
@@ -347,7 +346,7 @@ public class EDBAS14Tests : EPASTestBase
 
     }
 
-    [Test, Ignore("Similar to EC-1339 as this is anonymous block")]
+    [Test, EDBExplicit("Similar to EC-1339 as this is anonymous block")]
     public async Task EnablingParameter_default_with_rowids()
     {
         await using var conn = await OpenConnectionAsync();
@@ -362,9 +361,14 @@ public class EDBAS14Tests : EPASTestBase
         await Execute("CREATE OR REPLACE PACKAGE db171 IS\n"
             + "last_rowid bigint;\n"
         + "END;\n", false);
-        await Execute("BEGIN\n"
-          + "db171.last_rowid := nvl(pg_sequence_last_value(\'sys.rowid_global_seq\'), 0);\n"
-        + "END;", false);
+        //await Execute("BEGIN\n"
+        //  + "db171.last_rowid := nvl(pg_sequence_last_value(\'sys.rowid_global_seq\'), 0);\n"
+        //+ "END;", false);
+        await Execute("""
+        BEGIN
+          db171.last_rowid := nvl(pg_sequence_last_value('sys.rowid_global_seq'), 0);
+        END;
+        """, false);
 
         await Execute("SET default_with_rowids TO ON;", true);
 
@@ -386,8 +390,7 @@ public class EDBAS14Tests : EPASTestBase
 
     }
 
-    [Test, Ignore("EDB")]
-    //[Test]
+    [Test, EDBExplicit("EDB")]
     public async Task SupportPRIORInTargetListForCONNECTBYQueries()
     {
         await using var conn = await OpenConnectionAsync();

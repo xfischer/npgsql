@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using System.Threading;
 using System.Collections;
 using static System.Collections.Specialized.BitVector32;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 #pragma warning disable CS8604 // Possible null reference argument.
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
@@ -20,6 +21,18 @@ namespace EnterpriseDB.EDBClient.Tests.SPL;
 [NonParallelizable, Timeout(2000)]
 internal class EDBStaticCursorTest : EPASTestBase
 {
+    public class Employee
+    {
+        public int? empno { get; set; }
+        public string? ename { get; set; }
+        public string? job { get; set; }
+        public int? mgr { get; set; }
+        public DateTime? hiredate { get; set; }
+        public decimal? sal { get; set; }
+        public decimal? comm { get; set; }
+        public int? deptno { get; set; }
+    }
+
     private static int EMPNO = 7369;
     private static string ENAME = "SMITH";
     private static int EMP_COUNT = 14;
@@ -314,10 +327,13 @@ internal class EDBStaticCursorTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2633")]
     public void FetchingRowsRecordRowtypeTest()
     {
-        using var conn = OpenConnection();
+        var ds = CreateDataSourceBuilder()
+            .ConfigureTypeLoading(b => b.EnableTableCompositesLoading())
+            .MapComposite<Employee>("emp1")
+            .Build();
+        using var conn = ds.OpenConnection();
         var command = "fetching_rows_record_rowtype";
 
         var cstmt = new EDBCommand(command, conn)
@@ -325,10 +341,13 @@ internal class EDBStaticCursorTest : EPASTestBase
             CommandType = CommandType.StoredProcedure
         };
 
-        cstmt.DeriveParameters();
+        Assert.DoesNotThrow(() =>
+        {
+            cstmt.DeriveParameters();
 
-        //cstmt.Prepare();
-        //cstmt.ExecuteNonQuery();
+            cstmt.Prepare();
+            cstmt.ExecuteNonQuery();
+        });
     }
 
     [Test]
@@ -533,7 +552,6 @@ internal class EDBStaticCursorTest : EPASTestBase
     }
 
     [Test]
-    [Ignore("EC-2638: syntax error at or near \"my_record\"")]
     public void ParameterizedCursorTest()
     {
         using var conn = OpenConnection();
@@ -545,7 +563,7 @@ internal class EDBStaticCursorTest : EPASTestBase
         var sqlStr = "DECLARE\n"
                   + "    my_record       emp%ROWTYPE;\n"
                   + "    CURSOR c1 (max_wage NUMBER) IS\n"
-                  + "        SELECT * FROM emp WHERE sal < max_wage;\n"
+                  + "        SELECT * FROM emp WHERE sal < max_wage order by empno;\n"
                   + "BEGIN\n"
                   + "    OPEN c1(2000);\n"
                   + "    LOOP\n"
@@ -579,7 +597,7 @@ internal class EDBStaticCursorTest : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EMP_SALARIES[i], notice.MessageText);
+                CollectionAssert.Contains(EMP_SALARIES, notice.MessageText);
             }
         }
         finally

@@ -2,6 +2,7 @@ using System;
 using NUnit.Framework;
 using System.Data;
 using System.Threading.Tasks;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
@@ -778,7 +779,7 @@ public class EDBFunctionTests : EPASTestBase
     }
 
     /* To verify the sanity of IN, INOUT and OUT parameters in functions with BigInt datatype */
-    [Test, Ignore("EDB: Bigvar type does not exist")]
+    [Test, EDBExplicit("EDB: Bigvar type does not exist")]
     //[Test]
     public void TestFunctionWithBigIntAsInInoutOut()
     {
@@ -2778,7 +2779,7 @@ public class EDBFunctionTests : EPASTestBase
 
     }
 
-    [Test, Ignore("Investigate")]
+    [Test, EDBExplicit("Investigate")]
     public void TERSE_FUNC_MIXED_NATIVE_CURSOR_TYPES()
     {
         EDBCommand command = null;

@@ -4,6 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using System.Collections;
 using NUnit;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 //Haroon
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
@@ -17,29 +18,29 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 [NonParallelizable]
 public class EDBMiscTest : EPASTestBase
 {
-		EDBConnection? con = null;
+    EDBConnection? con = null;
 
     [SetUp]
-		public void Init()
-		{
-			//write setup for following test cases
-			con = OpenConnection();
-        TestUtil.createTempTable(con,"TESTTAB","a VARCHAR, b INT4");
+    public void Init()
+    {
+        //write setup for following test cases
+        con = OpenConnection();
+        TestUtil.createTempTable(con, "TESTTAB", "a VARCHAR, b INT4");
         var Command = new EDBCommand("", con)
         {
             CommandText = "INSERT INTO TESTTAB VALUES('V1',1)"
         };
         Command.ExecuteNonQuery();
-			Command.CommandText="INSERT INTO TESTTAB VALUES('V2',2)";
-			Command.ExecuteNonQuery();
-			TestUtil.createTempTable(con,"test_Index","major int4, minor INT4, name VARCHAR");
+        Command.CommandText = "INSERT INTO TESTTAB VALUES('V2',2)";
+        Command.ExecuteNonQuery();
+        TestUtil.createTempTable(con, "test_Index", "major int4, minor INT4, name VARCHAR");
 
-		}
+    }
 
-		[TearDown] 
-		public void Dispose()
-		{
-			
+    [TearDown]
+    public void Dispose()
+    {
+
         //EDBCommand Command=new EDBCommand("",con);
         //Command.CommandText="DROP Table TESTTAB";
         //Command.CommandType=CommandType.Text;
@@ -48,51 +49,51 @@ public class EDBMiscTest : EPASTestBase
         //Command.CommandText="DROP Table test_Index";
         //Command.CommandType=CommandType.Text;
         //Command.ExecuteNonQuery();
-			
-			TestUtil.closeDB(con);
-		}
-			
-		[Test]
-		public void TestDatabaseSelectNullBug()
-		{
-			try
-			{
-				var Con=OpenConnection();
+
+        TestUtil.closeDB(con);
+    }
+
+    [Test]
+    public void TestDatabaseSelectNullBug()
+    {
+        try
+        {
+            var Con = OpenConnection();
 
             var Command = new EDBCommand("", Con)
             {
                 CommandType = CommandType.Text
             };
-            var Select="select datname from pg_database";
-				Command.CommandText=Select;
-				var Reader=Command.ExecuteReader();
-				
-				Assert.IsNotNull(Reader);
-	
-				while(Reader.Read())
-				{
-					Console.WriteLine(Reader.GetValue(0).ToString());
+            var Select = "select datname from pg_database";
+            Command.CommandText = Select;
+            var Reader = Command.ExecuteReader();
 
-				}
-				
-				Reader.Close();
-				TestUtil.closeDB(Con);
-			}
+            Assert.IsNotNull(Reader);
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
-		
-		/// <summary>
-		/// Test Aggregate functions in various scenarios
-		/// </summary>
-		[Test]
-		public void TestAggregateInvalidMax()
-		{
-			try
-			{
+            while (Reader.Read())
+            {
+                Console.WriteLine(Reader.GetValue(0).ToString());
+
+            }
+
+            Reader.Close();
+            TestUtil.closeDB(Con);
+        }
+
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Test Aggregate functions in various scenarios
+    /// </summary>
+    [Test]
+    public void TestAggregateInvalidMax()
+    {
+        try
+        {
 
             var Command = new EDBCommand("", con)
             {
@@ -102,820 +103,774 @@ public class EDBMiscTest : EPASTestBase
             };
 
             Command.ExecuteNonQuery();
-				
-				Assert.Fail("Expected an exception on misuse of aggregate function");
-				
-			}
-			catch(Exception )
-			{
 
-			}
-		
-		}
-		[Test]
-		public void TestAggregateHavingMax()
-		{
-			try
-			{
+            Assert.Fail("Expected an exception on misuse of aggregate function");
+
+        }
+        catch (Exception)
+        {
+
+        }
+
+    }
+    [Test]
+    public void TestAggregateHavingMax()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having max(b)=b order by a",
 
                 CommandType = CommandType.Text
             };
-            var Reader=Command.ExecuteReader();
-			
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0).ToString());
-				Console.WriteLine(Reader.GetValue(0).ToString());
-				Assert.IsTrue(Reader.Read());
-				Reader.Close();
-			}
+            var Reader = Command.ExecuteReader();
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0).ToString());
+            Console.WriteLine(Reader.GetValue(0).ToString());
+            Assert.IsTrue(Reader.Read());
+            Reader.Close();
+        }
 
-		[Test]
-		public void TestAggregateHavingSelectMax()
-		{
-			try
-			{
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
+
+    [Test]
+    public void TestAggregateHavingSelectMax()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having b=(select max(b) from testtab);"
             };
 
             var Reader = Command.ExecuteReader();
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V2",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V2", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
+        }
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
-		
-		[Test]
-		public void TestAggregateSelectMax()
-		{
-			try
-			{
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
+
+    [Test]
+    public void TestAggregateSelectMax()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB where b=(select max(b) from TESTTAB)"
             };
 
             var Reader = Command.ExecuteReader();
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V2",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
-			}
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-			
-		}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V2", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
+        }
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-		[Test]
-		public void TestAggregateInvalidMin()
-		{
-			var Command = new EDBCommand("",con);
-			try
-			{
-				Command.CommandText="select a from TESTTAB where b=min(b)";
-				Command.ExecuteNonQuery();
-				Assert.Fail("Expected an exception on misuse of aggregate function");
-			}
-	
-			catch(Exception )
-			{
-				
-			}
-		
-		}
-		[Test]
-		public void TestAggregateHavingMin()
-		{
-			try
-			{
+    }
+
+    [Test]
+    public void TestAggregateInvalidMin()
+    {
+        var Command = new EDBCommand("", con);
+        try
+        {
+            Command.CommandText = "select a from TESTTAB where b=min(b)";
+            Command.ExecuteNonQuery();
+            Assert.Fail("Expected an exception on misuse of aggregate function");
+        }
+
+        catch (Exception)
+        {
+
+        }
+
+    }
+    [Test]
+    public void TestAggregateHavingMin()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having min(b)=b order by a"
             };
             var Reader = Command.ExecuteReader();
 
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsTrue(Reader.Read());
-				Reader.Close();
-			}
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
-		
-		[Test]
-		public void TestAggregateHavingSelectMin()
-		{
-			try
-			{
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsTrue(Reader.Read());
+            Reader.Close();
+        }
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
+
+    [Test]
+    public void TestAggregateHavingSelectMin()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having b=(select min(b) from testtab);"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
 
-			}
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
 
-		}
-		
-		//17-11-2006
-		
-		[Test]
-		public void TestAggregateSelectMin()
-		{
-			try
-			{
+        }
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+
+    }
+
+    //17-11-2006
+
+    [Test]
+    public void TestAggregateSelectMin()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB where b=(select min(b) from TESTTAB)"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
+        }
 
-		}
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-		[Test]
-		public void TestAggregateInvalidAvg()
-		{
+    }
 
-			try
-			{
+    [Test]
+    public void TestAggregateInvalidAvg()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB where b=avg(b)"
             };
 
             Command.ExecuteNonQuery();
-				Assert.Fail("Expected an exception on misuse of aggregate function");
-			}
-			catch(Exception )
-			{
-			}
-			
-		}
+            Assert.Fail("Expected an exception on misuse of aggregate function");
+        }
+        catch (Exception)
+        {
+            // Ignore
+        }
+    }
 
-		[Ignore("MERGE_HANG")]
-		[Test]
-		public void TestAggregateHavingAvg()
-		{
-			try
-			{
+    [Test]
+    public void TestAggregateHavingAvg()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having avg(b)=b order by a"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsTrue(Reader.Read());
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsTrue(Reader.Read());
+            Reader.Close();
+        }
 
-		[Test]
-		public void TestAggregateHavingSelectAvg()
-		{
-			try
-			{
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
+
+    [Test]
+    public void TestAggregateHavingSelectAvg()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having b=(select avg(b) from testtab);"
             };
 
             var Reader = Command.ExecuteReader();
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
-			}
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
+        }
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
 
-		[Test]
+    [Test]
 
-		public void TestAggregateSelectAvg()
-		{
-			try
-			{
+    public void TestAggregateSelectAvg()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB where b<(select avg(b) from TESTTAB)"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
+        }
 
-		[Test]
-		public void TestAggregateInvalidBIT_AND()
-		{
-			var Command = new EDBCommand("",con);
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
 
-			try
-			{
-				Command.CommandText="select a from TESTTAB where b=BIT_AND(b)";
-				Command.ExecuteNonQuery();
-				Assert.Fail("Expected an exception on misuse of aggregate function");
-			}
-			catch(Exception )
-			{
-			}
-		
-		}
+    [Test]
+    public void TestAggregateInvalidBIT_AND()
+    {
+        var Command = new EDBCommand("", con);
 
-		[Test]
+        try
+        {
+            Command.CommandText = "select a from TESTTAB where b=BIT_AND(b)";
+            Command.ExecuteNonQuery();
+            Assert.Fail("Expected an exception on misuse of aggregate function");
+        }
+        catch (Exception)
+        {
+        }
 
-		public void TestAggregateHavingBIT_AND()
-		{
+    }
 
-			try
-			{
+    [Test]
+
+    public void TestAggregateHavingBIT_AND()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having BIT_AND(b)=b order by a"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsTrue(Reader.Read());
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsTrue(Reader.Read());
+            Reader.Close();
+        }
 
-		}
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-		[Test]
-		public void TestAggregateHavingSelectBIT_AND()
-		{
-			try
-			{
+    }
+
+    [Test]
+    public void TestAggregateHavingSelectBIT_AND()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having b=(select BIT_AND(b) from testtab);"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
-			}
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-			
-		}
 
-		//***********************
-		[Test]
-		public void TestAggregateSelectBIT_AND()
-		{
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
+        }
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-			try
-			{
+    }
+
+    //***********************
+    [Test]
+    public void TestAggregateSelectBIT_AND()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB where b>(select BIT_AND(b) from TESTTAB)"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsTrue(Reader.Read());
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsTrue(Reader.Read());
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
+        }
 
-		}
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-		[Test]
-		public void TestAggregateInvalidBIT_OR()
-		{
-			
-			var Command = new EDBCommand("",con);
+    }
 
-			try
-			{
-				Command.CommandText="select a from TESTTAB where b=BIT_OR(b)";
-				Command.ExecuteNonQuery();
-				Assert.Fail("Expected an exception on misuse of aggregate function");
-			}
-			catch(Exception )
-			{
-			}
-		
-		}
+    [Test]
+    public void TestAggregateInvalidBIT_OR()
+    {
 
-		[Test]
-		public void TestAggregateHavingBIT_OR()
-		{
-			try
-			{
+        var Command = new EDBCommand("", con);
+
+        try
+        {
+            Command.CommandText = "select a from TESTTAB where b=BIT_OR(b)";
+            Command.ExecuteNonQuery();
+            Assert.Fail("Expected an exception on misuse of aggregate function");
+        }
+        catch (Exception)
+        {
+        }
+
+    }
+
+    [Test]
+    public void TestAggregateHavingBIT_OR()
+    {
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having BIT_OR(b)=b order by a"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsTrue(Reader.Read());
-				
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsTrue(Reader.Read());
 
-		[Test]
-		public void TestAggregateHavingSelectBIT_OR()
-		{
-			
-			var Command = new EDBCommand("",con);
+            Reader.Close();
+        }
 
-			try
-			{
-				Command.CommandText="select a from TESTTAB group by a,b having b=(select BIT_OR(b) from testtab);";
-				var Reader = Command.ExecuteReader();
-				Assert.IsFalse(Reader.Read());
-				Reader.Close();
-			}
-			catch(Exception exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
 
-		}
+    [Test]
+    public void TestAggregateHavingSelectBIT_OR()
+    {
 
-		[Test]
-		public void TestAggregateSelectBIT_OR()
-		{
+        var Command = new EDBCommand("", con);
 
-			try
-			{
+        try
+        {
+            Command.CommandText = "select a from TESTTAB group by a,b having b=(select BIT_OR(b) from testtab);";
+            var Reader = Command.ExecuteReader();
+            Assert.IsFalse(Reader.Read());
+            Reader.Close();
+        }
+        catch (Exception exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+
+    }
+
+    [Test]
+    public void TestAggregateSelectBIT_OR()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB where b<(select BIT_OR(b) from TESTTAB)"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsTrue(Reader.Read());
-				Assert.IsFalse(Reader.Read());
-				
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsTrue(Reader.Read());
+            Assert.IsFalse(Reader.Read());
 
-		}
+            Reader.Close();
+        }
 
-		[Test]
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-		public void TestAggregateInvalidCount()
-		{
-			
-			var Command = new EDBCommand("",con);
+    }
 
-			try
-			{
-				Command.CommandText="select a from TESTTAB where b=count(*)";
-				Command.ExecuteNonQuery();
-				Assert.Fail("Expected an exception on misuse of aggregate function");
-			}
-			catch(Exception )
-			{
-			}
+    [Test]
 
-		}
+    public void TestAggregateInvalidCount()
+    {
 
-		[Test]
-		public void TestAggregateHavingCount()
-		{
+        var Command = new EDBCommand("", con);
 
-			try
-			{
+        try
+        {
+            Command.CommandText = "select a from TESTTAB where b=count(*)";
+            Command.ExecuteNonQuery();
+            Assert.Fail("Expected an exception on misuse of aggregate function");
+        }
+        catch (Exception)
+        {
+        }
+
+    }
+
+    [Test]
+    public void TestAggregateHavingCount()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having b=count(*)"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				
-				Reader.Close();
-				Console.WriteLine(con.Database.ToString()+"afaf");
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
 
-		}
+            Reader.Close();
+            Console.WriteLine(con.Database.ToString() + "afaf");
+        }
 
-		[Test]
-		public void TestAggregateHavingSelectCount()
-		{
-				
-			try
-			{
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+
+    }
+
+    [Test]
+    public void TestAggregateHavingSelectCount()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having b=(select count(*) from testtab);"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V2",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V2", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
 
-		[Test]
-		public void TestAggregateSelectCount()
-		{
-			
-			try
-			{
+            Reader.Close();
+        }
+
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
+
+    [Test]
+    public void TestAggregateSelectCount()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB where b<(select count(*) from TESTTAB)"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
 
-		}
+            Reader.Close();
+        }
 
-		[Test]
-		public void TestAggregateSelectCountNonNull()
-		{
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-			try
-			{
+    }
+
+    [Test]
+    public void TestAggregateSelectCountNonNull()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "INSERT INTO TESTTAB(b) VALUES(3)"
             };
             Command.ExecuteNonQuery();
-				Command.CommandText="select a from TESTTAB where b<(select count(a) from TESTTAB)";
-			
-				var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				
-				Reader.Close();
+            Command.CommandText = "select a from TESTTAB where b<(select count(a) from TESTTAB)";
 
-				Command.CommandText="DELETE FROM TESTTAB WHERE a IS NULL";
-				Command.ExecuteNonQuery();
-			}
+            var Reader = Command.ExecuteReader();
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
 
-		}
+            Reader.Close();
 
-		[Test]
-		public void TestAggregateInvalidSum()
-		{
+            Command.CommandText = "DELETE FROM TESTTAB WHERE a IS NULL";
+            Command.ExecuteNonQuery();
+        }
 
-			var Command = new EDBCommand("",con);
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-			try
-			{
-				Command.CommandText="select a from TESTTAB where b=sum(b)";
-				Command.ExecuteNonQuery();
-				Assert.Fail("Expected an exception on misuse of aggregate function");
-			}
-			catch(Exception )
-			{
-			}
+    }
 
-		}
+    [Test]
+    public void TestAggregateInvalidSum()
+    {
 
-		[Test]
-		public void TestAggregateHavingSum()
-		{
+        var Command = new EDBCommand("", con);
 
-			try
-			{
+        try
+        {
+            Command.CommandText = "select a from TESTTAB where b=sum(b)";
+            Command.ExecuteNonQuery();
+            Assert.Fail("Expected an exception on misuse of aggregate function");
+        }
+        catch (Exception)
+        {
+        }
+
+    }
+
+    [Test]
+    public void TestAggregateHavingSum()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having b=sum(b) order by a"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V2",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V2", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
 
-		}
+            Reader.Close();
+        }
 
-		[Test]
-		public void TestAggregateHavingSelectSum()
-		{
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
 
-			try
-			{
+    }
+
+    [Test]
+    public void TestAggregateHavingSelectSum()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB group by a,b having b=(select sum(b) from testtab);"
             };
 
             var Reader = Command.ExecuteReader();
-				Assert.IsFalse(Reader.Read());
-				
-				Reader.Close();
-			}
+            Assert.IsFalse(Reader.Read());
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+            Reader.Close();
+        }
 
-		[Test]
-		public void TestAggregateSelectSum()
-		{
-			
-			try
-			{
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
+
+    [Test]
+    public void TestAggregateSelectSum()
+    {
+
+        try
+        {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "select a from TESTTAB where b<(select sum(b) from TESTTAB)"
             };
 
             var Reader = Command.ExecuteReader();
-				
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V1",Reader.GetValue(0));
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("V2",Reader.GetValue(0));
-				Assert.IsFalse(Reader.Read());
-				
-				Reader.Close();
-				
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V1", Reader.GetValue(0));
+            Assert.IsTrue(Reader.Read());
+            Assert.AreEqual("V2", Reader.GetValue(0));
+            Assert.IsFalse(Reader.Read());
 
-		[Ignore("MERGE_HANG")]
-		[Test]
-		public void MultiColIndex ()
-		{
-			
-			try
-			{
-            var Command = new EDBCommand("", con)
-            {
-                CommandText = "INSERT INTO test_Index VALUES (2000, 3000, 'Ali');"
-            };
-            Command.ExecuteNonQuery();
+            Reader.Close();
 
-				Command.CommandText="CREATE INDEX test_2_mm_idx ON test_Index (major, minor);";
-				Command.ExecuteNonQuery();
+        }
 
-				Command.CommandText="SELECT name FROM test_Index WHERE major = 2000 AND minor = 3000;";
-				var Reader = Command.ExecuteReader();
+        catch (EDBException exp)
+        {
+            throw new Exception(exp.ToString());
+        }
+    }
 
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("Ali",Reader.GetValue(0));
+    [Test]
+    public void MultiColIndex()
+    {
 
-				Reader.Close();
-			}
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+        var Command = new EDBCommand("", con)
+        {
+            CommandText = "INSERT INTO test_Index VALUES (2000, 3000, 'Ali');"
+        };
+        Command.ExecuteNonQuery();
 
-		[Test]
-		public void UniqueIndex ()
-		{
-			
-			try
-			{
-            var Command = new EDBCommand("", con)
-            {
-                CommandText = "INSERT INTO test_Index VALUES (3000, 4000, 'Usman');"
-            };
-            Command.ExecuteNonQuery();
+        Command.CommandText = "CREATE INDEX test_2_mm_idx ON test_Index (major, minor);";
+        Command.ExecuteNonQuery();
 
-				Command.CommandText="CREATE UNIQUE INDEX index2 ON test_Index (major, minor);";
-				Command.ExecuteNonQuery();
+        Command.CommandText = "SELECT name FROM test_Index WHERE major = 2000 AND minor = 3000;";
+        var Reader = Command.ExecuteReader();
 
-				Command.CommandText="SELECT name FROM test_Index WHERE major = 3000 AND minor = 4000;";
-				var Reader = Command.ExecuteReader();
+        Assert.IsTrue(Reader.Read());
+        Assert.AreEqual("Ali", Reader.GetValue(0));
 
-				Assert.IsTrue(Reader.Read());
-				Assert.AreEqual("Usman",Reader.GetValue(0));
+        Reader.Close();
+    }
 
-				Reader.Close();
-			}
+    [Test]
+    public void UniqueIndex()
+    {
+        var Command = new EDBCommand("", con)
+        {
+            CommandText = "INSERT INTO test_Index VALUES (3000, 4000, 'Usman');"
+        };
+        Command.ExecuteNonQuery();
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+        Command.CommandText = "CREATE UNIQUE INDEX index2 ON test_Index (major, minor);";
+        Command.ExecuteNonQuery();
 
-		[Test]
-		public void ViolUniqueIndex ()
-		{
-			
-			try
-			{
-            var Command = new EDBCommand("", con)
-            {
-                CommandText = "INSERT INTO test_Index VALUES (3000, 4000, 'Kamran');"
-            };
-            try
-				{
-					Command.ExecuteNonQuery();
+        Command.CommandText = "SELECT name FROM test_Index WHERE major = 3000 AND minor = 4000;";
+        var Reader = Command.ExecuteReader();
 
-				}
-				catch(EDBException )
-				{
-					Assert.Fail("Unable to execute... Unique Index violated");;
-				}
+        Assert.IsTrue(Reader.Read());
+        Assert.AreEqual("Usman", Reader.GetValue(0));
 
-			}
+        Reader.Close();
+    }
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
+    [Test]
+    public void ViolUniqueIndex()
+    {
+        var Command = new EDBCommand("", con)
+        {
+            CommandText = "INSERT INTO test_Index VALUES (3000, 4000, 'Kamran');"
+        };
+        Assert.DoesNotThrow(() => Command.ExecuteNonQuery());
+    }
 
-		[Test]
-		public void DdlFunctionalIndex ()
-		{
-			
-			try
-			{
+    [Test]
+    public void DdlFunctionalIndex()
+    {
             var Command = new EDBCommand("", con)
             {
                 CommandText = "CREATE TABLE functional_index (name NAME,id int);"
             };
             Command.ExecuteNonQuery();
 
-				Command.CommandText="CREATE SEQUENCE id INCREMENT BY 5 START WITH 1000 MAXVALUE 1010 MINVALUE 1000 Cache 3;";
-				Command.ExecuteNonQuery();
+            Command.CommandText = "CREATE SEQUENCE id INCREMENT BY 5 START WITH 1000 MAXVALUE 1010 MINVALUE 1000 Cache 3;";
+            Command.ExecuteNonQuery();
 
-				Command.CommandText="INSERT INTO functional_index VALUES('Ali',id.NextVal);";
-				Command.ExecuteNonQuery();
+            Command.CommandText = "INSERT INTO functional_index VALUES('Ali',id.NextVal);";
+            Command.ExecuteNonQuery();
 
-				Command.CommandText="INSERT INTO functional_index VALUES('Ahmed',id.NextVal);";
-				Command.ExecuteNonQuery();
+            Command.CommandText = "INSERT INTO functional_index VALUES('Ahmed',id.NextVal);";
+            Command.ExecuteNonQuery();
 
-				Command.CommandText="CREATE INDEX upper_name_idx ON functional_index(upper(name));";
-				Command.ExecuteNonQuery();
+            Command.CommandText = "CREATE INDEX upper_name_idx ON functional_index(upper(name));";
+            Command.ExecuteNonQuery();
 
-				Command.CommandText="SELECT * from functional_index where upper(name) ='Ali';";
-				var Reader = Command.ExecuteReader();
+            Command.CommandText = "SELECT * from functional_index where upper(name) ='Ali';";
+            var Reader = Command.ExecuteReader();
 
-				Assert.IsFalse(Reader.Read());
+            Assert.IsFalse(Reader.Read());
 
-				Reader.Close();
-				
-				Command.CommandText="DROP TABLE functional_index;Drop sequence id";
-				Command.ExecuteNonQuery();
+            Reader.Close();
 
-			}
+            Command.CommandText = "DROP TABLE functional_index;Drop sequence id";
+            Command.ExecuteNonQuery();
+    }
 
-			catch(EDBException exp)
-			{
-				throw new Exception(exp.ToString());
-			}
-		}
-
-		[Test]
-		public void DdlHashIndex ()
-		{
+    [Test]
+    public void DdlHashIndex()
+    {
 
         var Command = new EDBCommand("", con)
         {
@@ -923,27 +878,27 @@ public class EDBMiscTest : EPASTestBase
         };
         Command.ExecuteNonQuery();
 
-				Command.CommandText="CREATE INDEX tb_hash_idx ON tb_hash USING hash(name);";
-				try
-				{
-				Command.ExecuteNonQuery();
-				}
+        Command.CommandText = "CREATE INDEX tb_hash_idx ON tb_hash USING hash(name);";
+        try
+        {
+            Command.ExecuteNonQuery();
+        }
 
-				catch(EDBException )
-				{
-				Assert.Fail("Could not create Hash index");
-				}
+        catch (EDBException)
+        {
+            Assert.Fail("Could not create Hash index");
+        }
 
-				Command.CommandText="DROP TABLE tb_hash;";
-				Command.ExecuteNonQuery();
+        Command.CommandText = "DROP TABLE tb_hash;";
+        Command.ExecuteNonQuery();
 
-		}
+    }
 
-/*
- * Following test cases test the OUT Param refactoring FB17344.
- */
+    /*
+     * Following test cases test the OUT Param refactoring FB17344.
+     */
 
- //ZK: Redundent cases   [Test]
+    //ZK: Redundent cases   [Test]
     public void OutParamProcSingleNumeric()
     {
 
@@ -1264,7 +1219,7 @@ public class EDBMiscTest : EPASTestBase
         var result = Command.ExecuteReader();
         Assert.AreEqual("5", Command.Parameters["param2"].Value.ToString());
         Assert.AreEqual("10", Command.Parameters["param1"].Value.ToString());
-     
+
         result.Close();
         Command = new EDBCommand
         {
@@ -1402,11 +1357,11 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Integer, 10, "param2", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
         Command.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Numeric, 10, "param3", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
         Command.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Numeric, 10, "param4", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, null!));
-        Command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 0, "param5", ParameterDirection.ReturnValue, false, 0, 0, DataRowVersion.Current,null!));
-     
+        Command.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Varchar, 0, "param5", ParameterDirection.ReturnValue, false, 0, 0, DataRowVersion.Current, null!));
+
         Command.Prepare();
         var result = Command.ExecuteReader();
-    //    Assert.AreEqual("(HELLO,10,20.55,HELLO1,10)", Command.Parameters["param2"].Value.ToString());
+        //    Assert.AreEqual("(HELLO,10,20.55,HELLO1,10)", Command.Parameters["param2"].Value.ToString());
         result.Close();
         Command = new EDBCommand
         {

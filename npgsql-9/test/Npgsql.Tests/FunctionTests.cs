@@ -5,6 +5,7 @@ using EnterpriseDB.EDBClient.PostgresTypes;
 using EDBTypes;
 using NUnit.Framework;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests;
 
@@ -14,7 +15,7 @@ namespace EnterpriseDB.EDBClient.Tests;
 /// the tests.
 /// </summary>
 [NonParallelizable] // Manipulates the EnableStoredProcedureCompatMode global flag
-[Ignore("EDB: fix later, introduced for EDB on v8")]
+[EDBExplicit("EDB: fix later, introduced for EDB on v8")]
 public class FunctionTests : TestBase
 {
     [Test, Description("Simple function with no parameters, results accessed as a resultset")]

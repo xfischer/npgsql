@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace EnterpriseDB.EDBClient;
@@ -101,8 +102,7 @@ sealed class SqlQueryParser(bool supportsRedwoodDialect)
         _paramIndexMap.Clear();
         _rewrittenSql.Clear();
 
-        char[] trim = [' ', '\r', '\n'];
-        sql = sql.Trim(trim); //EnterpriseDB Team
+        sql = sql.Trim(StringExtensions.BlankChars); //EnterpriseDB Team
         var currCharOfs = 0;
         var isProcedure = false;//EnterpriseDB Team
         var numActiveBlocks = 0;//EnterpriseDB Team
@@ -135,80 +135,81 @@ sealed class SqlQueryParser(bool supportsRedwoodDialect)
             if (isProcedure)
             {
                 temp = sql.ToString().Substring(currCharOfs - 1);
-            }
 
-            if (isProcedure && temp.StartsWith("BEGIN", StringComparison.OrdinalIgnoreCase))
-            {
-                WriteDebug(currCharOfs, $"BEGIN : numActiveBlocks:{numActiveBlocks}->{numActiveBlocks + 1}, variableDeclare:{variableDeclare}->{variableDeclare - 1}");
-                numActiveBlocks++;
-                variableDeclare--;
-            }
-
-            if (isProcedure && temp.StartsWith("END", StringComparison.OrdinalIgnoreCase) && !IsLetter(lastChar)
-                && !(temp.StartsWith("END IF", StringComparison.OrdinalIgnoreCase)
-                    || temp.StartsWith("END_", StringComparison.OrdinalIgnoreCase)
-                    || temp.StartsWith("END LOOP", StringComparison.OrdinalIgnoreCase)
-                    || temp.StartsWith("END CASE", StringComparison.OrdinalIgnoreCase)))
-            {
-                WriteDebug(currCharOfs, $"END IF,_,LOOP,CASE : numActiveBlocks:{numActiveBlocks}->{numActiveBlocks - 1}, variableDeclare:{variableDeclare}");
-                numActiveBlocks--;
-            }
-
-            if (isProcedure && temp.StartsWith("IS", StringComparison.OrdinalIgnoreCase)
-                                || temp.StartsWith("AS", StringComparison.OrdinalIgnoreCase)
-                                || temp.StartsWith("TRIGGER", StringComparison.OrdinalIgnoreCase))
-            {
-                var next = ' ';
-                if (temp.StartsWith("TRIGGER", StringComparison.OrdinalIgnoreCase) && temp.Length > 7)
+                if (temp.StartsWith("BEGIN", StringComparison.OrdinalIgnoreCase))
                 {
-
-                    next = temp[7];
+                    WriteDebug(currCharOfs, $"BEGIN : numActiveBlocks:{numActiveBlocks}->{numActiveBlocks + 1}, variableDeclare:{variableDeclare}->{variableDeclare - 1}");
+                    numActiveBlocks++;
+                    variableDeclare--;
                 }
-                else
-                {
-                    if (temp.Length > 2)
-                    {
-                        next = temp[2];
-                    }
-                }
-                if (next == ' ' || next == '\r' || next == '\n' || next == '\t' || next == ';')
-                {
-                    // EnterpriseDB
-                    // AS is not a variable declaration in one line declaration such as
-                    //  CREATE PROCEDURE name() AS 'SELECT 1' LANGUAGE sql;
 
-                    if (temp.Length > 3)
+                if (temp.StartsWith("END", StringComparison.OrdinalIgnoreCase) && !IsLetter(lastChar)
+                    && !(temp.StartsWith("END IF", StringComparison.OrdinalIgnoreCase)
+                        || temp.StartsWith("END_", StringComparison.OrdinalIgnoreCase)
+                        || temp.StartsWith("END LOOP", StringComparison.OrdinalIgnoreCase)
+                        || temp.StartsWith("END CASE", StringComparison.OrdinalIgnoreCase)))
+                {
+                    WriteDebug(currCharOfs, $"END IF,_,LOOP,CASE : numActiveBlocks:{numActiveBlocks}->{numActiveBlocks - 1}, variableDeclare:{variableDeclare}");
+                    numActiveBlocks--;
+                }
+
+                if (temp.StartsWith("IS", StringComparison.OrdinalIgnoreCase)
+                                    || temp.StartsWith("AS", StringComparison.OrdinalIgnoreCase)
+                                    || temp.StartsWith("TRIGGER", StringComparison.OrdinalIgnoreCase))
+                {
+                    var next = ' ';
+                    if (temp.StartsWith("TRIGGER", StringComparison.OrdinalIgnoreCase) && temp.Length > 7)
                     {
-                        next = temp[3];
-                        if (next != '\'' && next != '$')
-                        {
-                            WriteDebug(currCharOfs, $"IS/AS/TRIGGER next:backslash or $ : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
-                            variableDeclare++;
-                        }
+
+                        next = temp[7];
                     }
                     else
                     {
-                        WriteDebug(currCharOfs, $"IS/AS/TRIGGER temp.Length<=3:{temp.Length} : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
+                        if (temp.Length > 2)
+                        {
+                            next = temp[2];
+                        }
+                    }
+                    if (next == ' ' || next == '\r' || next == '\n' || next == '\t' || next == ';')
+                    {
+                        // EnterpriseDB
+                        // AS is not a variable declaration in one line declaration such as
+                        //  CREATE PROCEDURE name() AS 'SELECT 1' LANGUAGE sql;
 
+                        if (temp.Length > 3)
+                        {
+                            next = temp[3];
+                            if (next != '\'' && next != '$')
+                            {
+                                WriteDebug(currCharOfs, $"IS/AS/TRIGGER next:backslash or $ : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
+                                variableDeclare++;
+                            }
+                        }
+                        else
+                        {
+                            WriteDebug(currCharOfs, $"IS/AS/TRIGGER temp.Length<=3:{temp.Length} : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
+
+                            variableDeclare++;
+                        }
+                    }
+                }
+
+                if (temp.StartsWith("DECLARE", StringComparison.OrdinalIgnoreCase))
+                {
+                    var next = ' ';
+                    if (temp.Length > 7)
+                    {
+                        next = temp[7];
+                    }
+                    if (next == ' ' || next == '\r' || next == '\n' || next == '\t' || next == ';')
+                    {
+                        WriteDebug(currCharOfs, $"DECLARE next:space/;/newline : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
                         variableDeclare++;
                     }
                 }
             }
-
-            if (isProcedure && temp.StartsWith("DECLARE", StringComparison.OrdinalIgnoreCase))
-            {
-                var next = ' ';
-                if (temp.Length > 7)
-                {
-                    next = temp[7];
-                }
-                if (next == ' ' || next == '\r' || next == '\n' || next == '\t' || next == ';')
-                {
-                    WriteDebug(currCharOfs, $"DECLARE next:space/;/newline : numActiveBlocks:{numActiveBlocks}, variableDeclare:{variableDeclare}->{variableDeclare + 1}");
-                    variableDeclare++;
-                }
-            }
             // ^^^ EnterpriseDB Team
+
             switch (ch)
             {
             case '/':
@@ -699,8 +700,6 @@ sealed class SqlQueryParser(bool supportsRedwoodDialect)
             }
 
             statementIndex++;
-            //EnterpriseDB Team
-            temp = sql;
 
             isProcedure = isProcedureGlobal;
             WriteDebug(currCharOfs, "SemiColon -> None MoveToNextBatchCommand");
@@ -713,6 +712,8 @@ sealed class SqlQueryParser(bool supportsRedwoodDialect)
         }
         if (batchCommands is not null && batchCommands.Count > statementIndex + 1)
             batchCommands.RemoveRange(statementIndex + 1, batchCommands.Count - (statementIndex + 1));
+
+        WriteParseResultDebug(command, batchCommands);
         return;
 
     Finish:
@@ -724,6 +725,8 @@ sealed class SqlQueryParser(bool supportsRedwoodDialect)
             batchCommand.FinalCommandText = _rewrittenSql.ToString();
         if (batchCommands is not null && batchCommands.Count > statementIndex + 1)
             batchCommands.RemoveRange(statementIndex + 1, batchCommands.Count - (statementIndex + 1));
+
+        WriteParseResultDebug(command, batchCommands);
 
         void MoveToNextBatchCommand()
         {
@@ -741,7 +744,6 @@ sealed class SqlQueryParser(bool supportsRedwoodDialect)
             }
         }
     }
-
 
     //EnterpriseDB Team
     internal bool ContainsSPLStartingKeyword(string temp)
@@ -788,5 +790,31 @@ sealed class SqlQueryParser(bool supportsRedwoodDialect)
     static void WriteDebug(int offset, string message)
     {
         Debug.WriteLine($"SqlQueryParser: {message} [offset: {offset}]");
+    }
+
+    [Conditional("EDB_DIAGNOSTICS")]
+    static void WriteParseResultDebug(EDBCommand? command, List<EDBBatchCommand>? batchCommands)
+    {
+        Debug.WriteLine("Initial command : ");
+        Debug.WriteLine(command?.CommandText);
+        Debug.WriteLine("-----------------------");
+        if (batchCommands is null)
+        {
+            Debug.WriteLine("(batchCommands is null)");
+            return;
+        }
+        Debug.WriteLine($"Final command : {batchCommands.Count} batch(es)");
+        for (var i = 0; i < batchCommands.Count; i++)
+        {
+            var batchCommand = batchCommands[i];
+            Debug.WriteLine($"---- Batch {i} -----");
+            Debug.WriteLine(batchCommand.FinalCommandText);
+            if (batchCommand.PositionalParameters is null)
+                return;
+
+            Debug.WriteLine($"Parameters: {batchCommand.PositionalParameters.Count}");
+            foreach (var parameter in batchCommand.PositionalParameters)
+                Debug.WriteLine(parameter);
+        }
     }
 }

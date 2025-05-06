@@ -9,6 +9,7 @@ using System.Threading;
 //using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using System.Dynamic;
 using System.IO;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
@@ -954,7 +955,7 @@ internal class EDBAS16Tests : EPASTestBase
     //This test was written when AS 16 was not available on Windows.
     //It is working fine but this test should be kept ignored because it may have
     //different bahaviour on different machines.
-    [Test, Ignore("Requires directory access and may fail as false negative. Read comments above")]
+    [Test, EDBExplicit("Requires directory access and may fail as false negative. Read comments above")]
     public async Task UTL_FILE_SubprogramsTest()
     {
         await using var conn = await OpenConnectionAsync();

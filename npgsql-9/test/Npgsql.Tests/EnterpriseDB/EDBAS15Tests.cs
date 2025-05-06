@@ -57,10 +57,10 @@ public class EDBAS15Tests : EPASTestBase
                 return com.ExecuteNonQuery();
             }
         }
-        catch
+        catch (Exception e)
         {
+            Console.WriteLine(e.Message);
         }
-
         return 0;
     }
 
@@ -88,7 +88,7 @@ public class EDBAS15Tests : EPASTestBase
 #nullable restore
 
         Execute("DROP TABLE jobhist1");
-        Execute("DROP TABLE emp1");
+        Execute("DROP TABLE emp_test1");
         Execute("DROP TABLE dept1");
         Execute("CREATE TABLE dept1 ("
        + "  dept1no          NUMBER(2) NOT NULL CONSTRAINT dept1_pk PRIMARY KEY,"
@@ -96,7 +96,7 @@ public class EDBAS15Tests : EPASTestBase
        + "  loc             VARCHAR2(13)"
        + " );");
 
-        Execute("CREATE TABLE emp1 ("
+        Execute("CREATE TABLE emp_test1 ("
                    + "  emp1no           NUMBER(4) NOT NULL CONSTRAINT emp1_pk PRIMARY KEY,"
                    + "  ename           VARCHAR2(10),"
                    + "  job             VARCHAR2(9),"
@@ -119,13 +119,13 @@ public class EDBAS15Tests : EPASTestBase
                    + "  chgdesc         VARCHAR2(80),"
                    + "  CONSTRAINT jobhist1_pk PRIMARY KEY (emp1no, startdate),"
                    + "  CONSTRAINT jobhist1_ref_emp1_fk FOREIGN KEY (emp1no)"
-                   + " 	REFERENCES emp1(emp1no) ON DELETE CASCADE,"
+                   + " 	REFERENCES emp_test1(emp1no) ON DELETE CASCADE,"
                    + "  CONSTRAINT jobhist1_ref_dept1_fk FOREIGN KEY (dept1no)"
                    + " 	REFERENCES dept1 (dept1no) ON DELETE SET NULL,"
                    + "  CONSTRAINT jobhist1_date_chk CHECK (startdate <= enddate)"
                    + " );");
 
-        Execute("GRANT ALL ON emp1 TO PUBLIC;");
+        Execute("GRANT ALL ON emp_test1 TO PUBLIC;");
         Execute("GRANT ALL ON dept1 TO PUBLIC;");
         Execute("GRANT ALL ON jobhist1 TO PUBLIC;");
 
@@ -134,20 +134,20 @@ public class EDBAS15Tests : EPASTestBase
         Execute("INSERT INTO dept1 VALUES (30,'SALES','CHICAGO');");
         Execute("INSERT INTO dept1 VALUES (40,'OPERATIONS','BOSTON');");
 
-        Execute("INSERT INTO emp1 VALUES (7369,'SMITH','CLERK',7902,'17-DEC-80',800,NULL,20);");
-        Execute("INSERT INTO emp1 VALUES (7499,'ALLEN','SALESMAN',7698,'20-FEB-81',1600,300,30);");
-        Execute("INSERT INTO emp1 VALUES (7521,'WARD','SALESMAN',7698,'22-FEB-81',1250,500,30);");
-        Execute("INSERT INTO emp1 VALUES (7566,'JONES','MANAGER',7839,'02-APR-81',2975,NULL,20);");
-        Execute("INSERT INTO emp1 VALUES (7654,'MARTIN','SALESMAN',7698,'28-SEP-81',1250,1400,30);");
-        Execute("INSERT INTO emp1 VALUES (7698,'BLAKE','MANAGER',7839,'01-MAY-81',2850,NULL,30);");
-        Execute("INSERT INTO emp1 VALUES (7782,'CLARK','MANAGER',7839,'09-JUN-81',2450,NULL,10);");
-        Execute("INSERT INTO emp1 VALUES (7788,'SCOTT','ANALYST',7566,'19-APR-87',3000,NULL,20);");
-        Execute("INSERT INTO emp1 VALUES (7839,'KING','PRESIDENT',NULL,'17-NOV-81',5000,NULL,10);");
-        Execute("INSERT INTO emp1 VALUES (7844,'TURNER','SALESMAN',7698,'08-SEP-81',1500,0,30);");
-        Execute("INSERT INTO emp1 VALUES (7876,'ADAMS','CLERK',7788,'23-MAY-87',1100,NULL,20);");
-        Execute("INSERT INTO emp1 VALUES (7900,'JAMES','CLERK',7698,'03-DEC-81',950,NULL,30);");
-        Execute("INSERT INTO emp1 VALUES (7902,'FORD','ANALYST',7566,'03-DEC-81',3000,NULL,20);");
-        Execute("INSERT INTO emp1 VALUES (7934,'MILLER','CLERK',7782,'23-JAN-82',1300,NULL,10);");
+        Execute("INSERT INTO emp_test1 VALUES (7369,'SMITH','CLERK',7902,'17-DEC-80',800,NULL,20);");
+        Execute("INSERT INTO emp_test1 VALUES (7499,'ALLEN','SALESMAN',7698,'20-FEB-81',1600,300,30);");
+        Execute("INSERT INTO emp_test1 VALUES (7521,'WARD','SALESMAN',7698,'22-FEB-81',1250,500,30);");
+        Execute("INSERT INTO emp_test1 VALUES (7566,'JONES','MANAGER',7839,'02-APR-81',2975,NULL,20);");
+        Execute("INSERT INTO emp_test1 VALUES (7654,'MARTIN','SALESMAN',7698,'28-SEP-81',1250,1400,30);");
+        Execute("INSERT INTO emp_test1 VALUES (7698,'BLAKE','MANAGER',7839,'01-MAY-81',2850,NULL,30);");
+        Execute("INSERT INTO emp_test1 VALUES (7782,'CLARK','MANAGER',7839,'09-JUN-81',2450,NULL,10);");
+        Execute("INSERT INTO emp_test1 VALUES (7788,'SCOTT','ANALYST',7566,'19-APR-87',3000,NULL,20);");
+        Execute("INSERT INTO emp_test1 VALUES (7839,'KING','PRESIDENT',NULL,'17-NOV-81',5000,NULL,10);");
+        Execute("INSERT INTO emp_test1 VALUES (7844,'TURNER','SALESMAN',7698,'08-SEP-81',1500,0,30);");
+        Execute("INSERT INTO emp_test1 VALUES (7876,'ADAMS','CLERK',7788,'23-MAY-87',1100,NULL,20);");
+        Execute("INSERT INTO emp_test1 VALUES (7900,'JAMES','CLERK',7698,'03-DEC-81',950,NULL,30);");
+        Execute("INSERT INTO emp_test1 VALUES (7902,'FORD','ANALYST',7566,'03-DEC-81',3000,NULL,20);");
+        Execute("INSERT INTO emp_test1 VALUES (7934,'MILLER','CLERK',7782,'23-JAN-82',1300,NULL,10);");
 
         Execute("INSERT INTO jobhist1 VALUES (7369,'17-DEC-80',NULL,'CLERK',800,NULL,20,'New Hire');");
         Execute("INSERT INTO jobhist1 VALUES (7499,'20-FEB-81',NULL,'SALESMAN',1600,300,30,'New Hire');");
@@ -167,7 +167,7 @@ public class EDBAS15Tests : EPASTestBase
         Execute("INSERT INTO jobhist1 VALUES (7902,'03-DEC-81',NULL,'ANALYST',3000,NULL,20,'New Hire');");
         Execute("INSERT INTO jobhist1 VALUES (7934,'23-JAN-82',NULL,'CLERK',1300,NULL,10,'New Hire');");
 
-        var query = "SELECT count(*) FROM emp1 e, dept1 d, jobhist1 j"
+        var query = "SELECT count(*) FROM emp_test1 e, dept1 d, jobhist1 j"
                             + " WHERE j.dept1no BETWEEN d.dept1no(+) AND e.dept1no(+);";
         try
         {
@@ -175,7 +175,7 @@ public class EDBAS15Tests : EPASTestBase
             {
                 var rs = cmd.ExecuteReader();
 
-                //SELECT count(*) FROM emp1 e, dept1 d, jobhist1 j                                                                 
+                //SELECT count(*) FROM emp_test1 e, dept1 d, jobhist1 j                                                                 
                 //WHERE j.dept1no BETWEEN d.dept1no(+) AND e.dept1no(+);
                 // count 
                 //-------

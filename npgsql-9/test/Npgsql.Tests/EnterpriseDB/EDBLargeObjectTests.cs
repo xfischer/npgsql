@@ -3,6 +3,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 using EDBTypes;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
@@ -29,7 +30,7 @@ public class EDBLargeObjectTests : EPASTestBase
         Console.WriteLine("CREATE TABLE returned " + result);
     }
 
-    [Test, Ignore("MERGE_NEED_TO_EXPLORE")]
+    [Test, EDBExplicit("MERGE_NEED_TO_EXPLORE")]
     [Obsolete("EDBLargeObjectManager is obsoleted by community")]
     public void LOCreateTest()
     {

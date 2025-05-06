@@ -18,8 +18,6 @@ public class EDBBasicStatementTest : EPASTestBase
 {
     public class Employee
     {
-        //empno NUMBER(8),  ename VARCHAR2(10),job VARCHAR2(9),mgr NUMBER(8), hiredate DATE, sal NUMBER(10,2), comm NUMBER(10,2), deptno NUMBER(4)
-
         public int? empno { get; set; }
         public string? ename { get; set; }
         public string? job { get; set; }

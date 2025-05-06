@@ -14,7 +14,7 @@ sealed partial class CompositeConverter<T> : ITextFormatConverter
         if (count != _composite.Fields.Count)
             throw new InvalidOperationException("Cannot read composite type with mismatched number of fields.");
 
-        int index = 0;
+        var index = 0;
         foreach (var field in _composite.Fields)
         {
             field.AddValue(builder, values[index++]);

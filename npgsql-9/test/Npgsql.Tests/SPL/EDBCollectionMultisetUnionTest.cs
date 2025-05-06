@@ -149,7 +149,6 @@ internal class EDBCollectionMultisetUnionTest : EPASTestBase
 
     [Test]
     [NonParallelizable]
-    //[Ignore("EC-2650")]
     public async Task MultisetUnionDistinctTest([Values] bool deriveParameters)
     {
         Execute("DROP PACKAGE BODY mulUnDisPkg;", false);

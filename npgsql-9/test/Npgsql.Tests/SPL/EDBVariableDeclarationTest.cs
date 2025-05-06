@@ -21,13 +21,25 @@ internal class EDBVariableDeclarationTest : EPASTestBase
 {
     EDBConnection? conn = null;
 
+    public class Employee
+    {
+        public int? empno { get; set; }
+        public string? ename { get; set; }
+        public string? job { get; set; }
+        public int? mgr { get; set; }
+        public DateTime? hiredate { get; set; }
+        public decimal? sal { get; set; }
+        public decimal? comm { get; set; }
+        public int? deptno { get; set; }
+    }
+
     private static readonly string[] emp01 = [ "1001", "SMITH", "Sales", "01-NOV-07 00:00:00",
         "120000.00", "20", "110000.00" ];
     private static readonly string ENAME = "SMITH";
     private static readonly string JOB = "Sales";
     private readonly double SALARY = 120000;
     private readonly int DEPTNO = 20;
-    private static readonly string DATE = "2007-11-01 00:00:00.0";
+    private static readonly DateTime DATE = new DateTime(2007, 11, 01, 0, 0, 0, DateTimeKind.Unspecified);
 
     [SetUp]
     public void Init()
@@ -218,7 +230,6 @@ internal class EDBVariableDeclarationTest : EPASTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-2634")]
     public void TypeVariableOutputTest()
     {
         Execute("DROP PACKAGE BODY pkgTypeTest;");
@@ -251,41 +262,24 @@ internal class EDBVariableDeclarationTest : EPASTestBase
         using var cstmt = new EDBCommand(commandText, conn);
         cstmt.CommandType = CommandType.StoredProcedure;
 
-        cstmt.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Numeric, 10, "param1",
-            ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
-
-        cstmt.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
-
-        cstmt.Parameters.Add(new EDBParameter("param3", EDBTypes.EDBDbType.Varchar, 10, "param3",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
-
-        cstmt.Parameters.Add(new EDBParameter("param4", EDBTypes.EDBDbType.Date, 10, "param4",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
-
-        cstmt.Parameters.Add(new EDBParameter("param5", EDBTypes.EDBDbType.Numeric, 10, "param5",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
-
-        cstmt.Parameters.Add(new EDBParameter("param6", EDBTypes.EDBDbType.Numeric, 10, "param6",
-            ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
+        cstmt.Parameters.AddWithValue("param1", 1001);
+        var name = cstmt.Parameters.Add(new() { ParameterName = "param2", Direction = ParameterDirection.Output });
+        var job = cstmt.Parameters.Add(new() { ParameterName = "param3", Direction = ParameterDirection.Output });
+        var date = cstmt.Parameters.Add(new() { ParameterName = "param4", Direction = ParameterDirection.Output });
+        var sal = cstmt.Parameters.Add(new() { ParameterName = "param5", Direction = ParameterDirection.Output });
+        var deptno = cstmt.Parameters.Add(new() { ParameterName = "param6", Direction = ParameterDirection.Output });
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
 
-        var name = cstmt.Parameters[1].Value.ToString();
-        Assert.AreEqual(ENAME, name);
-        var job = cstmt.Parameters[2].Value.ToString();
-        Assert.AreEqual(JOB, job);
-        var date = cstmt.Parameters[3].Value.ToString();
-        Assert.AreEqual(date, DATE);
-        var sal = double.Parse(cstmt.Parameters[4].Value.ToString());
-        Assert.AreEqual(SALARY, sal, 0.01);
-        var deptno = double.Parse(cstmt.Parameters[5].Value.ToString());
-        Assert.AreEqual(DEPTNO, deptno, 0.01);
+        Assert.AreEqual(ENAME, name.Value as string);
+        Assert.AreEqual(JOB, job.Value as string);
+        Assert.AreEqual(DATE, date.Value as DateTime?);
+        Assert.AreEqual(SALARY, sal.Value as decimal?);
+        Assert.AreEqual(DEPTNO, deptno.Value as decimal?);
     }
 
     [Test]
-    [EDBExplicit("EC-2633")]
     public void RowTypeVariableOutputTest()
     {
         Execute("DROP PACKAGE BODY pkgRowTypeTest;");
@@ -312,9 +306,15 @@ internal class EDBVariableDeclarationTest : EPASTestBase
                 + " End pkgRowTypeTest;";
         Execute(createRowTypeBody);
 
+        var ds = CreateDataSourceBuilder()
+            .ConfigureTypeLoading(b => b.EnableTableCompositesLoading())
+            .MapComposite<Employee>("emp1")
+            .Build();
+        using var conn2 = ds.OpenConnection();
+
         var commandText = "pkgRowTypeTest.emp_sal_query";
 
-        using var cstmt = new EDBCommand(commandText, conn);
+        using var cstmt = new EDBCommand(commandText, conn2);
         cstmt.CommandType = CommandType.StoredProcedure;
         cstmt.DeriveParameters();
 
@@ -325,12 +325,10 @@ internal class EDBVariableDeclarationTest : EPASTestBase
     }
 
     [Test]
-    [EDBExplicit("EC-2633")]
     public void RecordTypeVariableOutputTest()
     {
         Assert.DoesNotThrow(() =>
         {
-            Execute("DROP TABLE emp1 CASCADE");
             Execute("DROP PACKAGE BODY pkgRecordTypeTest;");
             Execute("DROP PACKAGE pkgRecordTypeTest;");
             //You can use the TYPE IS RECORD statement to create the definition of a
@@ -364,9 +362,16 @@ internal class EDBVariableDeclarationTest : EPASTestBase
                                  + " End pkgRecordTypeTest;";
             Execute(createRowTypeBody);
 
+
+            var ds = CreateDataSourceBuilder()
+            .ConfigureTypeLoading(b => b.EnableTableCompositesLoading())
+            .MapComposite<Employee>("emp_typ")
+            .Build();
+            using var conn2 = ds.OpenConnection();
+
             var commandText = "pkgRecordTypeTest.emp_sal_query";
 
-            using var cstmt = new EDBCommand(commandText, conn);
+            using var cstmt = new EDBCommand(commandText, conn2);
             cstmt.CommandType = CommandType.StoredProcedure;
             cstmt.DeriveParameters();
 

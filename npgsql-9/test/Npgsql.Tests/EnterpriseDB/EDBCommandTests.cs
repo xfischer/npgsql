@@ -262,7 +262,7 @@ public class EDBCommandTests : EPASTestBase
 
     }
 
-    //[Test]
+    [Test, EDBExplicit("Needs to be fixed")]
     public void FunctionCallWithParametersReturnSingleValue()
     {
         con.Open();
@@ -285,7 +285,7 @@ public class EDBCommandTests : EPASTestBase
 
     }
 
-    // [Test]
+    [Test, EDBExplicit("Needs to be fixed")]
     public void FunctionCallWithParametersReturnSingleValueEDBDbType()
     {
         con.Open();

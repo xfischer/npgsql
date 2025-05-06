@@ -4,6 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
 using EDBTypes;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
@@ -369,7 +370,7 @@ public class EDBMiscProcTest : EPASTestBase
     }
     #endregion
 
-    [Test, Ignore("Investigate Prompt")]
+    [Test, EDBExplicit("Investigate Prompt")]
     public void RefCursorFunc()
     {
         var tran = con.BeginTransaction();
@@ -520,7 +521,7 @@ public class EDBMiscProcTest : EPASTestBase
         if (!ex)
             Assert.Fail("Expected an exception. Cursor should be invalid");
     }
-    [Test, Ignore("Investigate")]
+    [Test, EDBExplicit("Investigate")]
     public void RefCursorProc()
     {
         var tran = con.BeginTransaction();
@@ -713,7 +714,7 @@ public class EDBMiscProcTest : EPASTestBase
         Reader.Close();
     }
 
-    [Test, Ignore("Investigate Prompt")]
+    [Test, EDBExplicit("Investigate Prompt")]
     public void SYSRefCursorFunc()
     {
         var tran = con.BeginTransaction();
@@ -887,7 +888,7 @@ public class EDBMiscProcTest : EPASTestBase
 
     }
 
-    [Test, Ignore("Investigate Prompt")]
+    [Test, EDBExplicit("Investigate Prompt")]
     public void PACKAGERefCursorFunc()
     {
         var tran = con.BeginTransaction();
@@ -1099,7 +1100,7 @@ public class EDBMiscProcTest : EPASTestBase
 
     }
 
-    [Test, Ignore("Investigate Prompt")]
+    [Test, EDBExplicit("Investigate Prompt")]
     public void PACKSYSRefCursorFunc()
     {
         var tran = con.BeginTransaction();
@@ -1366,7 +1367,7 @@ public class EDBMiscProcTest : EPASTestBase
             Assert.Fail("Expected an exception. Cursor should be invalid");
     }
 
-    [Ignore("Investigate default params failure")]
+    [Test, EDBExplicit("Investigate default params failure")]
     public void DefaultInBindAsReturn()
     {
         var command = new EDBCommand("public.DEFAULTINRETURNFUNC(:param0)", con)
@@ -1405,7 +1406,8 @@ public class EDBMiscProcTest : EPASTestBase
 
         reader.Close();
     }
-    [Test, Ignore("Investigate default params failure")]
+
+    [Test, EDBExplicit("Investigate default params failure")]
     public void PACKDefaultInBindAsReturn()
     {
         var command = new EDBCommand("REFCURSOR_PKG.DEFAULTINRETURNFUNC(:param0)", con)
@@ -1596,7 +1598,7 @@ public class EDBMiscProcTest : EPASTestBase
 
     }
 
-    [Test, Ignore("Investigate")]
+    [Test, EDBExplicit("Investigate")]
     public void SYSRefcursorsII()
     {
         var tran = con.BeginTransaction();
@@ -1656,7 +1658,7 @@ public class EDBMiscProcTest : EPASTestBase
 
     }
 
-    [Test, Ignore("Investigate")]
+    [Test, EDBExplicit("Investigate")]
     public void PACKSYSRefcursorsII()
     {
         var tran = con.BeginTransaction();

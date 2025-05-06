@@ -5,6 +5,7 @@ using System.Text;
 using System.IO;
 using EDBTypes;
 using System.Collections.Generic;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
@@ -286,7 +287,7 @@ public class EDBByteaTest : EPASTestBase
         return hex.ToString();
     }
 
-    [Test, Ignore("Needs refactor")]
+    [Test, EDBExplicit("Needs refactor")]
     public void Testa_bytea_out()
     {
         // Insert Data first

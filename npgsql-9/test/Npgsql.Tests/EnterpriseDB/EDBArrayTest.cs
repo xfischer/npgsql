@@ -461,7 +461,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
 		}
 
-		[Test]//, Ignore("Difference in decimal point value only")]
+		[Test]
 		public void ArraysMoney()
 		{
         using var con = OpenConnection();

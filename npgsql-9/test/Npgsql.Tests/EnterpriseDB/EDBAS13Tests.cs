@@ -3,6 +3,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient;
 using System.Data;
 using System.Collections.Generic;
+using EnterpriseDB.EDBClient.Tests.Support;
 
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 
@@ -30,7 +31,7 @@ public class EDBAS13Tests : EPASTestBase
         TestUtil.closeDB(con);
     }
 
-    [Test, Ignore("EC-1339")]
+    [Test, EDBExplicit("EC-1339")]
     public void CompatibleSYSDATE_Test()
     {
 #nullable disable
@@ -154,7 +155,7 @@ public class EDBAS13Tests : EPASTestBase
         //InsertIntoTable(insert4);
     }
 
-    [Test, Ignore("EC-1338")]
+    [Test, EDBExplicit("EC-1338")]
     public void UTL_HTTPExceptionHandling_Test()
     {
 #nullable disable
@@ -550,7 +551,7 @@ public class EDBAS13Tests : EPASTestBase
         CallProc("dbmssql_proc2()");
     }
 
-    [Test, Ignore("EC-1337")]
+    [Test, EDBExplicit("EC-1337")]
     public void Function_to_timestamp_tz_Test()
     {
 #nullable disable
@@ -638,7 +639,7 @@ public class EDBAS13Tests : EPASTestBase
         SelectFromTable(selectView2);
     }
 
-    [Test, Ignore("EC-1336")]
+    [Test, EDBExplicit("EC-1336")]
     public void AutomaticListPartitionaing_Test()
     {
 #nullable disable

@@ -250,6 +250,8 @@ $$ LANGUAGE 'plpgsql';");
 
 #pragma warning disable SYSLIB0011
 #pragma warning disable SYSLIB0050
+
+#if !NET9_0_OR_GREATER
     [Test]
     public void Serialization()
     {
@@ -283,6 +285,7 @@ $$ LANGUAGE 'plpgsql';");
         Assert.That(expected.Line, Is.EqualTo(actual.Line));
         Assert.That(expected.Routine, Is.EqualTo(actual.Routine));
     }
+#endif
 
     SerializationInfo CreateSerializationInfo() => new(typeof(PostgresException), new FormatterConverter());
 #pragma warning restore SYSLIB0011
