@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFrameworks>net472;net48;net481;net8.0</TargetFrameworks>
+		<TargetFrameworks>net472;net48;net481;net8.0;net9.0</TargetFrameworks>
 		<LangVersion>11</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
@@ -31,7 +31,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-		<PackageReference Include="EnterpriseDB.EDBClient" Version="9.0.2.1" />
+		<PackageReference Include="EnterpriseDB.EDBClient" Version="9.0.3.1" />
 	</ItemGroup>
 
 

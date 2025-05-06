@@ -36,6 +36,8 @@ namespace EDBBenchmark
                     return; // only runtime is net462
             }
 
+            AddJob(Job.Default.WithId("net8.0"));
+            AddJob(Job.Default.WithId("net9.0"));
             AddJob(Job.Default.WithRuntime(ClrRuntime.Net472).WithId("net472"));
             AddJob(Job.Default.WithRuntime(ClrRuntime.Net48).WithId("net48"));
             AddJob(Job.Default.WithRuntime(ClrRuntime.Net481).WithId("net481"));
