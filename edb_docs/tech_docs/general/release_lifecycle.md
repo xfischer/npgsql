@@ -28,7 +28,7 @@ end note
 [PostgreSQL 15] starts 2022-10-13 and ends 2026-11-01
 [PostgreSQL 16] starts 2023-09-14 and ends 2026-11-01
 [PostgreSQL 17] starts 2024-09-26 and ends 2026-11-01
-[PostgreSQL 17] starts 2025-09-26 and ends 2026-11-01
+[PostgreSQL 18] starts 2025-09-26 and ends 2026-11-01
 
 -- EPAS cadence --
 
@@ -39,13 +39,17 @@ end note
 -- EDB .NET Connector cadence --
 
 [Npgsql7 merge] starts after [Npgsql7]'s start and ends 2023-07-01
+[Npgsql7 merge] is colored in Coral
 [v7.0.4.1] happens 2023-07-01
 [v7.0.6.1] happens 2023-10-25
 [v7.0.6.2] happens 2024-02-15
 [Npgsql8 merge] starts after [Npgsql8]'s start and ends 2024-05-12
+[Npgsql8 merge] is colored in Coral
 [v8.0.2.1] happens at [Npgsql8 merge]'s end
 [v8.0.5.1] happens 2024-11-22
 [Npgsql9 merge] starts after [Npgsql9]'s start and ends 2025-01-12
+[Npgsql9 merge] is colored in Coral
+[v9.0.3.1] happens 2025-05-15
 @endgantt
 ```
 
