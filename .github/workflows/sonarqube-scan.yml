@@ -155,7 +155,7 @@ jobs:
         run: |
           echo "Running coverage"
           dotnet tool install --global dotnet-coverage
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" /d:sonar.branch.name="${{ github.ref_name }}" /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" /d:sonar.branch.name="${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}" /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
           dotnet build source/npgsql-9/ef.core/efcore.pg.sln --no-incremental -f net8.0
           dotnet-coverage collect "dotnet test source/npgsql-9/ef.core/efcore.pg.sln -c Release -f net8.0" -f xml -o "coverage.xml"
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
@@ -165,7 +165,7 @@ jobs:
         shell: powershell
         run: |
           echo "Not running coverage"
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true
+          .\.sonar\scanner\dotnet-sonarscanner begin /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" /d:sonar.branch.name="${{ github.event_name == 'workflow_dispatch' && inputs.ref || (github.event_name == 'push' && github.ref_name) || '' }}" /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true
           dotnet build source/npgsql-9/ef.core/efcore.pg.sln --no-incremental
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
 
