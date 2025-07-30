@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\npgsql-9\src\Npgsql\Npgsql.csproj" />
+    <ProjectReference Include="..\..\..\npgsql\src\Npgsql\Npgsql.csproj" />
   </ItemGroup>
 
   <ItemGroup>

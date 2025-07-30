@@ -1,0 +1,78 @@
+﻿#nullable enable
+abstract EnterpriseDB.EDBClient.NpgsqlDataSource.Clear() -> void
+EnterpriseDB.EDBClient.EDBConnection.CloneWithAsync(string! connectionString, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<EnterpriseDB.EDBClient.EDBConnection!>
+EnterpriseDB.EDBClient.EDBConnection.SslClientAuthenticationOptionsCallback.get -> System.Action<System.Net.Security.SslClientAuthenticationOptions!>?
+EnterpriseDB.EDBClient.EDBConnection.SslClientAuthenticationOptionsCallback.set -> void
+EnterpriseDB.EDBClient.EDBConnectionStringBuilder.SslNegotiation.get -> EnterpriseDB.EDBClient.SslNegotiation
+EnterpriseDB.EDBClient.EDBConnectionStringBuilder.SslNegotiation.set -> void
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.ConfigureTypeLoading(System.Action<EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!>! configureAction) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapComposite(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapComposite<T>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.ConfigureTracing(System.Action<EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!>! configureAction) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.UseNegotiateOptionsCallback(System.Action<System.Net.Security.NegotiateAuthenticationClientOptions!>? negotiateOptionsCallback) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.UseSslClientAuthenticationOptionsCallback(System.Action<System.Net.Security.SslClientAuthenticationOptions!>? sslClientAuthenticationOptionsCallback) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBMetricsOptions
+EnterpriseDB.EDBClient.EDBMetricsOptions.EDBMetricsOptions() -> void
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.ConfigureTracing(System.Action<EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!>! configureAction) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.ConfigureTypeLoading(System.Action<EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!>! configureAction) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableGeometricTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableJsonTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableNetworkTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapComposite(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapComposite<T>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseNegotiateOptionsCallback(System.Action<System.Net.Security.NegotiateAuthenticationClientOptions!>? negotiateOptionsCallback) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseSslClientAuthenticationOptionsCallback(System.Action<System.Net.Security.SslClientAuthenticationOptions!>? sslClientAuthenticationOptionsCallback) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+*REMOVED*EnterpriseDB.EDBClient.EDBTracingOptions
+*REMOVED*EnterpriseDB.EDBClient.EDBTracingOptions.EDBTracingOptions() -> void
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureBatchEnrichmentCallback(System.Action<System.Diagnostics.Activity!, EnterpriseDB.EDBClient.EDBBatch!>? batchEnrichmentCallback) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureBatchFilter(System.Func<EnterpriseDB.EDBClient.EDBBatch!, bool>? batchFilter) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureBatchSpanNameProvider(System.Func<EnterpriseDB.EDBClient.EDBBatch!, string?>? batchSpanNameProvider) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCommandEnrichmentCallback(System.Action<System.Diagnostics.Activity!, EnterpriseDB.EDBClient.EDBCommand!>? commandEnrichmentCallback) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCommandFilter(System.Func<EnterpriseDB.EDBClient.EDBCommand!, bool>? commandFilter) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCommandSpanNameProvider(System.Func<EnterpriseDB.EDBClient.EDBCommand!, string?>? commandSpanNameProvider) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.EnableFirstResponseEvent(bool enable = true) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder
+EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder.EnableTableCompositesLoading(bool enable = true) -> EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder.EnableTypeLoading(bool enable = true) -> EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder.SetTypeLoadingSchemas(params System.Collections.Generic.IEnumerable<string!>? schemas) -> EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!
+EnterpriseDB.EDBClient.Replication.PgOutput.ReplicationValue.GetFieldName() -> string!
+EnterpriseDB.EDBClient.Replication.PgOutput.Messages.ParallelStreamAbortMessage
+EnterpriseDB.EDBClient.Replication.PgOutput.Messages.ParallelStreamAbortMessage.AbortLsn.get -> EDBTypes.EDBLogSequenceNumber
+EnterpriseDB.EDBClient.Replication.PgOutput.Messages.ParallelStreamAbortMessage.AbortTimestamp.get -> System.DateTime
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion.V1 = 1 -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion.V2 = 2 -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion.V3 = 3 -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion.V4 = 4 -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputReplicationOptions.PgOutputReplicationOptions(string! publicationName, EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion protocolVersion, bool? binary = null, EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode? streamingMode = null, bool? messages = null, bool? twoPhase = null) -> void
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputReplicationOptions.PgOutputReplicationOptions(System.Collections.Generic.IEnumerable<string!>! publicationNames, EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion protocolVersion, bool? binary = null, EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode? streamingMode = null, bool? messages = null, bool? twoPhase = null) -> void
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputReplicationOptions.ProtocolVersion.get -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputProtocolVersion
+*REMOVED*EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputReplicationOptions.ProtocolVersion.get -> ulong
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputReplicationOptions.StreamingMode.get -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode?
+*REMOVED*EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputReplicationOptions.Streaming.get -> bool?
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode.Off = 0 -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode.On = 1 -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode
+EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode.Parallel = 2 -> EnterpriseDB.EDBClient.Replication.PgOutput.PgOutputStreamingMode
+EnterpriseDB.EDBClient.SslNegotiation
+EnterpriseDB.EDBClient.SslNegotiation.Direct = 1 -> EnterpriseDB.EDBClient.SslNegotiation
+EnterpriseDB.EDBClient.SslNegotiation.Postgres = 0 -> EnterpriseDB.EDBClient.SslNegotiation
+override EnterpriseDB.EDBClient.EDBMultiHostDataSource.Clear() -> void
+EnterpriseDB.EDBClient.EDBDataSource.ReloadTypes() -> void
+EnterpriseDB.EDBClient.EDBDataSource.ReloadTypesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+EnterpriseDB.EDBClient.EDBConnection.ReloadTypesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+*REMOVED*EnterpriseDB.EDBClient.EDBConnection.ReloadTypesAsync() -> System.Threading.Tasks.Task!
+*REMOVED*EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapComposite(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+*REMOVED*EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapComposite<T>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+*REMOVED*EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+*REMOVED*EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+*REMOVED*EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapComposite(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+*REMOVED*EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapComposite<T>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+*REMOVED*EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+*REMOVED*EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+static readonly EDBTypes.EDBTsVector.Empty -> EDBTypes.EDBTsVector!
