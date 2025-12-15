@@ -1,6 +1,6 @@
 ###
 # Foundation-security SonarQube workflow
-# version: dotnet-sonarqube
+# version: dotnet-sonarqube - v2
 ###
 name: Foundation-Security/SonarQube .net Scan
 
@@ -34,9 +34,9 @@ jobs:
       id-token: write
       contents: read
     runs-on: windows-latest
+
     steps:
       - name: Checkout source repository for dispatch runs
-        id: checkout-source-dispatch
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
         with:
@@ -46,7 +46,6 @@ jobs:
           token: ${{ secrets.GH_SLONIK }}
 
       - name: Checkout source repository for non-dispatch runs
-        id: checkout-source
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v4
         with:
@@ -80,7 +79,8 @@ jobs:
         if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
         shell: powershell
         run: |
-          New-Item -Path .\.sonar\scanner -ItemType Directory
+          $ErrorActionPreference = "Stop"
+          New-Item -Path .\.sonar\scanner -ItemType Directory -Force | Out-Null
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
 
       - name: Checkout foundation repository
@@ -91,16 +91,18 @@ jobs:
           token: ${{ secrets.GH_SLONIK }}
           path: foundation
 
+      # ----------------------------
+      # Coverage-mode prerequisites
+      # ----------------------------
       - name: Get EPAS Server
-
-        if: github.event_name == 'workflow_dispatch' && inputs.run_coverage || github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         uses: ./foundation/actions/windows/install/edbas
         with:
           edbas-version: 16
           additional-options: --superpassword edb
 
       - name: Add KeyPair
-        if: github.event_name == 'workflow_dispatch' && inputs.run_coverage || github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         shell: bash
         run: |
           cp server.crt "/c/Program Files/edb/as16/data/server.crt"
@@ -108,7 +110,7 @@ jobs:
         working-directory: source/edb_test_db_scripts
 
       - name: Configure EPAS Server
-        if: github.event_name == 'workflow_dispatch' && inputs.run_coverage || github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         shell: bash
         run: |
           export PATH=$PATH:"/c/Program Files/edb/as16/bin"
@@ -128,44 +130,93 @@ jobs:
           sed -i "s|#ssl_cert_file = 'server.crt'|ssl_cert_file = 'server.crt'|" "$EPAS/data/postgresql.conf"
           sed -i "s|#ssl_key_file = 'server.crt'|ssl_key_file = 'server.key'|" "$EPAS/data/postgresql.conf"
           cat "$EPAS/data/postgresql.conf"
-          pg_ctl -D "$EPAS/data"  restart
+          pg_ctl -D "$EPAS/data" restart
 
       - name: Create test database
-        if: github.event_name == 'workflow_dispatch' && inputs.run_coverage || github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         shell: cmd
         run: makedb.bat 5444
         working-directory: source/edb_test_db_scripts
 
       - name: Install PostGIS
-        if: github.event_name == 'workflow_dispatch' && inputs.run_coverage || github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         uses: ./foundation/actions/windows/install/postgis
         with:
           edbas-version: 16
           additional-options: --pgpassword edb --extract-only 1
 
       - name: Install DotNet Coverage tool
-        if: github.event_name == 'workflow_dispatch' && inputs.run_coverage || github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         shell: powershell
         run: |
+          $ErrorActionPreference = "Stop"
           dotnet tool install --global dotnet-coverage
 
-      - name: Build and analyze with Coverage
-        if: github.event_name == 'workflow_dispatch' && inputs.run_coverage || github.event_name == 'push' && github.ref == 'refs/heads/master'
+      # ----------------------------
+      # Branch/Dispatch analysis
+      # ----------------------------
+      - name: SonarQube analyze (branch/dispatch)
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         shell: powershell
+        working-directory: source
         run: |
-          echo "Running coverage"
-          dotnet tool install --global dotnet-coverage
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" /d:sonar.branch.name="${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}" /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
-          dotnet build source/npgsql/ef.core/efcore.pg.sln --no-incremental -f net8.0
-          dotnet-coverage collect "dotnet test source/npgsql/ef.core/efcore.pg.sln -c Release -f net8.0" -f xml -o "coverage.xml"
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
+          $ErrorActionPreference = "Stop"
 
-      - name: Build and analyze without Coverage
-        if: github.event_name == 'workflow_dispatch' && !inputs.run_coverage || github.event_name == 'pull_request'
+          $branchName = "${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.ref_name }}"
+          $runCoverage = "${{ (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master') }}"
+
+          if ($runCoverage -eq "true") {
+            echo "Running coverage (branch/dispatch)"
+
+            ..\.sonar\scanner\dotnet-sonarscanner begin `
+              /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" `
+              /d:sonar.branch.name="$branchName" `
+              /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true `
+              /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml
+
+            if ($LASTEXITCODE -ne 0) { throw "Sonar begin failed ($LASTEXITCODE)" }
+            if (!(Test-Path .sonarqube)) { throw ".sonarqube missing after begin (wrong working directory or begin failed)" }
+
+            dotnet build npgsql/ef.core/efcore.pg.sln --no-incremental -f net8.0
+            dotnet-coverage collect "dotnet test npgsql/ef.core/efcore.pg.sln -c Release -f net8.0" -f xml -o "coverage.xml"
+
+            ..\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
+          }
+          else {
+            echo "Not running coverage (branch/dispatch)"
+
+            ..\.sonar\scanner\dotnet-sonarscanner begin `
+              /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" `
+              /d:sonar.branch.name="$branchName" `
+              /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true
+
+            if ($LASTEXITCODE -ne 0) { throw "Sonar begin failed ($LASTEXITCODE)" }
+            if (!(Test-Path .sonarqube)) { throw ".sonarqube missing after begin (wrong working directory or begin failed)" }
+
+            dotnet build npgsql/ef.core/efcore.pg.sln --no-incremental
+            ..\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
+          }
+
+      # ----------------------------
+      # Pull request analysis
+      # ----------------------------
+      - name: SonarQube analyze (pull_request)
+        if: github.event_name == 'pull_request'
         shell: powershell
+        working-directory: source
         run: |
-          echo "Not running coverage"
-          .\.sonar\scanner\dotnet-sonarscanner begin /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" /d:sonar.branch.name="${{ github.event_name == 'workflow_dispatch' && inputs.ref || (github.event_name == 'push' && github.ref_name) || '' }}" /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true
-          dotnet build source/npgsql/ef.core/efcore.pg.sln --no-incremental
-          .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
+          $ErrorActionPreference = "Stop"
+          echo "PR scan"
 
+          ..\.sonar\scanner\dotnet-sonarscanner begin `
+            /k:"EnterpriseDB_edb-dotnet" /n:"edb-dotnet" /v:"${{ github.ref_name }}" `
+            /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}" /d:sonar.host.url="${{ vars.SQ_URL }}" /d:sonar.verbose=true `
+            /d:sonar.pullrequest.key="${{ github.event.pull_request.number }}" `
+            /d:sonar.pullrequest.branch="${{ github.head_ref }}" `
+            /d:sonar.pullrequest.base="${{ github.base_ref }}"
+
+          if ($LASTEXITCODE -ne 0) { throw "Sonar begin failed ($LASTEXITCODE)" }
+          if (!(Test-Path .sonarqube)) { throw ".sonarqube missing after begin (wrong working directory or begin failed)" }
+
+          dotnet build npgsql/ef.core/efcore.pg.sln --no-incremental
+          ..\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONARQUBE_TOKEN }}"
