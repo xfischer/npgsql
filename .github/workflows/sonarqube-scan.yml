@@ -89,6 +89,14 @@ jobs:
           New-Item -Path .\.sonar\scanner -ItemType Directory -Force | Out-Null
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
 
+      - name: Checkout foundation repository
+        uses: actions/checkout@v4
+        with:
+          repository: EnterpriseDB/foundation-packaging
+          ref: v4
+          token: ${{ env.GH_APP_TOKEN }}
+          path: foundation
+
       - name: Checkout foundation-security repository
         id: checkout-foundation-security
         uses: actions/checkout@v4
