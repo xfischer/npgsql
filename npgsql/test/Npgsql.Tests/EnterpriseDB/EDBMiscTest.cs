@@ -51,6 +51,7 @@ public class EDBMiscTest : EPASTestBase
         //Command.ExecuteNonQuery();
 
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     [Test]
@@ -68,7 +69,7 @@ public class EDBMiscTest : EPASTestBase
             Command.CommandText = Select;
             var Reader = Command.ExecuteReader();
 
-            Assert.IsNotNull(Reader);
+            Assert.That(Reader, Is.Not.Null);
 
             while (Reader.Read())
             {
@@ -78,6 +79,8 @@ public class EDBMiscTest : EPASTestBase
 
             Reader.Close();
             TestUtil.closeDB(Con);
+
+            Con?.Dispose();
         }
 
         catch (EDBException exp)
@@ -126,10 +129,10 @@ public class EDBMiscTest : EPASTestBase
             };
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0).ToString());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("V1"));
             Console.WriteLine(Reader.GetValue(0).ToString());
-            Assert.IsTrue(Reader.Read());
+            Assert.That(Reader.Read());
             Reader.Close();
         }
 
@@ -150,9 +153,9 @@ public class EDBMiscTest : EPASTestBase
             };
 
             var Reader = Command.ExecuteReader();
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V2", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V2"));
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
         }
 
@@ -173,9 +176,9 @@ public class EDBMiscTest : EPASTestBase
             };
 
             var Reader = Command.ExecuteReader();
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V2", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V2"));
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
         }
         catch (EDBException exp)
@@ -213,9 +216,9 @@ public class EDBMiscTest : EPASTestBase
             };
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsTrue(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read());
             Reader.Close();
         }
         catch (EDBException exp)
@@ -236,9 +239,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
 
         }
@@ -263,9 +266,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
         }
 
@@ -308,9 +311,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsTrue(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read());
             Reader.Close();
         }
 
@@ -331,7 +334,7 @@ public class EDBMiscTest : EPASTestBase
             };
 
             var Reader = Command.ExecuteReader();
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
         }
 
@@ -354,9 +357,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
         }
 
@@ -397,9 +400,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsTrue(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read());
             Reader.Close();
         }
 
@@ -422,7 +425,7 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
         }
         catch (EDBException exp)
@@ -446,10 +449,10 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsTrue(Reader.Read());
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read());
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
         }
 
@@ -490,9 +493,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsTrue(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read());
 
             Reader.Close();
         }
@@ -513,7 +516,7 @@ public class EDBMiscTest : EPASTestBase
         {
             Command.CommandText = "select a from TESTTAB group by a,b having b=(select BIT_OR(b) from testtab);";
             var Reader = Command.ExecuteReader();
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read(), Is.False);
             Reader.Close();
         }
         catch (Exception exp)
@@ -536,10 +539,10 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsTrue(Reader.Read());
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read());
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
         }
@@ -583,9 +586,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
             Console.WriteLine(con.Database.ToString() + "afaf");
@@ -611,9 +614,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V2", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V2"));
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
         }
@@ -637,9 +640,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
         }
@@ -666,9 +669,9 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
 
@@ -714,11 +717,11 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V2", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V2"));
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
         }
@@ -742,7 +745,7 @@ public class EDBMiscTest : EPASTestBase
             };
 
             var Reader = Command.ExecuteReader();
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
         }
@@ -766,11 +769,11 @@ public class EDBMiscTest : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V1", Reader.GetValue(0));
-            Assert.IsTrue(Reader.Read());
-            Assert.AreEqual("V2", Reader.GetValue(0));
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V1"));
+            Assert.That(Reader.Read());
+            Assert.That(Reader.GetValue(0), Is.EqualTo("V2"));
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
 
@@ -799,8 +802,8 @@ public class EDBMiscTest : EPASTestBase
         Command.CommandText = "SELECT name FROM test_Index WHERE major = 2000 AND minor = 3000;";
         var Reader = Command.ExecuteReader();
 
-        Assert.IsTrue(Reader.Read());
-        Assert.AreEqual("Ali", Reader.GetValue(0));
+        Assert.That(Reader.Read());
+        Assert.That(Reader.GetValue(0), Is.EqualTo("Ali"));
 
         Reader.Close();
     }
@@ -820,8 +823,8 @@ public class EDBMiscTest : EPASTestBase
         Command.CommandText = "SELECT name FROM test_Index WHERE major = 3000 AND minor = 4000;";
         var Reader = Command.ExecuteReader();
 
-        Assert.IsTrue(Reader.Read());
-        Assert.AreEqual("Usman", Reader.GetValue(0));
+        Assert.That(Reader.Read());
+        Assert.That(Reader.GetValue(0), Is.EqualTo("Usman"));
 
         Reader.Close();
     }
@@ -860,7 +863,7 @@ public class EDBMiscTest : EPASTestBase
             Command.CommandText = "SELECT * from functional_index where upper(name) ='Ali';";
             var Reader = Command.ExecuteReader();
 
-            Assert.IsFalse(Reader.Read());
+            Assert.That(Reader.Read(), Is.False);
 
             Reader.Close();
 
@@ -919,7 +922,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("5", Command.Parameters[0].Value.ToString());
+        Assert.That(Command.Parameters[0].Value.ToString(), Is.EqualTo("5"));
         Command = new EDBCommand
         {
             Connection = con,
@@ -950,7 +953,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Integer, 10, "param1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 1));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("5", Command.Parameters[0].Value.ToString());
+        Assert.That(Command.Parameters[0].Value.ToString(), Is.EqualTo("5"));
         result.Close();
         Command = new EDBCommand
         {
@@ -982,7 +985,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 1));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("HELLO", Command.Parameters[0].Value.ToString());
+        Assert.That(Command.Parameters[0].Value.ToString(), Is.EqualTo("HELLO"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1015,7 +1018,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.Output, false, 2, 2, DataRowVersion.Current, 1));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("HELLO", Command.Parameters[0].Value.ToString());
+        Assert.That(Command.Parameters[0].Value.ToString(), Is.EqualTo("HELLO"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1048,7 +1051,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("HELLO", Command.Parameters["param2"].Value.ToString());
+        Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("HELLO"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1081,7 +1084,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HELLO"));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("(HELLO,HELLO1)", Command.Parameters["param1"].Value.ToString());
+        Assert.That(Command.Parameters["param1"].Value.ToString(), Is.EqualTo("(HELLO,HELLO1)"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1116,7 +1119,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HELLO"));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("(HELLO,10,20.55,HELLO1)", Command.Parameters["param1"].Value.ToString());
+        Assert.That(Command.Parameters["param1"].Value.ToString(), Is.EqualTo("(HELLO,10,20.55,HELLO1)"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1150,7 +1153,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HELLO"));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("(HELLO,HELLO1)", Command.Parameters["param2"].Value.ToString());
+        Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("(HELLO,HELLO1)"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1183,7 +1186,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("(5,10)", Command.Parameters["param2"].Value.ToString());
+        Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("(5,10)"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1217,8 +1220,8 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param1", EDBTypes.EDBDbType.Varchar, 10, "param1", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("5", Command.Parameters["param2"].Value.ToString());
-        Assert.AreEqual("10", Command.Parameters["param1"].Value.ToString());
+        Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("5"));
+        Assert.That(Command.Parameters["param1"].Value.ToString(), Is.EqualTo("10"));
 
         result.Close();
         Command = new EDBCommand
@@ -1252,7 +1255,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, 1));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("(HELLO,10)", Command.Parameters["param2"].Value.ToString());
+        Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("(HELLO,10)"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1286,7 +1289,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HI"));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("(HELLO,10)", Command.Parameters["param2"].Value.ToString());
+        Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("(HELLO,10)"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1320,7 +1323,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HI"));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("(HELLO,HELLO1,10)", Command.Parameters["param2"].Value.ToString());
+        Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("(HELLO,HELLO1,10)"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1361,7 +1364,7 @@ public class EDBMiscTest : EPASTestBase
 
         Command.Prepare();
         var result = Command.ExecuteReader();
-        //    Assert.AreEqual("(HELLO,10,20.55,HELLO1,10)", Command.Parameters["param2"].Value.ToString());
+        //    Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("(HELLO,10,20.55,HELLO1,10)"));
         result.Close();
         Command = new EDBCommand
         {
@@ -1396,7 +1399,7 @@ public class EDBMiscTest : EPASTestBase
         Command.Parameters.Add(new EDBParameter("param2", EDBTypes.EDBDbType.Varchar, 10, "param2", ParameterDirection.ReturnValue, false, 2, 2, DataRowVersion.Current, "HI"));
         Command.Prepare();
         var result = Command.ExecuteReader();
-        Assert.AreEqual("(HELLO,HELLO1,10)", Command.Parameters["param2"].Value.ToString());
+        Assert.That(Command.Parameters["param2"].Value.ToString(), Is.EqualTo("(HELLO,HELLO1,10)"));
         result.Close();
         Command = new EDBCommand
         {

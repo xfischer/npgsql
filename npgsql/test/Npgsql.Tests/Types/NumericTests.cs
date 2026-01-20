@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Globalization;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -211,10 +210,10 @@ public class NumericTests(MultiplexingMode multiplexingMode) : MultiplexingTestB
         await rdr.ReadAsync();
         var value = rdr.GetFieldValue<decimal>(0);
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         Assert.That(value.Scale, Is.EqualTo(2));
 #else
-        Assert.That(value.ToString(CultureInfo.InvariantCulture), Is.EqualTo(0.00M.ToString(CultureInfo.InvariantCulture)));
+        Assert.That(value.ToString(System.Globalization.CultureInfo.InvariantCulture), Is.EqualTo(0.00M.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 #endif
     }
 }

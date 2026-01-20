@@ -44,7 +44,7 @@ sealed class UserTypeMapper : PgTypeInfoResolverFactory
         get => _defaultNameTranslator;
         set
         {
-#if NET6_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
             ArgumentNullException.ThrowIfNull(value);
 #else
             if (value is null)

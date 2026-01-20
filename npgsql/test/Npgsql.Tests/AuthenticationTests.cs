@@ -66,7 +66,7 @@ public class AuthenticationTests(MultiplexingMode multiplexingMode) : Multiplexi
 
         using var dataSource = dataSourceBuilder.Build();
         using var conn = async ? await dataSource.OpenConnectionAsync() : dataSource.OpenConnection();
-        Assert.True(async ? asyncProviderCalled : syncProviderCalled, "Password_provider not used");
+        Assert.That(async ? asyncProviderCalled : syncProviderCalled, "Password_provider not used");
     }
 
     [Test]
@@ -368,9 +368,8 @@ public class AuthenticationTests(MultiplexingMode multiplexingMode) : Multiplexi
         // request. This should trigger a timeout
         await using var dataSource = CreateDataSource(postmasterMock.ConnectionString);
         await using var connection = dataSource.CreateConnection();
-        Assert.That(async () => await connection.OpenAsync(),
-            Throws.Exception.TypeOf<EDBException>()
-                .With.InnerException.TypeOf<TimeoutException>());
+        var ex = Assert.ThrowsAsync<EDBException>(async () => await connection.OpenAsync());
+        Assert.That(ex.InnerException, Is.TypeOf<TimeoutException>());
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1180")]
@@ -418,7 +417,7 @@ public class AuthenticationTests(MultiplexingMode multiplexingMode) : Multiplexi
         using (var conn = new EDBConnection(builder.ConnectionString) { ProvidePasswordCallback = ProvidePasswordCallback })
         {
             conn.Open();
-            Assert.True(getPasswordDelegateWasCalled, "ProvidePasswordCallback delegate not used");
+            Assert.That(getPasswordDelegateWasCalled, "ProvidePasswordCallback delegate not used");
 
             // Do this again, since with multiplexing the very first connection attempt is done via
             // the non-multiplexing path, to surface any exceptions.
@@ -427,7 +426,7 @@ public class AuthenticationTests(MultiplexingMode multiplexingMode) : Multiplexi
             getPasswordDelegateWasCalled = false;
             conn.Open();
             Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
-            Assert.True(getPasswordDelegateWasCalled, "ProvidePasswordCallback delegate not used");
+            Assert.That(getPasswordDelegateWasCalled, "ProvidePasswordCallback delegate not used");
         }
 
         string ProvidePasswordCallback(string host, int port, string database, string username)
@@ -500,10 +499,10 @@ public class AuthenticationTests(MultiplexingMode multiplexingMode) : Multiplexi
         using (var conn = new EDBConnection(builder.ConnectionString) { ProvidePasswordCallback = ProvidePasswordCallback })
         {
             conn.Open();
-            Assert.AreEqual(builder.Host, receivedHost);
-            Assert.AreEqual(builder.Port, receivedPort);
-            Assert.AreEqual(builder.Database, receivedDatabase);
-            Assert.AreEqual(builder.Username, receivedUsername);
+            Assert.That(receivedHost, Is.EqualTo(builder.Host));
+            Assert.That(receivedPort, Is.EqualTo(builder.Port));
+            Assert.That(receivedDatabase, Is.EqualTo(builder.Database));
+            Assert.That(receivedUsername, Is.EqualTo(builder.Username));
         }
 
         string ProvidePasswordCallback(string host, int port, string database, string username)

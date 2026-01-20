@@ -387,6 +387,7 @@ EnterpriseDB.EDBClient.EDBConnection.CreateCommand() -> EnterpriseDB.EDBClient.E
 EnterpriseDB.EDBClient.EDBConnection.Disposed -> System.EventHandler?
 EnterpriseDB.EDBClient.EDBConnection.FullState.get -> System.Data.ConnectionState
 EnterpriseDB.EDBClient.EDBConnection.HasIntegerDateTimes.get -> bool
+EnterpriseDB.EDBClient.EDBConnection.SupportsRedwoodDialect.get -> bool
 EnterpriseDB.EDBClient.EDBConnection.Host.get -> string?
 EnterpriseDB.EDBClient.EDBConnection.Notice -> EnterpriseDB.EDBClient.NoticeEventHandler?
 EnterpriseDB.EDBClient.EDBConnection.Notification -> EnterpriseDB.EDBClient.NotificationEventHandler?
@@ -1938,7 +1939,6 @@ virtual EnterpriseDB.EDBClient.EDBCommand.Clone() -> EnterpriseDB.EDBClient.EDBC
 virtual EnterpriseDB.EDBClient.Replication.PgOutput.ReplicationTuple.GetAsyncEnumerator(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerator<EnterpriseDB.EDBClient.Replication.PgOutput.ReplicationValue!>!
 EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.DisableDynamicJson() -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
 EnterpriseDB.EDBClient.EDBAQDequeueMode
-EnterpriseDB.EDBClient.EDBAQDequeueMode.EDBAQDequeueMode() -> void
 EnterpriseDB.EDBClient.EDBAQDequeueOptions
 EnterpriseDB.EDBClient.EDBAQDequeueOptions.DeliveryMode.get -> int
 EnterpriseDB.EDBClient.EDBAQDequeueOptions.DeliveryMode.set -> void
@@ -1947,7 +1947,6 @@ EnterpriseDB.EDBClient.EDBAQDequeueOptions.DequeueMode.set -> void
 EnterpriseDB.EDBClient.EDBAQDequeueOptions.EDBAQDequeueOptions() -> void
 EnterpriseDB.EDBClient.EDBAQDequeueOptions.Navigation.get -> int
 EnterpriseDB.EDBClient.EDBAQDequeueOptions.Navigation.set -> void
-EnterpriseDB.EDBClient.EDBAQDequeueOptions.Visibility.get -> int
 EnterpriseDB.EDBClient.EDBAQDequeueOptions.Visibility.set -> void
 EnterpriseDB.EDBClient.EDBAQDequeueOptions.Wait.get -> int
 EnterpriseDB.EDBClient.EDBAQDequeueOptions.Wait.set -> void
@@ -1969,19 +1968,16 @@ EnterpriseDB.EDBClient.EDBAQMessageProperties.DeliveryMode.set -> void
 EnterpriseDB.EDBClient.EDBAQMessageProperties.Priority.get -> int
 EnterpriseDB.EDBClient.EDBAQMessageProperties.Priority.set -> void
 EnterpriseDB.EDBClient.EDBAQMessageState
-EnterpriseDB.EDBClient.EDBAQMessageState.EDBAQMessageState() -> void
 EnterpriseDB.EDBClient.EDBAQMessageType
 EnterpriseDB.EDBClient.EDBAQMessageType.Raw = 1 -> EnterpriseDB.EDBClient.EDBAQMessageType
 EnterpriseDB.EDBClient.EDBAQMessageType.Udt = 2 -> EnterpriseDB.EDBClient.EDBAQMessageType
 EnterpriseDB.EDBClient.EDBAQMessageType.Xml = 3 -> EnterpriseDB.EDBClient.EDBAQMessageType
 EnterpriseDB.EDBClient.EDBAQNavigationMode
-EnterpriseDB.EDBClient.EDBAQNavigationMode.EDBAQNavigationMode() -> void
 EnterpriseDB.EDBClient.EDBAQQueue
 EnterpriseDB.EDBClient.EDBAQQueue.Dispose() -> void
 EnterpriseDB.EDBClient.EDBAQQueue.MessageType.get -> EnterpriseDB.EDBClient.EDBAQMessageType
 EnterpriseDB.EDBClient.EDBAQQueue.MessageType.set -> void
 EnterpriseDB.EDBClient.EDBAQVisibility
-EnterpriseDB.EDBClient.EDBAQVisibility.EDBAQVisibility() -> void
 EnterpriseDB.EDBClient.EDBConnectionStringBuilder.IsPgPoolConnection.get -> bool
 EnterpriseDB.EDBClient.EDBConnectionStringBuilder.IsPgPoolConnection.set -> void
 EnterpriseDB.EDBClient.EDBConnectionStringBuilder.LoadRoleBasedTables.get -> bool
@@ -2026,7 +2022,6 @@ EnterpriseDB.EDBClient.EDBParameter.EDBParameterOID.Timestamp = 1114 -> Enterpri
 EnterpriseDB.EDBClient.EDBParameter.EDBParameterOID.Unknown = 0 -> EnterpriseDB.EDBClient.EDBParameter.EDBParameterOID
 EnterpriseDB.EDBClient.EDBParameter.EDBParameterOID.Varchar = 1043 -> EnterpriseDB.EDBClient.EDBParameter.EDBParameterOID
 EnterpriseDB.EDBClient.EDBParameter.EDBParameterOID.Varchar2 = 1043 -> EnterpriseDB.EDBClient.EDBParameter.EDBParameterOID
-EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.DisableDynamicJson() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.DisableRecordsAsTuples() -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
 EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.DisableUnmappedTypes() -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
 static EDBTypes.EDBBox.Parse(string! s) -> EDBTypes.EDBBox
@@ -2049,23 +2044,20 @@ static readonly EnterpriseDB.EDBClient.EDBAQNavigationMode.NEXT_MESSAGE -> int
 static readonly EnterpriseDB.EDBClient.EDBAQNavigationMode.NEXT_TRANSACTION -> int
 static readonly EnterpriseDB.EDBClient.EDBAQVisibility.IMMEDIATE -> int
 static readonly EnterpriseDB.EDBClient.EDBAQVisibility.ON_COMMIT -> int
-~EnterpriseDB.EDBClient.EDBAQDequeueOptions.ConsumerName.get -> string
+~EnterpriseDB.EDBClient.EDBAQDequeueOptions.ConsumerName.get -> string?
 ~EnterpriseDB.EDBClient.EDBAQDequeueOptions.ConsumerName.set -> void
-~EnterpriseDB.EDBClient.EDBAQDequeueOptions.Correlation.get -> string
+~EnterpriseDB.EDBClient.EDBAQDequeueOptions.Correlation.get -> string?
 ~EnterpriseDB.EDBClient.EDBAQDequeueOptions.Correlation.set -> void
-~EnterpriseDB.EDBClient.EDBAQDequeueOptions.DeqCondition.get -> string
+~EnterpriseDB.EDBClient.EDBAQDequeueOptions.DeqCondition.get -> string?
 ~EnterpriseDB.EDBClient.EDBAQDequeueOptions.DeqCondition.set -> void
-~EnterpriseDB.EDBClient.EDBAQDequeueOptions.EDBAQDequeueOptions(string consumer_name, int dequeue_mode, int navigation, int visibility, int wait, byte[] msgid, string correlation, string deq_condition, string transformation, int delivery_mode) -> void
 ~EnterpriseDB.EDBClient.EDBAQDequeueOptions.Msgid.get -> byte[]
 ~EnterpriseDB.EDBClient.EDBAQDequeueOptions.Msgid.set -> void
-~EnterpriseDB.EDBClient.EDBAQDequeueOptions.Transformation.get -> string
+~EnterpriseDB.EDBClient.EDBAQDequeueOptions.Transformation.get -> string?
 ~EnterpriseDB.EDBClient.EDBAQDequeueOptions.Transformation.set -> void
-~EnterpriseDB.EDBClient.EDBAQEnqueueOptions.EDBAQEnqueueOptions(int visibility, byte[] relative_msgid, int? sequence_deviation, string transformation, int delivery_mode) -> void
-~EnterpriseDB.EDBClient.EDBAQEnqueueOptions.RelativeMsgid.get -> byte[]
+~EnterpriseDB.EDBClient.EDBAQEnqueueOptions.RelativeMsgid.get -> byte[]?
 ~EnterpriseDB.EDBClient.EDBAQEnqueueOptions.RelativeMsgid.set -> void
-~EnterpriseDB.EDBClient.EDBAQEnqueueOptions.Transformation.get -> string
+~EnterpriseDB.EDBClient.EDBAQEnqueueOptions.Transformation.get -> string?
 ~EnterpriseDB.EDBClient.EDBAQEnqueueOptions.Transformation.set -> void
-~EnterpriseDB.EDBClient.EDBAQMessage.MessageId.get -> byte[]
 ~EnterpriseDB.EDBClient.EDBAQMessage.MessageId.set -> void
 ~EnterpriseDB.EDBClient.EDBAQMessage.Payload.get -> object
 ~EnterpriseDB.EDBClient.EDBAQMessage.Payload.set -> void
@@ -2073,7 +2065,6 @@ static readonly EnterpriseDB.EDBClient.EDBAQVisibility.ON_COMMIT -> int
 ~EnterpriseDB.EDBClient.EDBAQMessageProperties.Attempts.set -> void
 ~EnterpriseDB.EDBClient.EDBAQMessageProperties.Correlation.get -> object
 ~EnterpriseDB.EDBClient.EDBAQMessageProperties.Correlation.set -> void
-~EnterpriseDB.EDBClient.EDBAQMessageProperties.EDBAQMessageProperties(int priority, int delay, object expiration, object correlation, object attempts, object recipient_list, object exception_queue, object enqueue_time, object state, object original_msgid, object transaction_group, int delivery_mode) -> void
 ~EnterpriseDB.EDBClient.EDBAQMessageProperties.EnqueueTime.get -> object
 ~EnterpriseDB.EDBClient.EDBAQMessageProperties.EnqueueTime.set -> void
 ~EnterpriseDB.EDBClient.EDBAQMessageProperties.ExceptionQueue.get -> object
@@ -2098,16 +2089,12 @@ static readonly EnterpriseDB.EDBClient.EDBAQVisibility.ON_COMMIT -> int
 ~EnterpriseDB.EDBClient.EDBAQQueue.Enqueue(EnterpriseDB.EDBClient.EDBAQMessage msg) -> void
 ~EnterpriseDB.EDBClient.EDBAQQueue.EnqueueOptions.get -> EnterpriseDB.EDBClient.EDBAQEnqueueOptions
 ~EnterpriseDB.EDBClient.EDBAQQueue.EnqueueOptions.set -> void
-~EnterpriseDB.EDBClient.EDBAQQueue.Listen(string[] listenConsumers, int waitTime) -> string
-~EnterpriseDB.EDBClient.EDBAQQueue.Map<T>(object source, T destination) -> void
 ~EnterpriseDB.EDBClient.EDBAQQueue.MessageProperties.get -> EnterpriseDB.EDBClient.EDBAQMessageProperties
 ~EnterpriseDB.EDBClient.EDBAQQueue.MessageProperties.set -> void
 ~EnterpriseDB.EDBClient.EDBAQQueue.Name.get -> string
 ~EnterpriseDB.EDBClient.EDBAQQueue.Name.set -> void
 ~EnterpriseDB.EDBClient.EDBAQQueue.UdtTypeName.get -> string
 ~EnterpriseDB.EDBClient.EDBAQQueue.UdtTypeName.set -> void
-EnterpriseDB.EDBClient.EDBTableOfExtensions
 EnterpriseDB.EDBClient.EDBParameter.TypeInfo.get -> EnterpriseDB.EDBClient.Internal.PgTypeInfo?
-static EnterpriseDB.EDBClient.EDBTableOfExtensions.UseEDBIsTableOf(this EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper! mapper, params string![]! knownTableOfTypes) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
 EnterpriseDB.EDBClient.PostgresTypes.EDBTableOfType
 EnterpriseDB.EDBClient.PostgresTypes.EDBTableOfType.EDBTableOfType(string! ns, string! name, uint oid, EnterpriseDB.EDBClient.PostgresTypes.PostgresType! elementPostgresType) -> void

@@ -1,6 +1,4 @@
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 [MinimumPostgresVersion(12, 0)]
 public class ComputedColumnTest : IAsyncLifetime
@@ -134,7 +132,7 @@ public class ComputedColumnTest : IAsyncLifetime
         Assert.Equal(FlagEnum.AValue | FlagEnum.BValue, entity.CalculatedFlagEnum);
     }
 
-    protected NpgsqlTestStore TestStore { get; private set; }
+    protected NpgsqlTestStore TestStore { get; private set; } = null!;
 
     public async Task InitializeAsync()
         => TestStore = await NpgsqlTestStore.CreateInitializedAsync("ComputedColumnTest");

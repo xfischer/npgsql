@@ -31,14 +31,9 @@ sealed class NetworkTypeInfoResolverFactory : PgTypeInfoResolverFactory
 
             // inet
             // There are certain IPAddress values like Loopback or Any that return a *private* derived type (see https://github.com/dotnet/runtime/issues/27870).
-            // However we still need to be able to resolve some typed converter for those values.
-            // We do so by returning a boxing info when we deal with a derived type, as a result we don't need an exact typed converter.
-            // For arrays users can't actually reference the private type so we'll only see some version of ArrayType<IPAddress>.
-            // For reads we'll only see the public type so we never surface an InvalidCastException trying to cast IPAddress to ReadOnlyIPAddress.
-            // Finally we add a custom predicate to be able to match any type which values are assignable to IPAddress.
             mappings.AddType<IPAddress>(DataTypeNames.Inet,
-                static (options, mapping, _) => new PgTypeInfo(options, new IPAddressConverter(),
-                    new DataTypeName(mapping.DataTypeName), unboxedType: mapping.Type == typeof(IPAddress) ? null : mapping.Type),
+                static (options, mapping, _) => new PgTypeInfo(options, new IPAddressConverter(), new DataTypeName(mapping.DataTypeName),
+                    unboxedType: mapping.Type != typeof(IPAddress) ? mapping.Type : null),
                 mapping => mapping with
                 {
                     MatchRequirement = MatchRequirement.Single,
@@ -47,14 +42,23 @@ sealed class NetworkTypeInfoResolverFactory : PgTypeInfoResolverFactory
             mappings.AddStructType<EDBInet>(DataTypeNames.Inet,
                 static (options, mapping, _) => mapping.CreateInfo(options, new EDBInetConverter()));
 
-            // cidr
-            mappings.AddStructType<EDBCidr>(DataTypeNames.Cidr,
-                static (options, mapping, _) => mapping.CreateInfo(options, new EDBCidrConverter()), isDefault: true);
-
 #if NET8_0_OR_GREATER
             mappings.AddStructType<IPNetwork>(DataTypeNames.Cidr,
-                static (options, mapping, _) => mapping.CreateInfo(options, new IPNetworkConverter()));
+                static (options, mapping, _) => mapping.CreateInfo(options, new IPNetworkConverter()), isDefault: true);
+
+#pragma warning disable CS0618 // EDBCidr is obsolete
+            mappings.AddStructType<EDBCidr>(DataTypeNames.Cidr,
+                static (options, mapping, _) => mapping.CreateInfo(options, new EDBCidrConverter()));
+#pragma warning restore CS0618
+#else
+#pragma warning disable CS0618 // EDBCidr is obsolete
+            mappings.AddStructType<EDBCidr>(DataTypeNames.Cidr,
+                static (options, mapping, _) => mapping.CreateInfo(options, new EDBCidrConverter()), isDefault: true);
+#pragma warning restore CS0618	
 #endif
+
+
+
 
             return mappings;
         }
@@ -79,11 +83,11 @@ sealed class NetworkTypeInfoResolverFactory : PgTypeInfoResolverFactory
             mappings.AddStructArrayType<EDBInet>(DataTypeNames.Inet);
 
             // cidr
-            mappings.AddStructArrayType<EDBCidr>(DataTypeNames.Cidr);
-
 #if NET8_0_OR_GREATER
             mappings.AddStructArrayType<IPNetwork>(DataTypeNames.Cidr);
 #endif
+            mappings.AddStructArrayType<EDBCidr>(DataTypeNames.Cidr);
+
 
             return mappings;
         }

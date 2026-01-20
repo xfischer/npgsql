@@ -75,24 +75,24 @@ public class EDBDocExamplesTests : EPASTestBase
             dNames.Add(drDept.GetString(1));
             dLocs.Add(drDept.GetString(2));
         }
-        Assert.AreEqual(4, dNos.Count);
-        Assert.AreEqual(4, dNames.Count);
-        Assert.AreEqual(4, dLocs.Count);
+        Assert.That(dNos.Count, Is.EqualTo(4));
+        Assert.That(dNames.Count, Is.EqualTo(4));
+        Assert.That(dLocs.Count, Is.EqualTo(4));
 
-        Assert.True(dNos.Contains(10));
-        Assert.True(dNos.Contains(20));
-        Assert.True(dNos.Contains(30));
-        Assert.True(dNos.Contains(40));
+        Assert.That(dNos.Contains(10));
+        Assert.That(dNos.Contains(20));
+        Assert.That(dNos.Contains(30));
+        Assert.That(dNos.Contains(40));
 
-        Assert.True(dNames.Contains("ACCOUNTING"));
-        Assert.True(dNames.Contains("RESEARCH"));
-        Assert.True(dNames.Contains("SALES"));
-        Assert.True(dNames.Contains("OPERATIONS"));
+        Assert.That(dNames.Contains("ACCOUNTING"));
+        Assert.That(dNames.Contains("RESEARCH"));
+        Assert.That(dNames.Contains("SALES"));
+        Assert.That(dNames.Contains("OPERATIONS"));
 
-        Assert.True(dLocs.Contains("NEW YORK"));
-        Assert.True(dLocs.Contains("DALLAS"));
-        Assert.True(dLocs.Contains("CHICAGO"));
-        Assert.True(dLocs.Contains("BOSTON"));
+        Assert.That(dLocs.Contains("NEW YORK"));
+        Assert.That(dLocs.Contains("DALLAS"));
+        Assert.That(dLocs.Contains("CHICAGO"));
+        Assert.That(dLocs.Contains("BOSTON"));
 
         await connection.CloseAsync();
     }
@@ -109,7 +109,7 @@ public class EDBDocExamplesTests : EPASTestBase
         using var cmd = new EDBCommand("SELECT MAX(sal) FROM emp", connection);
         cmd.CommandType = CommandType.Text;
         var maxSal = Convert.ToInt32(await cmd.ExecuteScalarAsync());
-        Assert.AreEqual(5000, maxSal);
+        Assert.That(maxSal, Is.EqualTo(5000));
 
         await connection.CloseAsync();
     }
@@ -125,7 +125,7 @@ public class EDBDocExamplesTests : EPASTestBase
         //Just verification, not for doc
         using var cmd = new EDBCommand("SELECT sal FROM emp WHERE empno=7788", connection);
         var sal = Convert.ToInt32(await cmd.ExecuteScalarAsync());
-        Assert.AreEqual(3000, sal);
+        Assert.That(sal, Is.EqualTo(3000));
         //End verifiation
 
         //For doc
@@ -143,7 +143,7 @@ public class EDBDocExamplesTests : EPASTestBase
         //Just verification, not for doc
         using var cmd2 = new EDBCommand("SELECT sal FROM emp WHERE empno=7788", connection);
         var salUpdated = Convert.ToInt32(await cmd2.ExecuteScalarAsync());
-        Assert.AreEqual(sal + 500, salUpdated);
+        Assert.That(salUpdated, Is.EqualTo(sal + 500));
         //End verifiation
 
         //Just for reverting our change if other tests depend on this data, not for doc.
@@ -157,7 +157,7 @@ public class EDBDocExamplesTests : EPASTestBase
         //Just verification, not for doc
         using var cmd3 = new EDBCommand("SELECT sal FROM emp WHERE empno=7788", connection);
         var sal3 = Convert.ToInt32(await cmd.ExecuteScalarAsync());
-        Assert.AreEqual(3000, sal3);
+        Assert.That(sal3, Is.EqualTo(3000));
         //End verifiation
 
         await connection.CloseAsync();
@@ -179,7 +179,7 @@ public class EDBDocExamplesTests : EPASTestBase
 
         using var dr1 = await cmd.ExecuteReaderAsync();
         //Record should not exist so read will return false.
-        Assert.False(await dr1.ReadAsync());
+        Assert.That(await dr1.ReadAsync(), Is.False);
 
         await dr1.CloseAsync();
         //End verifiation
@@ -202,8 +202,8 @@ public class EDBDocExamplesTests : EPASTestBase
         using var cmd2 = new EDBCommand("SELECT ename FROM emp WHERE empno=1234", connection);
         using var dr2 = await cmd2.ExecuteReaderAsync();
         //Record should exist so read will return true.
-        Assert.True(await dr2.ReadAsync());
-        Assert.AreEqual("Lola", dr2.GetString(0));
+        Assert.That(await dr2.ReadAsync());
+        Assert.That(dr2.GetString(0), Is.EqualTo("Lola"));
         await dr2.CloseAsync();
         //End verifiation
 
@@ -222,7 +222,7 @@ public class EDBDocExamplesTests : EPASTestBase
         using var cmd3 = new EDBCommand("SELECT ename FROM emp WHERE empno=1234", connection);
         using var dr3 = await cmd3.ExecuteReaderAsync();
         //Record should not exist so read will return false.
-        Assert.False(await dr3.ReadAsync());
+        Assert.That(await dr3.ReadAsync(), Is.False);
         await dr3.CloseAsync();
         //End verifiation
 
@@ -292,7 +292,7 @@ public class EDBDocExamplesTests : EPASTestBase
 
             //Just verification, not fo doc
             mre.WaitOne(5000);
-            Assert.AreEqual(2, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(2));
             var expectedMsgs = new List<string>()
             {
                 "Dept No: 10",
@@ -301,7 +301,7 @@ public class EDBDocExamplesTests : EPASTestBase
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(expectedMsgs[i], notice!.MessageText);
+                Assert.That(notice!.MessageText, Is.EqualTo(expectedMsgs[i]));
             }
         }
         finally
@@ -398,19 +398,19 @@ public class EDBDocExamplesTests : EPASTestBase
         var count2 = Convert.ToInt32(await cmd2.ExecuteScalarAsync());
 
         //One row should be inserted.
-        Assert.AreEqual(count1 + 1, count2);
+        Assert.That(count2, Is.EqualTo(count1 + 1));
 
         //Verify the t\rwo inserted.
         await using var seletcmd = new EDBCommand("SELECT ENAME, JOB, SAL, COMM, DEPTNO, MGR FROM EMP WHERE ENAME='EDB'", connection);
         await using var dr = await seletcmd.ExecuteReaderAsync();
-        Assert.True(await dr.ReadAsync());
+        Assert.That(await dr.ReadAsync());
 
-        Assert.AreEqual(empName, dr.GetString(0));
-        Assert.AreEqual(empJob, dr.GetString(1));
-        Assert.AreEqual(salary, dr.GetDouble(2));
-        Assert.AreEqual(commission, dr.GetDouble(3));
-        Assert.AreEqual(deptno, dr.GetInt32(4));
-        Assert.AreEqual(manager, dr.GetInt32(5));
+        Assert.That(dr.GetString(0), Is.EqualTo(empName));
+        Assert.That(dr.GetString(1), Is.EqualTo(empJob));
+        Assert.That(dr.GetDouble(2), Is.EqualTo(salary));
+        Assert.That(dr.GetDouble(3), Is.EqualTo(commission));
+        Assert.That(dr.GetInt32(4), Is.EqualTo(deptno));
+        Assert.That(dr.GetInt32(5), Is.EqualTo(manager));
 
         await dr.CloseAsync();
         //End verifiation
@@ -427,7 +427,7 @@ public class EDBDocExamplesTests : EPASTestBase
         var count3 = Convert.ToInt32(await cmd3.ExecuteScalarAsync());
 
         //The insert should be reverted.
-        Assert.AreEqual(count1, count3);
+        Assert.That(count3, Is.EqualTo(count1));
         //End verifiation
     }
 
@@ -495,7 +495,7 @@ public class EDBDocExamplesTests : EPASTestBase
         var fc = result.FieldCount;
 
         //Just verification, not for doc
-        Assert.AreEqual(2, fc);
+        Assert.That(fc, Is.EqualTo(2));
         //End verification
 
         var props = new List<string>();
@@ -514,10 +514,10 @@ public class EDBDocExamplesTests : EPASTestBase
         //End doc
 
         //Just verification, not for doc
-        Assert.AreEqual(3, props.Count);
-        Assert.AreEqual("10", props[0]);
-        Assert.AreEqual("ACCOUNTING", props[1]);
-        Assert.AreEqual("NEW YORK", props[2]);
+        Assert.That(props.Count, Is.EqualTo(3));
+        Assert.That(props[0], Is.EqualTo("10"));
+        Assert.That(props[1], Is.EqualTo("ACCOUNTING"));
+        Assert.That(props[2], Is.EqualTo("NEW YORK"));
         //End verification
     }
 
@@ -586,8 +586,8 @@ public class EDBDocExamplesTests : EPASTestBase
         //End doc
 
         //Just verification, not for doc
-        Assert.AreEqual("ACCOUNTING", command.Parameters["pDNAME"].Value!.ToString());
-        Assert.AreEqual("NEW YORK", command.Parameters["pLOC"].Value!.ToString());
+        Assert.That(command.Parameters["pDNAME"].Value!.ToString(), Is.EqualTo("ACCOUNTING"));
+        Assert.That(command.Parameters["pLOC"].Value!.ToString(), Is.EqualTo("NEW YORK"));
         //End verification
     }
 
@@ -658,9 +658,9 @@ public class EDBDocExamplesTests : EPASTestBase
 
         //Just verification, not for doc
         actualEnames.Sort();
-        Assert.AreEqual(expectedEnames.Count, actualEnames.Count);
+        Assert.That(actualEnames.Count, Is.EqualTo(expectedEnames.Count));
         for(var j=0; j< actualEnames.Count; j++)
-            Assert.AreEqual(expectedEnames[j], actualEnames[j]);
+            Assert.That(actualEnames[j], Is.EqualTo(expectedEnames[j]));
         //End verification
     }
 }

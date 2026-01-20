@@ -14,7 +14,8 @@ namespace EnterpriseDB.EDBClient.Internal;
 
 partial class EDBConnector
 {
-#if !NET6_0_OR_GREATER
+
+#if !NET8_0_OR_GREATER
     static byte[] Hi(string str, byte[] salt, int count)
     {
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(str));
@@ -35,10 +36,9 @@ partial class EDBConnector
 
         return hi;
     }
-#endif
 
-#if !NET7_0_OR_GREATER
-    internal async Task AuthenticateGSS(bool async)
+
+    internal async ValueTask AuthenticateGSS(bool async, CancellationToken cancellationToken)
     {
         var targetName = $"{KerberosServiceName}/{Host}";
 

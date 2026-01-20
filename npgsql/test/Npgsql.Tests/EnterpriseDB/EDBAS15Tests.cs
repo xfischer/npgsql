@@ -45,6 +45,7 @@ public class EDBAS15Tests : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     private int Execute(string query)
@@ -183,7 +184,7 @@ public class EDBAS15Tests : EPASTestBase
                 //(1 row)
 
                 rs.Read();
-                Assert.AreEqual(318, rs.GetInt32(0));
+                Assert.That(rs.GetInt32(0), Is.EqualTo(318));
 
                 rs.Close();
             }
@@ -264,7 +265,7 @@ public class EDBAS15Tests : EPASTestBase
                 var index = 0;
                 while (rs.Read())
                 {
-                    Assert.AreEqual(output[index], rs.GetString(0).ToString());
+                    Assert.That(rs.GetString(0).ToString(), Is.EqualTo(output[index]));
                     index++;
                 }
 
@@ -330,12 +331,12 @@ public class EDBAS15Tests : EPASTestBase
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             var obj1 = (ct1)callProc.Parameters[0].Value;
-            Assert.AreEqual(10, obj1!.x);
-            Assert.AreEqual(20, obj1!.y);
+            Assert.That( obj1!.x, Is.EqualTo(10));
+            Assert.That(obj1!.y, Is.EqualTo(20));
 
             var obj2 = (ct3)callProc.Parameters[1].Value;
-            Assert.AreEqual("ten", obj2!.x);
-            Assert.AreEqual("twenty", obj2!.y);
+            Assert.That(obj2!.x, Is.EqualTo("ten"));
+            Assert.That(obj2!.y, Is.EqualTo("twenty"));
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
         }
         catch (Exception exp)
@@ -388,12 +389,12 @@ public class EDBAS15Tests : EPASTestBase
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             var obj1 = (ct1)callProc.Parameters[0].Value;
-            Assert.AreEqual(10, obj1!.x);
-            Assert.AreEqual(20, obj1!.y);
+            Assert.That(obj1!.x, Is.EqualTo(10));
+            Assert.That(obj1!.y, Is.EqualTo(20));
 
             var obj2 = (ct3)callProc.Parameters[1].Value;
-            Assert.AreEqual("ten", obj2!.x);
-            Assert.AreEqual("twenty", obj2!.y);
+            Assert.That(obj2!.x, Is.EqualTo("ten"));
+            Assert.That(obj2!.y, Is.EqualTo("twenty"));
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
         }
         catch (Exception exp)
@@ -451,12 +452,12 @@ public class EDBAS15Tests : EPASTestBase
 
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
             var obj1 = (ct1)callProc.Parameters[0].Value;
-            Assert.AreEqual(10, obj1!.x);
-            Assert.AreEqual(20, obj1!.y);
+            Assert.That(obj1!.x, Is.EqualTo(10));
+            Assert.That(obj1!.y, Is.EqualTo(20));
 
             var obj2 = (ct3)callProc.Parameters[1].Value;
-            Assert.AreEqual("ten", obj2!.x);
-            Assert.AreEqual("twenty", obj2!.y);
+            Assert.That(obj2!.x, Is.EqualTo("ten"));
+            Assert.That(obj2!.y, Is.EqualTo("twenty"));
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
         }
         catch (Exception exp)
@@ -490,10 +491,10 @@ public class EDBAS15Tests : EPASTestBase
                 //(1 row)
 
                 rs.Read();
-                //Assert.AreEqual("80 days 13:30:00", rs.GetValue(0).ToString());
+                //Assert.That(rs.GetValue(0).ToString(), Is.EqualTo("80 days 13:30:00"));
 
                 //GetInterval() method removed. GetValue() returns the following.
-                Assert.AreEqual("80.13:30:00", rs.GetValue(0).ToString());
+                Assert.That(rs.GetValue(0).ToString(), Is.EqualTo("80.13:30:00"));
 
                 rs.Close();
             }
@@ -516,9 +517,9 @@ public class EDBAS15Tests : EPASTestBase
         Execute("CREATE TABLE db1618_t1(dp1 double precision, dp2 double precision, nr NUMERIC(4, 2), it INTEGER)");
 
         var rowcount = Execute("INSERT INTO db1618_t1 VALUES(11.11, NULL, 33.33, 44);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO db1618_t1 VALUES(NULL, 22.22, 55.55, 66.66);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
 
         var query = "SELECT NVL(dp1, dp2) FROM db1618_t1 ORDER BY 1;";
 
@@ -536,9 +537,9 @@ public class EDBAS15Tests : EPASTestBase
                 //(2 rows)
 
                 rs.Read();
-                Assert.AreEqual(11.11, rs.GetDouble(0), 0.1);
+                Assert.That(rs.GetDouble(0),Is.EqualTo(11.11));
                 rs.Read();
-                Assert.AreEqual(22.22, rs.GetDouble(0), 0.1);
+                Assert.That(rs.GetDouble(0), Is.EqualTo(22.22));
 
                 rs.Close();
             }
@@ -572,7 +573,7 @@ public class EDBAS15Tests : EPASTestBase
                 //(1 row)
 
                 rs.Read();
-                Assert.AreEqual(new DateTime(2017, 8, 8, 2, 39, 10), rs.GetDateTime(0));
+                Assert.That(rs.GetDateTime(0), Is.EqualTo(new DateTime(2017, 8, 8, 2, 39, 10)));
 
                 rs.Close();
             }
@@ -605,8 +606,8 @@ public class EDBAS15Tests : EPASTestBase
                 //(1 row)
 
                 rs.Read();
-                Assert.AreEqual(" 7,654,321.00", rs.GetString(0));
-                Assert.AreEqual("Wednesday: APRIL     20, 2022", rs.GetString(1));
+                Assert.That(rs.GetString(0),Is.EqualTo(" 7,654,321.00"));
+                Assert.That(rs.GetString(1),Is.EqualTo("Wednesday: APRIL     20, 2022"));
 
                 rs.Close();
             }
@@ -654,12 +655,12 @@ public class EDBAS15Tests : EPASTestBase
             {
                 var rs = cmd.ExecuteReader();
                 rs.Read();
-                Assert.AreEqual("unknown string", rs.GetString(0));
-                Assert.AreEqual("c", rs.GetString(1));
-                Assert.AreEqual("varchar2 string", rs.GetString(2));
-                Assert.AreEqual("n", rs.GetString(3));
-                Assert.AreEqual("nvarchar2 string", rs.GetString(4));
-                Assert.AreEqual("clob string", rs.GetString(5));
+                Assert.That(rs.GetString(0), Is.EqualTo("unknown string"));
+                Assert.That(rs.GetString(1), Is.EqualTo("c"));
+                Assert.That(rs.GetString(2), Is.EqualTo("varchar2 string"));
+                Assert.That(rs.GetString(3), Is.EqualTo("n"));
+                Assert.That(rs.GetString(4), Is.EqualTo("nvarchar2 string"));
+                Assert.That(rs.GetString(5), Is.EqualTo("clob string"));
 
                 rs.Close();
             }
@@ -727,7 +728,7 @@ public class EDBAS15Tests : EPASTestBase
                 var rs = cmd.ExecuteReader();
 
                 rs.Read();
-                Assert.AreEqual(-1476, rs.GetInt32(0));
+                Assert.That(rs.GetInt32(0), Is.EqualTo(-1476));
 
                 rs.Close();
             }
@@ -737,7 +738,7 @@ public class EDBAS15Tests : EPASTestBase
                 var rs = cmd.ExecuteReader();
 
                 rs.Read();
-                Assert.AreEqual("division by zero", rs.GetString(0));
+                Assert.That(rs.GetString(0), Is.EqualTo("division by zero"));
 
                 rs.Close();
             }
@@ -763,7 +764,7 @@ public class EDBAS15Tests : EPASTestBase
                 var rs = cmd.ExecuteReader();
 
                 rs.Read();
-                Assert.AreEqual("ＡＢＣ＆１２３", rs.GetString(0));
+                Assert.That(rs.GetString(0), Is.EqualTo("ＡＢＣ＆１２３"));
 
                 rs.Close();
             }
@@ -789,7 +790,7 @@ public class EDBAS15Tests : EPASTestBase
                 var rs = cmd.ExecuteReader();
 
                 rs.Read();
-                Assert.AreEqual("ABC&123", rs.GetString(0));
+                Assert.That(rs.GetString(0), Is.EqualTo("ABC&123"));
 
                 rs.Close();
             }
@@ -839,7 +840,7 @@ public class EDBAS15Tests : EPASTestBase
                 var rs = cmd.ExecuteReader();
 
                 rs.Read();
-                Assert.AreEqual(20, rs.GetInt32(0));
+                Assert.That(rs.GetInt32(0), Is.EqualTo(20));
 
                 rs.Close();
             }
@@ -856,7 +857,7 @@ public class EDBAS15Tests : EPASTestBase
             notice = args.Notice;
             mre.Set();
         };
-        con.Notice += action;
+        con!.Notice += action;
         try
         {
             var callProc = new EDBCommand("db1408_pr_in(:arg_in)", con)
@@ -893,21 +894,21 @@ public class EDBAS15Tests : EPASTestBase
         Execute("CREATE TABLE source(sid integer, delta integer);");
 
         var rowcount = Execute("INSERT INTO source VALUES (1, 100);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO source VALUES (2, 200);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO source VALUES (3, 300);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO source VALUES (4, 100);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO source VALUES (5, 300);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO source VALUES (6, 600);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO target VALUES (1, 0);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO target VALUES (2, 20);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO target VALUES (3, 0);");
 
         var anony = "BEGIN; "
@@ -938,20 +939,20 @@ public class EDBAS15Tests : EPASTestBase
                 //(5 rows)
 
                 rs.Read();
-                Assert.AreEqual(1, rs.GetInt32(0));
-                Assert.AreEqual(100, rs.GetInt32(1));
+                Assert.That(rs.GetInt32(0), Is.EqualTo(1));
+                Assert.That(rs.GetInt32(1), Is.EqualTo(100));
                 rs.Read();
-                Assert.AreEqual(2, rs.GetInt32(0));
-                Assert.AreEqual(20, rs.GetInt32(1));
+                Assert.That(rs.GetInt32(0), Is.EqualTo(2));
+                Assert.That(rs.GetInt32(1), Is.EqualTo(20));
                 rs.Read();
-                Assert.AreEqual(3, rs.GetInt32(0));
-                Assert.AreEqual(300, rs.GetInt32(1));
+                Assert.That(rs.GetInt32(0), Is.EqualTo(3));
+                Assert.That(rs.GetInt32(1), Is.EqualTo(300));
                 rs.Read();
-                Assert.AreEqual(5, rs.GetInt32(0));
-                Assert.AreEqual(300, rs.GetInt32(1));
+                Assert.That(rs.GetInt32(0), Is.EqualTo(5));
+                Assert.That(rs.GetInt32(1), Is.EqualTo(300));
                 rs.Read();
-                Assert.AreEqual(6, rs.GetInt32(0));
-                Assert.AreEqual(600, rs.GetInt32(1));
+                Assert.That(rs.GetInt32(0), Is.EqualTo(6));
+                Assert.That(rs.GetInt32(1), Is.EqualTo(600));
 
                 rs.Close();
             }
@@ -1003,13 +1004,13 @@ public class EDBAS15Tests : EPASTestBase
         Execute("CREATE TABLE xmltest_db1691(id int, data xml);");
 
         var rowcount = Execute("INSERT INTO xmltest_db1691 VALUES (1, '<menu><beers><name>Budvar</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO xmltest_db1691 VALUES (2, '<menu><beers><name>Molson</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO xmltest_db1691 VALUES (3, '<myns:menu xmlns:myns=\"http://myns.com\"><myns:beers><myns:name>Budvar</myns:name><myns:cost>free</myns:cost><myns:name>Carling</myns:name><myns:cost>lots</myns:cost></myns:beers></myns:menu>'::xml);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO xmltest_db1691 VALUES (4, '<myns:menu xmlns:myns=\"http://myns.com\"><myns:beers><myns:name>Molson</myns:name><myns:cost>free</myns:cost><myns:name>Carling</myns:name><myns:cost>lots</myns:cost></myns:beers></myns:menu>'::xml);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
 
         var query = "SELECT extractvalue(xmltest_db1691.data, '/menu/beers/name[position()=1]')"
                 + "  FROM xmltest_db1691 ORDER BY id;";
@@ -1025,9 +1026,9 @@ public class EDBAS15Tests : EPASTestBase
         // Molson
 
         rs.Read();
-        Assert.AreEqual("Budvar", rs.GetString(0));
+        Assert.That(rs.GetString(0), Is.EqualTo("Budvar"));
         rs.Read();
-        Assert.AreEqual("Molson", rs.GetString(0));
+        Assert.That(rs.GetString(0), Is.EqualTo("Molson"));
     }
 
     //--DB-1410 : Support for HTP and HTF package
@@ -1080,11 +1081,11 @@ public class EDBAS15Tests : EPASTestBase
         Execute("ALTER TABLE db1425_t1 DROP COLUMN z;");
 
         var rowcount = Execute("INSERT INTO db1425_t1 VALUES(1,2);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO db1425_t1 VALUES(2,2);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
         rowcount = Execute("INSERT INTO db1425_t1 VALUES(3,2);");
-        Assert.AreEqual(1, rowcount);
+        Assert.That(rowcount, Is.EqualTo(1));
 
         var anony = """
             DECLARE    
@@ -1117,14 +1118,14 @@ public class EDBAS15Tests : EPASTestBase
             //(3 rows)
 
             rs.Read();
-            Assert.AreEqual(1000, rs.GetInt32(0));
-            Assert.AreEqual(1000, rs.GetInt32(1));
+            Assert.That(rs.GetInt32(0), Is.EqualTo(1000));
+            Assert.That(rs.GetInt32(1), Is.EqualTo(1000));
             rs.Read();
-            Assert.AreEqual(2000, rs.GetInt32(0));
-            Assert.AreEqual(2000, rs.GetInt32(1));
+            Assert.That(rs.GetInt32(0), Is.EqualTo(2000));
+            Assert.That(rs.GetInt32(1), Is.EqualTo(2000));
             rs.Read();
-            Assert.AreEqual(3000, rs.GetInt32(0));
-            Assert.AreEqual(3000, rs.GetInt32(1));
+            Assert.That(rs.GetInt32(0), Is.EqualTo(3000));
+            Assert.That(rs.GetInt32(1), Is.EqualTo(3000));
 
             rs.Close();
         }

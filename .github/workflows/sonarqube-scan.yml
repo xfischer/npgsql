@@ -36,6 +36,12 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      - name: Create GitHub App token
+        uses: EnterpriseDB/upm-github-actions/create-gh-app-token@main
+        with:
+          GH_APP_ID: ${{ secrets.FOUNDATION_SECURITY_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.FOUNDATION_SECURITY_APP_PRIVATE_KEY }}
+
       - name: Checkout source repository for dispatch runs
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v4
@@ -43,7 +49,7 @@ jobs:
           repository: ${{ github.repository }}
           ref: ${{ inputs.ref }}
           path: source
-          token: ${{ secrets.GH_SLONIK }}
+          token: ${{ env.GH_APP_TOKEN }}
 
       - name: Checkout source repository for non-dispatch runs
         if: github.event_name != 'workflow_dispatch'
@@ -52,7 +58,7 @@ jobs:
           repository: ${{ github.repository }}
           ref: ${{ github.ref }}
           path: source
-          token: ${{ secrets.GH_SLONIK }}
+          token: ${{ env.GH_APP_TOKEN }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -83,13 +89,15 @@ jobs:
           New-Item -Path .\.sonar\scanner -ItemType Directory -Force | Out-Null
           dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
 
-      - name: Checkout foundation repository
+      - name: Checkout foundation-security repository
+        id: checkout-foundation-security
         uses: actions/checkout@v4
         with:
-          repository: EnterpriseDB/foundation-packaging
-          ref: v2.2.2
-          token: ${{ secrets.GH_SLONIK }}
-          path: foundation
+          repository: EnterpriseDB/foundation-security
+          ref: stable
+          lfs: true
+          path: foundation-security
+          token: ${{ env.GH_APP_TOKEN }}
 
       # ----------------------------
       # Coverage-mode prerequisites
@@ -98,23 +106,23 @@ jobs:
         if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         uses: ./foundation/actions/windows/install/edbas
         with:
-          edbas-version: 16
+          edbas-version: 17
           additional-options: --superpassword edb
 
       - name: Add KeyPair
         if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         shell: bash
         run: |
-          cp server.crt "/c/Program Files/edb/as16/data/server.crt"
-          cp server.key "/c/Program Files/edb/as16/data/server.key"
+          cp server.crt "/c/Program Files/edb/as17/data/server.crt"
+          cp server.key "/c/Program Files/edb/as17/data/server.key"
         working-directory: source/edb_test_db_scripts
 
       - name: Configure EPAS Server
         if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         shell: bash
         run: |
-          export PATH=$PATH:"/c/Program Files/edb/as16/bin"
-          export EPAS="/c/Program Files/edb/as16"
+          export PATH=$PATH:"/c/Program Files/edb/as17/bin"
+          export EPAS="/c/Program Files/edb/as17"
           cd "$EPAS"
           SOCKET_DIR=$(echo "$LOCALAPPDATA\Temp" | sed 's|\\|/|g')
           sed -i "s|max_connections = 100|max_connections = 500|" "$EPAS/data/postgresql.conf"
@@ -142,7 +150,7 @@ jobs:
         if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         uses: ./foundation/actions/windows/install/postgis
         with:
-          edbas-version: 16
+          edbas-version: 17
           additional-options: --pgpassword edb --extract-only 1
 
       - name: Install DotNet Coverage tool

@@ -1,16 +1,21 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Diagnostics.Tracing;
+using System.Runtime.CompilerServices;
 
 namespace EnterpriseDB.EDBClient;
 
 sealed class EDBEventSource : EventSource
 {
     public static readonly EDBEventSource Log = new();
+    // A static to keep the CWT values from making themselves uncollectable if they would have a reference through the
+    // EDBEventSource instance to the CWT table, which they would if this was an instance field.
+    static readonly EDBEventSourceDataSources DataSourceEvents = new(Log);
 
-    const string EventSourceName = "EDB";
+    const string EventSourceName = "edb-dotnet";
 
     internal const int CommandStartId = 3;
     internal const int CommandStopId = 4;
@@ -26,8 +31,6 @@ sealed class EDBEventSource : EventSource
     PollingCounter? _preparedCommandsRatioCounter;
 
     PollingCounter? _poolsCounter;
-    readonly object _dataSourcesLock = new();
-    readonly Dictionary<EDBDataSource, (PollingCounter IdleConnectionsCounter, PollingCounter BusyConnectionsCounter)?> _dataSources = new();
 
     PollingCounter? _multiplexingAverageCommandsPerBatchCounter;
     PollingCounter? _multiplexingAverageWriteTimePerBatchCounter;
@@ -95,35 +98,21 @@ sealed class EDBEventSource : EventSource
             Interlocked.Increment(ref _failedCommands);
     }
 
-    internal void DataSourceCreated(EDBDataSource dataSource)
-    {
-#if !(NETSTANDARD2_0 || NETFRAMEWORK) // EnterpriseDB (NETFRAMEWORK)
-        lock (_dataSourcesLock)
-        {
-            _dataSources.Add(dataSource, null);
-        }
-#endif
-    }
+    internal bool TryTrackDataSource(string name, EDBDataSource dataSource, [NotNullWhen(true)]out IDisposable? untrack)
+        => DataSourceEvents.TryTrack(name, dataSource, out untrack);
 
-    internal void MultiplexingBatchSent(int numCommands, Stopwatch stopwatch)
+    internal void MultiplexingBatchSent(int numCommands, long elapsedTicks)
     {
         // TODO: CAS loop instead of 3 separate interlocked operations?
         if (IsEnabled())
         {
             Interlocked.Increment(ref _multiplexingBatchesSent);
             Interlocked.Add(ref _multiplexingCommandsSent, numCommands);
-            Interlocked.Add(ref _multiplexingTicksWritten, stopwatch.ElapsedTicks);
+            Interlocked.Add(ref _multiplexingTicksWritten, elapsedTicks);
         }
     }
 
-#if !(NETSTANDARD2_0 || NETFRAMEWORK) // EnterpriseDB (NETFRAMEWORK)
-    double GetDataSourceCount()
-    {
-        lock (_dataSourcesLock)
-        {
-            return _dataSources.Count;
-        }
-    }
+    double GetDataSourceCount() => DataSourceEvents.GetDataSourceCount();
 
     double GetMultiplexingAverageCommandsPerBatch()
     {
@@ -147,8 +136,9 @@ sealed class EDBEventSource : EventSource
 
     protected override void OnEventCommand(EventCommandEventArgs command)
     {
-        if (command.Command == EventCommand.Enable)
+        if (command.Command is EventCommand.Enable)
         {
+            #if !(NETSTANDARD2_0 || NETFRAMEWORK) // EnterpriseDB (NETFRAMEWORK)
             // Comment taken from RuntimeEventSource in CoreCLR
             // NOTE: These counters will NOT be disposed on disable command because we may be introducing
             // a race condition by doing that. We still want to create these lazily so that we aren't adding
@@ -212,20 +202,112 @@ sealed class EDBEventSource : EventSource
                 DisplayName = "Average write time per multiplexing batch",
                 DisplayUnits = "us"
             };
-            lock (_dataSourcesLock)
-            {
-                foreach (var dataSource in _dataSources.Keys)
-                {
-                    if (!_dataSources[dataSource].HasValue)
-                    {
-                        _dataSources[dataSource] = (
-                            new PollingCounter($"Idle Connections ({dataSource.Settings.ToStringWithoutPassword()}])", this, () => dataSource.Statistics.Idle),
-                            new PollingCounter($"Busy Connections ({dataSource.Settings.ToStringWithoutPassword()}])", this, () => dataSource.Statistics.Busy));
-                    }
-                }
-            }
+            #endif
+
+            DataSourceEvents.EnableAll();
+        }
+    }
+}
+
+// This is a separate class to avoid accidentally making the CWT instance reachable through the value.
+// The EventSource is stored in the counters, part of the value, so the EventSource *must not* reference this instance on an instance field.
+// This goes for any state captured by the value, which is why the other state has its own object for the value to reference.
+// See https://github.com/dotnet/runtime/issues/12255.
+sealed class EDBEventSourceDataSources(EventSource eventSource)
+{
+#if NETFRAMEWORK || NETSTANDARD
+    readonly EnumerableWeakTable<EDBDataSource, Lazy<DataSourceEvents>> _dataSources = new();
+#else
+    readonly ConditionalWeakTable<EDBDataSource, Lazy<DataSourceEvents>> _dataSources = new();
+#endif
+    readonly StrongBox<(int DataSourceCount, ConcurrentDictionary<string, bool> DataSourceNames)> _nonCwtState = new((0, new()));
+
+    internal double GetDataSourceCount() => _nonCwtState.Value.DataSourceCount;
+
+    internal bool TryTrack(string name, EDBDataSource dataSource, [NotNullWhen(true)]out IDisposable? untrack)
+    {
+        untrack = null;
+        if (!_nonCwtState.Value.DataSourceNames.TryAdd(name, default))
+            return false;
+
+        var lazy = new Lazy<DataSourceEvents>(
+            () => new DataSourceEvents(name: name, dataSource, eventSource, _nonCwtState),
+            LazyThreadSafetyMode.ExecutionAndPublication);
+#if NETFRAMEWORK || NETSTANDARD
+        var tracked = true; _dataSources.Add(dataSource, lazy);
+#else
+        var tracked = _dataSources.TryAdd(dataSource, lazy);
+#endif
+
+        if (tracked)
+        {
+            Interlocked.Increment(ref _nonCwtState.Value.DataSourceCount);
+            // We must initialize directly when the event source is already enabled.
+            if (eventSource.IsEnabled())
+                untrack = lazy.Value;
+            else
+                untrack = new DataSourceEventsDisposable(lazy);
+        }
+
+        return tracked;
+    }
+
+    internal void EnableAll()
+    {
+#if NETFRAMEWORK || NETSTANDARD
+        foreach (var dataSourceKv in _dataSources.ToEnumerable())
+#else
+        foreach (var dataSourceKv in _dataSources)
+#endif
+        {
+            _ = dataSourceKv.Value.Value;
         }
     }
 
+    sealed class DataSourceEventsDisposable(Lazy<DataSourceEvents> events) : IDisposable
+    {
+        public void Dispose() => events.Value.Dispose();
+    }
+
+    sealed class DataSourceEvents : IDisposable
+    {
+        readonly string _name;
+        readonly StrongBox<(int Count, ConcurrentDictionary<string, bool> Names)> _state;
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+        readonly PollingCounter _idleConnections;
+        readonly PollingCounter _busyConnections;
 #endif
+        int _disposed;
+
+        public DataSourceEvents(string name, EDBDataSource dataSource, EventSource eventSource, StrongBox<(int, ConcurrentDictionary<string, bool>)> state)
+        {
+            _name = name;
+            _state = state;
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+            _idleConnections = new($"idle-connections-{name}", eventSource, () => dataSource.Statistics.Idle)
+            {
+                DisplayName = $"Idle Connections [{name}]"
+            };
+            _busyConnections = new($"busy-connections-{name}", eventSource, () => dataSource.Statistics.Busy)
+            {
+                DisplayName = $"Busy Connections [{name}]"
+            };
+#endif
+        }
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) is 1)
+                return;
+#if !(NETFRAMEWORK || NETSTANDARD2_0)
+            _idleConnections.Dispose();
+            _busyConnections.Dispose();
+#endif
+
+            Interlocked.Decrement(ref _state.Value.Count);
+            var success = _state.Value.Names.TryRemove(_name, out _);
+            Debug.Assert(success);
+        }
+    }
+//#endif
 }

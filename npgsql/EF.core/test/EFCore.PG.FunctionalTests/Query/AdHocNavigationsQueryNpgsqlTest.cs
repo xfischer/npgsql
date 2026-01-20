@@ -1,8 +1,6 @@
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace Microsoft.EntityFrameworkCore.Query;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
-
-public class AdHocNavigationsQueryNpgsqlTest : AdHocNavigationsQueryRelationalTestBase
+public class AdHocNavigationsQueryNpgsqlTest(NonSharedFixture fixture) : AdHocNavigationsQueryRelationalTestBase(fixture)
 {
     // Cannot write DateTime with Kind=Local to PostgreSQL type 'timestamp with time zone', only UTC is supported.
     public override Task Reference_include_on_derived_type_with_sibling_works()

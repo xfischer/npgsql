@@ -1,7 +1,4 @@
-using Microsoft.EntityFrameworkCore.BulkUpdates;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.BulkUpdates;
+namespace Microsoft.EntityFrameworkCore.BulkUpdates;
 
 public class TPTInheritanceBulkUpdatesNpgsqlFixture : TPTInheritanceBulkUpdatesFixture
 {

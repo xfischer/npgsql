@@ -41,7 +41,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         dr.Read();
         var result = dr.GetBoolean(4);
-        Assert.IsTrue(result);
+        Assert.That(result);
 
     }
 
@@ -58,7 +58,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var a = dr.GetChars(1, 0, result, 0, 6);
 
-        Assert.AreEqual("Random", new string(result));
+        Assert.That(new string(result), Is.EqualTo("Random"));
 
     }
 
@@ -74,7 +74,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = dr.GetInt32(2);
 
-        Assert.AreEqual(4, result);
+        Assert.That(result, Is.EqualTo(4));
 
     }
 
@@ -90,7 +90,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = dr.GetInt16(1);
 
-        Assert.AreEqual(2, result);
+        Assert.That(result, Is.EqualTo(2));
 
     }
 
@@ -106,7 +106,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = dr.GetDecimal(3);
 
-        Assert.AreEqual(4.2300000M, result);
+        Assert.That(result, Is.EqualTo(4.2300000M));
 
     }
 
@@ -122,7 +122,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = dr.GetDouble(2);
 
-        Assert.AreEqual(.123456789012345D, result);
+        Assert.That(result, Is.EqualTo(0.123456789012345D));
 
     }
 
@@ -138,7 +138,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = dr.GetFloat(1);
 
-        Assert.AreEqual(.123456F, result);
+        Assert.That(result, Is.EqualTo(.123456F));
 
     }
 
@@ -154,7 +154,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = dr.GetString(1);
 
-        Assert.AreEqual("Random text", result);
+        Assert.That(result, Is.EqualTo("Random text"));
 
     }
 
@@ -180,7 +180,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = dr.GetString(1);
 
-        Assert.AreEqual(test, result);
+        Assert.That(result, Is.EqualTo(test));
 
     }
 
@@ -206,7 +206,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = dr.GetString(1);
 
-        Assert.AreEqual(test, result);
+        Assert.That(result, Is.EqualTo(test));
 
     }
 
@@ -223,7 +223,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         var result = (string)dr["field_text"];
 
-        Assert.AreEqual("Random text", result);
+        Assert.That(result, Is.EqualTo("Random text"));
 
     }
 
@@ -315,8 +315,8 @@ public class EDBDataReaderTests : EPASTestBase
 
         da.Fill(ds);
 
-        Assert.AreEqual(1, ds.Tables.Count);
-        Assert.AreEqual(5, ds.Tables[0].Rows.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
+        Assert.That(ds.Tables[0].Rows.Count, Is.EqualTo(5));
 
     }
 
@@ -337,8 +337,8 @@ public class EDBDataReaderTests : EPASTestBase
 
         da.Fill(ds);
 
-        Assert.AreEqual(1, ds.Tables.Count);
-        Assert.AreEqual(5, ds.Tables[0].Rows.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
+        Assert.That(ds.Tables[0].Rows.Count, Is.EqualTo(5));
 
     }
 
@@ -354,8 +354,8 @@ public class EDBDataReaderTests : EPASTestBase
 
         da.Fill(ds);
 
-        Assert.AreEqual(1, ds.Tables.Count);
-        Assert.AreEqual(5, ds.Tables[0].Rows.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
+        Assert.That(ds.Tables[0].Rows.Count, Is.EqualTo(5));
 
     }
 
@@ -372,8 +372,8 @@ public class EDBDataReaderTests : EPASTestBase
         da.Fill(ds);
 
         //ds.WriteXml("TestUseDataAdapterStringStringConstructor2.xml");
-        Assert.AreEqual(1, ds.Tables.Count);
-        Assert.AreEqual(4, ds.Tables[0].Rows.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
+        Assert.That(ds.Tables[0].Rows.Count, Is.EqualTo(4));
     }
 
     [Test]
@@ -401,9 +401,9 @@ public class EDBDataReaderTests : EPASTestBase
         var dr = command.ExecuteReader();
 
         dr.Read();
-        Assert.IsFalse(dr.IsDBNull(0));
+        Assert.That(dr.IsDBNull(0), Is.False);
         dr.Read();
-        Assert.IsTrue(dr.IsDBNull(0));
+        Assert.That(dr.IsDBNull(0), Is.True);
 
     }
 
@@ -416,7 +416,7 @@ public class EDBDataReaderTests : EPASTestBase
         var dr = command.ExecuteReader();
 
         dr.Read();
-        Assert.IsFalse(dr.IsDBNull(0));
+        Assert.That(dr.IsDBNull(0), Is.False);
 
     }
 
@@ -436,11 +436,11 @@ public class EDBDataReaderTests : EPASTestBase
         var t3 = dr.GetDataTypeName(3);
         var t4 = dr.GetDataTypeName(4);
 
-        Assert.AreEqual("integer", t0);
-        Assert.AreEqual("text", t1);
-        Assert.AreEqual("integer", t2);
-        Assert.AreEqual("bigint", t3);
-        Assert.AreEqual("boolean", t4);
+        Assert.That(t0, Is.EqualTo("integer"));
+        Assert.That(t1, Is.EqualTo("text"));
+        Assert.That(t2, Is.EqualTo("integer"));
+        Assert.That(t3, Is.EqualTo("bigint"));
+        Assert.That(t4, Is.EqualTo("boolean"));
 
         dr.Close();
 
@@ -454,10 +454,10 @@ public class EDBDataReaderTests : EPASTestBase
         t2 = dr.GetDataTypeName(2);
         t3 = dr.GetDataTypeName(3);
 
-        Assert.AreEqual("integer", t0);
-        Assert.AreEqual("smallint", t1);
-        Assert.AreEqual("timestamp without time zone", t2);
-        Assert.AreEqual("numeric(11, 7)", t3);
+        Assert.That(t0, Is.EqualTo("integer"));
+        Assert.That(t1, Is.EqualTo("smallint"));
+        Assert.That(t2, Is.EqualTo("timestamp without time zone"));
+        Assert.That(t3, Is.EqualTo("numeric(11, 7)"));
 
         dr.Close();
     }
@@ -478,8 +478,8 @@ public class EDBDataReaderTests : EPASTestBase
 			Command.CommandText="select * from TESTTAB";
 			EDBDataReader Reader = Command.ExecuteReader();
 			
-			Assert.IsTrue(Reader.Read());
-			Assert.AreEqual(1,Reader.GetByte(0));
+			Assert.That(Reader.Read());
+			Assert.That(1,Reader.GetByte(0));
 
 
 			
@@ -488,8 +488,9 @@ public class EDBDataReaderTests : EPASTestBase
 			Command.CommandType=CommandType.Text;
 			Command.ExecuteNonQuery();
 			TestUtil.closeDB(_conn);
-			Assert.AreEqual(1,Reader.GetByte(0));*/
+			Assert.That(1,Reader.GetByte(0));*/
 
+        con?.Dispose();
     }
 
 
@@ -539,7 +540,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         command = new EDBCommand("select * from DataSetTest", con);
         var Reader = command.ExecuteReader();
-        Assert.IsTrue(Reader.HasRows);
+        Assert.That(Reader.HasRows);
         Reader.Close();
 
         command = new EDBCommand("drop table DataSetTest;", con);
@@ -579,7 +580,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         command = new EDBCommand("select * from DataSetTest1", con);
         var Reader = command.ExecuteReader();
-        Assert.IsTrue(Reader.HasRows);
+        Assert.That(Reader.HasRows);
         Reader.Close();
 
         command = new EDBCommand("drop table DataSetTest1;", con);
@@ -621,9 +622,9 @@ public class EDBDataReaderTests : EPASTestBase
 
         command = new EDBCommand("select * from DataSetTest3", con);
         var Reader = command.ExecuteReader();
-        Assert.IsTrue(Reader.HasRows);
+        Assert.That(Reader.HasRows);
         Reader.Close();
-        Assert.AreEqual("field_int2", ds.Tables[0].Columns[0].ToString());
+        Assert.That(ds.Tables[0].Columns[0].ToString(), Is.EqualTo("field_int2"));
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
     }
@@ -662,9 +663,9 @@ public class EDBDataReaderTests : EPASTestBase
 
         command = new EDBCommand("select * from DataSetTest3", con);
         var Reader = command.ExecuteReader();
-        Assert.IsTrue(Reader.HasRows);
+        Assert.That(Reader.HasRows);
         Reader.Close();
-        Assert.AreEqual("field_int2", ds.Tables[0].Columns["field_int2"].ToString());
+        Assert.That(ds.Tables[0].Columns["field_int2"].ToString(), Is.EqualTo("field_int2"));
         //Console.WriteLine(ds.Tables[0].Columns["field_int2"].ToString());
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
@@ -707,7 +708,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         ds2 = ds.Copy();
 
-        Assert.AreEqual("field_int2", ds2.Tables[0].Columns[0].ToString());
+        Assert.That(ds2.Tables[0].Columns[0].ToString(), Is.EqualTo("field_int2"));
         //Console.WriteLine(ds2.Tables[0].Columns["field_int2"].ToString());
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
@@ -741,7 +742,7 @@ public class EDBDataReaderTests : EPASTestBase
         ds.DataSetName = "ds";
 
         //Console.WriteLine(ds.Namespace);
-        Assert.AreEqual("ds", ds.DataSetName);
+        Assert.That(ds.DataSetName, Is.EqualTo("ds"));
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
 
@@ -781,10 +782,10 @@ public class EDBDataReaderTests : EPASTestBase
         da.Fill(ds);
 
         //Console.WriteLine(ds.Tables[0].Rows.Count);
-        Assert.IsNotNull(ds.Tables[0].Rows.Count);
+        Assert.That(ds.Tables[0].Rows.Count, Is.GreaterThan(0));
         ds.Clear();
         //Console.WriteLine(ds.Tables[0].Rows.Count);
-        Assert.AreEqual("0", ds.Tables[0].Rows.Count.ToString());
+        Assert.That(ds.Tables[0].Rows.Count.ToString(), Is.EqualTo("0"));
 
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
@@ -816,7 +817,7 @@ public class EDBDataReaderTests : EPASTestBase
         da.Fill(ds);
 
         ds.Namespace = "TestNameSpace";
-        Assert.AreEqual("TestNameSpace", ds.Namespace);
+        Assert.That(ds.Namespace, Is.EqualTo("TestNameSpace"));
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
     }
@@ -847,7 +848,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         ds.WriteXml("XMLTest.xml");
 
-        Assert.IsTrue(File.Exists("XMLTest.xml"));
+        Assert.That(File.Exists("XMLTest.xml"));
 
         File.Delete("XMLTest.xml");
 
@@ -882,7 +883,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         ds.WriteXml("XMLTest.xml");
 
-        Assert.IsTrue(File.Exists("XMLTest.xml"));
+        Assert.That(File.Exists("XMLTest.xml"));
 
         try
         {
@@ -925,7 +926,7 @@ public class EDBDataReaderTests : EPASTestBase
         // Display the DataSet contents as XML.
 
         //Console.WriteLine( dataSet.GetXml().Length );
-        Assert.AreEqual(651, dataSet.GetXml().Length);
+        Assert.That(dataSet.GetXml().Length, Is.EqualTo(651));
     }
 
     [Test]
@@ -955,7 +956,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         ds.WriteXmlSchema("XMLSchemaTest.xml");
 
-        Assert.IsTrue(File.Exists("XMLSchemaTest.xml"));
+        Assert.That(File.Exists("XMLSchemaTest.xml"));
 
         File.Delete("XMLSchemaTest.xml");
 
@@ -990,7 +991,7 @@ public class EDBDataReaderTests : EPASTestBase
 
         ds.WriteXmlSchema("XMLTest.xml");
 
-        Assert.IsTrue(File.Exists("XMLTest.xml"));
+        Assert.That(File.Exists("XMLTest.xml"));
 
         try
         {
@@ -1033,10 +1034,10 @@ public class EDBDataReaderTests : EPASTestBase
         }
 
         if (Environment.Version.Major == 1)
-            Assert.AreEqual(673, dataSet.GetXmlSchema().Length);
+            Assert.That(dataSet.GetXmlSchema().Length, Is.EqualTo(673));
         else
         if (Environment.Version.Major == 2)
-            Assert.AreEqual(718, dataSet.GetXmlSchema().Length);
+            Assert.That(dataSet.GetXmlSchema().Length, Is.EqualTo(718));
         dataSet.Prefix = "abc";
     }
 
@@ -1069,7 +1070,7 @@ public class EDBDataReaderTests : EPASTestBase
         //Console.WriteLine(ds.Namespace);
         ds.Prefix = "TestPrefix";
         //Console.WriteLine("TestPrefix",ds.Prefix);
-        Assert.AreEqual("TestPrefix", ds.Prefix);
+        Assert.That(ds.Prefix, Is.EqualTo("TestPrefix"));
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
 
@@ -1100,10 +1101,10 @@ public class EDBDataReaderTests : EPASTestBase
         da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
 
         da.Fill(ds);
-        Assert.AreEqual(1, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
         var dt = new DataTable();
         ds.Tables.Add(dt);
-        Assert.AreEqual(2, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(2));
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
 
@@ -1132,13 +1133,13 @@ public class EDBDataReaderTests : EPASTestBase
         da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
 
         da.Fill(ds);
-        Assert.AreEqual(1, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
         var dt = new DataTable("TestTable");
         ds.Tables.Add(dt);
-        Assert.AreEqual(2, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(2));
 
         ds.Tables.Remove(dt);
-        Assert.AreEqual(1, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
 
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
@@ -1167,13 +1168,13 @@ public class EDBDataReaderTests : EPASTestBase
         da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
 
         da.Fill(ds);
-        Assert.AreEqual(1, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
         var dt = new DataTable("TestTable");
         ds.Tables.Add(dt);
-        Assert.AreEqual(2, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(2));
 
         ds.Tables.Remove("TestTable");
-        Assert.AreEqual(1, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
 
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
@@ -1206,14 +1207,14 @@ public class EDBDataReaderTests : EPASTestBase
         da.InsertCommand.Parameters[0].SourceColumn = "field_int2";
 
         da.Fill(ds);
-        Assert.AreEqual(1, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(1));
         var dt = new DataTable("TestTable");
         ds.Tables.Add(dt);
-        Assert.AreEqual(2, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(2));
 
         ds.Tables.Clear();
 
-        Assert.AreEqual(0, ds.Tables.Count);
+        Assert.That(ds.Tables.Count, Is.EqualTo(0));
 
         command = new EDBCommand("drop table DataSetTest3;", con);
         command.ExecuteNonQuery();
@@ -1221,7 +1222,7 @@ public class EDBDataReaderTests : EPASTestBase
 
     }
 
-    [Test, Timeout(5000)]
+    [Test, CancelAfter(5000)]
     public async Task EDB_EC_2716_TestReaderShouldNotHangAsync()
     {
         await con.OpenAsync();
@@ -1252,7 +1253,7 @@ public class EDBDataReaderTests : EPASTestBase
         return callable_command;
     }
 
-    [Test, Timeout(5000)]
+    [Test, CancelAfter(5000)]
     public void EDB_EC_2716_TestReaderShouldNotHangSync()
     {
         con.Open();
@@ -1263,7 +1264,7 @@ public class EDBDataReaderTests : EPASTestBase
         var result = callable_command.ExecuteReader();
         var fc = result.FieldCount;
         Console.WriteLine("Count: " + fc);
-        Assert.IsTrue(result.Read());
+        Assert.That(result.Read());
     }
 
 }

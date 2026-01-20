@@ -1,12 +1,13 @@
 ﻿// Modified by EnterpriseDB Team
 using System.Data;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 // ReSharper disable HeapView.CanAvoidClosure
 // ReSharper disable MethodHasAsyncOverload
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
+
+#nullable disable
 
 public class NpgsqlDatabaseCreatorExistsTest : NpgsqlDatabaseCreatorTest
 {
@@ -636,9 +637,8 @@ public class NpgsqlDatabaseCreatorTest
     public class TestDatabaseCreator(
         RelationalDatabaseCreatorDependencies dependencies,
         INpgsqlRelationalConnection connection,
-        IRawSqlCommandBuilder rawSqlCommandBuilder,
-        IRelationalConnectionDiagnosticsLogger connectionLogger)
-        : NpgsqlDatabaseCreator(dependencies, connection, rawSqlCommandBuilder, connectionLogger)
+        IRawSqlCommandBuilder rawSqlCommandBuilder)
+        : NpgsqlDatabaseCreator(dependencies, connection, rawSqlCommandBuilder)
     {
         public bool HasTablesBase()
             => HasTables();

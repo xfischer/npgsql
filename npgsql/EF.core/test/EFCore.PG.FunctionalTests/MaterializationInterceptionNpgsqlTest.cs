@@ -1,11 +1,7 @@
-#nullable enable
+namespace Microsoft.EntityFrameworkCore;
 
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
-
-public class MaterializationInterceptionNpgsqlTest :
-    MaterializationInterceptionTestBase<MaterializationInterceptionNpgsqlTest.NpgsqlLibraryContext>
+public class MaterializationInterceptionNpgsqlTest(NonSharedFixture fixture) :
+    MaterializationInterceptionTestBase<MaterializationInterceptionNpgsqlTest.NpgsqlLibraryContext>(fixture)
 {
     public class NpgsqlLibraryContext(DbContextOptions options) : LibraryContext(options)
     {

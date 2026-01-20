@@ -84,6 +84,7 @@ internal class EDBSubProcedureTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -123,7 +124,7 @@ internal class EDBSubProcedureTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(1, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(1));
             var notice = (PostgresNotice?)notices[0];
             msg = notice.MessageText;
         }
@@ -185,7 +186,7 @@ internal class EDBSubProcedureTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_TOTAL));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
@@ -193,8 +194,8 @@ internal class EDBSubProcedureTest : EPASTestBase
                 var arr = value.Split(":");
                 var empno = arr[0].Trim();
                 var ename = arr[1].Trim();
-                Assert.AreEqual(empnos[i].ToString(), empno);
-                Assert.AreEqual(enames[i], ename);
+                Assert.That(empnos[i].ToString(), Is.EqualTo(empno));
+                Assert.That(enames[i], Is.EqualTo(ename));
             }
         }
         finally
@@ -211,7 +212,7 @@ internal class EDBSubProcedureTest : EPASTestBase
         var sqlStr = "INSERT INTO dept1 VALUES (50,'HR','DENVER');";
         var msg = getMessgeFromTrigerTest(sqlStr);
         var expMsg = "User " + conn.UserName + " added dept on";
-        Assert.IsTrue(msg.StartsWith(expMsg));
+        Assert.That(msg.StartsWith(expMsg));
     }
 
     [Test]
@@ -221,7 +222,7 @@ internal class EDBSubProcedureTest : EPASTestBase
         var sqlStr = "update dept1 set loc='Boston' where deptno=50;";
         var msg = getMessgeFromTrigerTest(sqlStr);
         var expMsg = "User " + conn.UserName + " updated dept on";
-        Assert.IsTrue(msg.StartsWith(expMsg));
+        Assert.That(msg.StartsWith(expMsg));
     }
 
     [Test]
@@ -231,7 +232,7 @@ internal class EDBSubProcedureTest : EPASTestBase
         var sqlStr = "delete from dept1 where deptno=50;";
         var msg = getMessgeFromTrigerTest(sqlStr);
         var expMsg = "User " + conn.UserName + " deleted dept on";
-        Assert.IsTrue(msg.StartsWith(expMsg));
+        Assert.That(msg.StartsWith(expMsg));
     }
 }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.

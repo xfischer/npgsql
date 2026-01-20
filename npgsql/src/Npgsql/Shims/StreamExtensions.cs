@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD2_0 || !NET7_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
+﻿#if NETSTANDARD2_0 || !NET8_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
 using System.Buffers;
 using System.Diagnostics;
 using System.Threading;

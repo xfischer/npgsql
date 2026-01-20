@@ -43,7 +43,7 @@ sealed class JsonDynamicTypeInfoResolverFactory(
     {
         JsonSerializerOptions? _serializerOptions = serializerOptions;
         JsonSerializerOptions SerializerOptions
-    #if NET7_0_OR_GREATER
+    #if NET8_0_OR_GREATER
             => _serializerOptions ??= JsonSerializerOptions.Default;
     #else
             => _serializerOptions ??= new();
@@ -55,7 +55,7 @@ sealed class JsonDynamicTypeInfoResolverFactory(
 
 #if NET9_0_OR_GREATER
         static Func<JsonSerializerOptions, bool> AllowOutOfOrderMetadataProperties { get; } = options => options.AllowOutOfOrderMetadataProperties;
-#elif NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#elif NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         static Func<JsonSerializerOptions, bool> AllowOutOfOrderMetadataProperties { get; } =
             typeof(JsonSerializerOptions).GetProperty("AllowOutOfOrderMetadataProperties") is { } prop && prop.GetGetMethod() is { } getProp
                 ? getProp.CreateDelegate<Func<JsonSerializerOptions, bool>>()

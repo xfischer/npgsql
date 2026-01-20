@@ -7,6 +7,7 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Internal.Postgres;
 using EDBTypes;
+using InfiniteTimeout = System.Threading.Timeout;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
 namespace EnterpriseDB.EDBClient;
@@ -24,7 +25,7 @@ public sealed class EDBBinaryExporter : ICancelable
 
     EDBConnector _connector;
     EDBReadBuffer _buf;
-    bool _isConsumed, _isDisposed;
+    ExporterState _state = ExporterState.Uninitialized;
     long _endOfMessagePos;
 
     short _column;
@@ -46,8 +47,10 @@ public sealed class EDBBinaryExporter : ICancelable
     /// </summary>
     public TimeSpan Timeout
     {
-        set => _buf.Timeout = value;
+        set => _buf.Timeout = value > TimeSpan.Zero ? value : InfiniteTimeout.InfiniteTimeSpan;
     }
+
+    Activity? _activity;
 
     #endregion
 
@@ -64,38 +67,50 @@ public sealed class EDBBinaryExporter : ICancelable
 
     internal async Task Init(string copyToCommand, bool async, CancellationToken cancellationToken = default)
     {
-        await _connector.WriteQuery(copyToCommand, async, cancellationToken).ConfigureAwait(false);
-        await _connector.Flush(async, cancellationToken).ConfigureAwait(false);
+        Debug.Assert(_activity is null);
+        _activity = _connector.TraceCopyStart(copyToCommand, "COPY TO");
 
-        using var registration = _connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
+        try
+	    {
+	        await _connector.WriteQuery(copyToCommand, async, cancellationToken).ConfigureAwait(false);
+	        await _connector.Flush(async, cancellationToken).ConfigureAwait(false);
 
-        CopyOutResponseMessage copyOutResponse;
-        var msg = await _connector.ReadMessage(async).ConfigureAwait(false);
-        switch (msg.Code)
-        {
-        case BackendMessageCode.CopyOutResponse:
-            copyOutResponse = (CopyOutResponseMessage) msg;
-            if (!copyOutResponse.IsBinary)
+            using var registration = _connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
+
+            CopyOutResponseMessage copyOutResponse;
+            var msg = await _connector.ReadMessage(async).ConfigureAwait(false);
+            switch (msg.Code)
             {
-                throw _connector.Break(
-                    new ArgumentException("copyToCommand triggered a text transfer, only binary is allowed",
-                        nameof(copyToCommand)));
+            case BackendMessageCode.CopyOutResponse:
+                copyOutResponse = (CopyOutResponseMessage)msg;
+                if (!copyOutResponse.IsBinary)
+                {
+                    throw _connector.Break(
+                        new ArgumentException("copyToCommand triggered a text transfer, only binary is allowed",
+                            nameof(copyToCommand)));
+                }
+                break;
+            case BackendMessageCode.CommandComplete:
+                throw new InvalidOperationException(
+                    "This API only supports import/export from the client, i.e. COPY commands containing TO/FROM STDIN. " +
+                    "To import/export with files on your PostgreSQL machine, simply execute the command with ExecuteNonQuery. " +
+                    "Note that your data has been successfully imported/exported.");
+            default:
+                throw _connector.UnexpectedMessageReceived(msg.Code);
             }
-            break;
-        case BackendMessageCode.CommandComplete:
-            throw new InvalidOperationException(
-                "This API only supports import/export from the client, i.e. COPY commands containing TO/FROM STDIN. " +
-                "To import/export with files on your PostgreSQL machine, simply execute the command with ExecuteNonQuery. " +
-                "Note that your data has been successfully imported/exported.");
-        default:
-            throw _connector.UnexpectedMessageReceived(msg.Code);
-        }
 
-        NumColumns = copyOutResponse.NumColumns;
-        _columnInfoCache = new PgConverterInfo[NumColumns];
-        _rowsExported = 0;
-        _endOfMessagePos = _buf.CumulativeReadPosition;
-        await ReadHeader(async).ConfigureAwait(false);
+            _state = ExporterState.Ready;
+	        NumColumns = copyOutResponse.NumColumns;
+	        _columnInfoCache = new PgConverterInfo[NumColumns];
+	        _rowsExported = 0;
+	        _endOfMessagePos = _buf.CumulativeReadPosition;
+	        await ReadHeader(async).ConfigureAwait(false);
+        }
+        catch (Exception e)
+        {
+            TraceSetException(e);
+            throw;
+        }
     }
 
     async Task ReadHeader(bool async)
@@ -141,7 +156,7 @@ public sealed class EDBBinaryExporter : ICancelable
     async ValueTask<int> StartRow(bool async, CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        if (_isConsumed)
+        if (_state == ExporterState.Consumed)
             return -1;
 
         using var registration = _connector.StartNestedCancellableOperation(cancellationToken);
@@ -176,7 +191,7 @@ public sealed class EDBBinaryExporter : ICancelable
             Expect<CommandCompleteMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
             Expect<ReadyForQueryMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
             _column = BeforeRow;
-            _isConsumed = true;
+            _state = ExporterState.Consumed;
             return -1;
         }
 
@@ -437,7 +452,7 @@ public sealed class EDBBinaryExporter : ICancelable
 
     void ThrowIfDisposed()
     {
-        if (_isDisposed)
+        if (_state == ExporterState.Disposed)
             ThrowHelper.ThrowObjectDisposedException(nameof(EDBBinaryExporter), "The COPY operation has already ended.");
     }
 
@@ -472,12 +487,15 @@ public sealed class EDBBinaryExporter : ICancelable
 
     async ValueTask DisposeAsync(bool async)
     {
-        if (_isDisposed)
+        if (_state == ExporterState.Disposed)
             return;
 
-        if (_isConsumed)
+        try
         {
+            if (_state is ExporterState.Consumed or ExporterState.Uninitialized)
+            {
             LogMessages.BinaryCopyOperationCompleted(_copyLogger, _rowsExported, _connector.Id);
+                TraceExportStop();
         }
         else if (!_connector.IsBroken)
         {
@@ -496,23 +514,29 @@ public sealed class EDBBinaryExporter : ICancelable
                 // We intentionally do not pass a CancellationToken since we don't want to cancel cleanup
                 Expect<CommandCompleteMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
                 Expect<ReadyForQueryMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
+                    TraceExportStop();
             }
             catch (OperationCanceledException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.QueryCanceled })
             {
                 LogMessages.CopyOperationCancelled(_copyLogger, _connector.Id);
+                    TraceExportStop();
             }
             catch (Exception e)
             {
                 LogMessages.ExceptionWhenDisposingCopyOperation(_copyLogger, _connector.Id, e);
+                    TraceSetException(e);
+                }
             }
         }
-
+        finally
+        {
         _connector.EndUserAction();
         Cleanup();
+        }
 
         void Cleanup()
         {
-            Debug.Assert(!_isDisposed);
+            Debug.Assert(_state != ExporterState.Disposed);
             var connector = _connector;
 
             if (!ReferenceEquals(connector, null))
@@ -523,9 +547,43 @@ public sealed class EDBBinaryExporter : ICancelable
             }
 
             _buf = null!;
-            _isDisposed = true;
+            _state = ExporterState.Disposed;
         }
     }
 
     #endregion
+
+    #region Tracing
+
+    void TraceExportStop()
+    {
+        if (_activity is not null)
+        {
+            EDBActivitySource.CopyStop(_activity, _rowsExported);
+            _activity = null;
+        }
+    }
+
+    void TraceSetException(Exception exception)
+    {
+        if (_activity is not null)
+        {
+            EDBActivitySource.SetException(_activity, exception);
+            _activity = null;
+        }
+    }
+
+    #endregion Tracing
+
+    #region Enums
+
+    enum ExporterState
+    {
+        Uninitialized,
+        Ready,
+        Consumed,
+        Disposed
+    }
+
+    #endregion Enums
 }

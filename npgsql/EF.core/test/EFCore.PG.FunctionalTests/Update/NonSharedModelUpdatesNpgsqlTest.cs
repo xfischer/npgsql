@@ -1,8 +1,6 @@
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace Microsoft.EntityFrameworkCore.Update;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update;
-
-public class NonSharedModelUpdatesNpgsqlTest : NonSharedModelUpdatesTestBase
+public class NonSharedModelUpdatesNpgsqlTest(NonSharedFixture fixture) : NonSharedModelUpdatesTestBase(fixture)
 {
     protected override ITestStoreFactory TestStoreFactory
         => NpgsqlTestStoreFactory.Instance;

@@ -5,7 +5,7 @@ using System.Numerics;
 namespace EnterpriseDB.EDBClient.Internal.Converters;
 
 sealed class Int2Converter<T> : PgBufferedConverter<T>
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     where T : INumberBase<T>
 #endif
 {
@@ -14,7 +14,7 @@ sealed class Int2Converter<T> : PgBufferedConverter<T>
         bufferRequirements = BufferRequirements.CreateFixedSize(sizeof(short));
         return format is DataFormat.Binary;
     }
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     protected override T ReadCore(PgReader reader) => T.CreateChecked(reader.ReadInt16());
     protected override void WriteCore(PgWriter writer, T value) => writer.WriteInt16(short.CreateChecked(value));
 #else

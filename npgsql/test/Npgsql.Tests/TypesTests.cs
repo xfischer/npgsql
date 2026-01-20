@@ -17,22 +17,22 @@ public class TypesTests
         EDBTsVector vec;
 
         vec = EDBTsVector.Parse("a");
-        Assert.AreEqual("'a'", vec.ToString());
+        Assert.That(vec.ToString(), Is.EqualTo("'a'"));
 
         vec = EDBTsVector.Parse("a ");
-        Assert.AreEqual("'a'", vec.ToString());
+        Assert.That(vec.ToString(), Is.EqualTo("'a'"));
 
         vec = EDBTsVector.Parse("a:1A");
-        Assert.AreEqual("'a':1A", vec.ToString());
+        Assert.That(vec.ToString(), Is.EqualTo("'a':1A"));
 
         vec = EDBTsVector.Parse(@"\abc\def:1a ");
-        Assert.AreEqual("'abcdef':1A", vec.ToString());
+        Assert.That(vec.ToString(), Is.EqualTo("'abcdef':1A"));
 
         vec = EDBTsVector.Parse(@"abc:3A 'abc' abc:4B 'hello''yo' 'meh\'\\':5");
-        Assert.AreEqual(@"'abc':3A,4B 'hello''yo' 'meh''\\':5", vec.ToString());
+        Assert.That(vec.ToString(), Is.EqualTo(@"'abc':3A,4B 'hello''yo' 'meh''\\':5"));
 
         vec = EDBTsVector.Parse(" a:12345C  a:24D a:25B b c d 1 2 a:25A,26B,27,28");
-        Assert.AreEqual("'1' '2' 'a':24,25A,26B,27,28,12345C 'b' 'c' 'd'", vec.ToString());
+        Assert.That(vec.ToString(), Is.EqualTo("'1' '2' 'a':24,25A,26B,27,28,12345C 'b' 'c' 'd'"));
     }
 
     [Test]
@@ -47,27 +47,27 @@ public class TypesTests
         var str = query.ToString();
 
         query = EDBTsQuery.Parse("a & b | c");
-        Assert.AreEqual("'a' & 'b' | 'c'", query.ToString());
+        Assert.That(query.ToString(), Is.EqualTo("'a' & 'b' | 'c'"));
 
         query = EDBTsQuery.Parse("'a''':*ab&d:d&!c");
-        Assert.AreEqual("'a''':*AB & 'd':D & !'c'", query.ToString());
+        Assert.That(query.ToString(), Is.EqualTo("'a''':*AB & 'd':D & !'c'"));
 
         query = EDBTsQuery.Parse("(a & !(c | d)) & (!!a&b) | c | d | e");
-        Assert.AreEqual("( ( 'a' & !( 'c' | 'd' ) & !( !'a' ) & 'b' | 'c' ) | 'd' ) | 'e'", query.ToString());
-        Assert.AreEqual(query.ToString(), EDBTsQuery.Parse(query.ToString()).ToString());
+        Assert.That(query.ToString(), Is.EqualTo("( ( 'a' & !( 'c' | 'd' ) & !( !'a' ) & 'b' | 'c' ) | 'd' ) | 'e'"));
+        Assert.That(EDBTsQuery.Parse(query.ToString()).ToString(), Is.EqualTo(query.ToString()));
 
         query = EDBTsQuery.Parse("(((a:*)))");
-        Assert.AreEqual("'a':*", query.ToString());
+        Assert.That(query.ToString(), Is.EqualTo("'a':*"));
 
         query = EDBTsQuery.Parse(@"'a\\b''cde'");
-        Assert.AreEqual(@"a\b'cde", ((EDBTsQueryLexeme)query).Text);
-        Assert.AreEqual(@"'a\\b''cde'", query.ToString());
+        Assert.That(((EDBTsQueryLexeme)query).Text, Is.EqualTo(@"a\b'cde"));
+        Assert.That(query.ToString(), Is.EqualTo(@"'a\\b''cde'"));
 
         query = EDBTsQuery.Parse(@"a <-> b");
-        Assert.AreEqual("'a' <-> 'b'", query.ToString());
+        Assert.That(query.ToString(), Is.EqualTo("'a' <-> 'b'"));
 
         query = EDBTsQuery.Parse("((a & b) <5> c) <-> !d <0> e");
-        Assert.AreEqual("( ( 'a' & 'b' <5> 'c' ) <-> !'d' ) <0> 'e'", query.ToString());
+        Assert.That(query.ToString(), Is.EqualTo("( ( 'a' & 'b' <5> 'c' ) <-> !'d' ) <0> 'e'"));
 
         Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("a b c & &"));
         Assert.Throws(typeof(FormatException), () => EDBTsQuery.Parse("&"));
@@ -89,8 +89,8 @@ public class TypesTests
     [Test]
     public void TsVector_empty()
     {
-        Assert.IsEmpty(EDBTsVector.Empty);
-        Assert.AreEqual(string.Empty, EDBTsVector.Empty.ToString());
+        Assert.That(EDBTsVector.Empty, Is.Empty);
+        Assert.That(EDBTsVector.Empty.ToString(), Is.Empty);
     }
 
     [Test]
@@ -167,18 +167,18 @@ public class TypesTests
 
         void AreEqual(EDBTsQuery left, EDBTsQuery right)
         {
-            Assert.True(left == right);
-            Assert.False(left != right);
-            Assert.AreEqual(left, right);
-            Assert.AreEqual(left.GetHashCode(), right.GetHashCode());
+            Assert.That(left == right);
+            Assert.That(left != right, Is.False);
+            Assert.That(right, Is.EqualTo(left));
+            Assert.That(right.GetHashCode(), Is.EqualTo(left.GetHashCode()));
         }
 
         void AreNotEqual(EDBTsQuery left, EDBTsQuery right)
         {
-            Assert.False(left == right);
-            Assert.True(left != right);
-            Assert.AreNotEqual(left, right);
-            Assert.AreNotEqual(left.GetHashCode(), right.GetHashCode());
+            Assert.That(left == right, Is.False);
+            Assert.That(left != right);
+            Assert.That(right, Is.Not.EqualTo(left));
+            Assert.That(right.GetHashCode(), Is.Not.EqualTo(left.GetHashCode()));
         }
     }
 
@@ -188,7 +188,7 @@ public class TypesTests
     {
         var query = EDBTsQuery.Parse("!a <-> b & c | d & e");
         var expectedGrouping = EDBTsQuery.Parse("((!(a) <-> b) & c) | (d & e)");
-        Assert.AreEqual(expectedGrouping.ToString(), query.ToString());
+        Assert.That(query.ToString(), Is.EqualTo(expectedGrouping.ToString()));
     }
 #pragma warning restore CS0618 // {EDBTsVector,EDBTsQuery}.Parse are obsolete
 
@@ -204,14 +204,14 @@ public class TypesTests
     public void EDBPath_default()
     {
         EDBPath defaultPath = default;
-        Assert.IsFalse(defaultPath.Equals([new(1, 2)]));
+        Assert.That(defaultPath.Equals([new(1, 2)]), Is.False);
     }
 
     [Test]
     public void EDBPolygon_default()
     {
         EDBPolygon defaultPolygon = default;
-        Assert.IsFalse(defaultPolygon.Equals([new(1, 2)]));
+        Assert.That(defaultPolygon.Equals([new(1, 2)]), Is.False);
     }
 
     [Test]

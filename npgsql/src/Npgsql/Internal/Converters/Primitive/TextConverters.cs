@@ -43,7 +43,7 @@ abstract class StringBasedTextConverter<T>(Encoding encoding) : PgStreamingConve
             ? ReadAsync(reader, encoding, cancellationToken)
             : new(ConvertFrom(encoding.GetString(reader.ReadBytes(reader.CurrentRemaining))));
 
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
         async ValueTask<T> ReadAsync(PgReader reader, Encoding encoding, CancellationToken cancellationToken)
@@ -92,7 +92,7 @@ abstract class ArrayBasedTextConverter<T>(Encoding encoding) : PgStreamingConver
     {
         return async ? ReadAsync(reader, encoding) : new(ConvertFrom(GetSegment(reader.ReadBytes(reader.CurrentRemaining), encoding)));
 
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
         async ValueTask<T> ReadAsync(PgReader reader, Encoding encoding)
@@ -140,7 +140,7 @@ sealed class CharTextConverter(Encoding encoding) : PgBufferedConverter<char>
     {
         var byteSeq = reader.ReadBytes(Math.Min(_oneCharMaxByteCount.Value, reader.CurrentRemaining));
         Debug.Assert(byteSeq.IsSingleSegment);
-#if NET6_0_OR_GREATER || NETSTANDARD2_1 // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER || NETSTANDARD2_1 // EnterpriseDB (NETFRAMEWORK)
         var bytes = byteSeq.FirstSpan;
 #else
         var bytes = byteSeq.GetFirstSpan();

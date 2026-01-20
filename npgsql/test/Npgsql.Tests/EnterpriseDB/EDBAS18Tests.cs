@@ -55,7 +55,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandText = query;
                     EDBDataReader reader = await com.ExecuteReaderAsync();
 
-                    Assert.IsTrue(reader.HasRows);
+                    Assert.That(reader.HasRows);
 
                     if (await reader.ReadAsync())
                     {
@@ -82,15 +82,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandText = query;
                     EDBDataReader reader = await com.ExecuteReaderAsync();
 
-                    Assert.IsTrue(reader.HasRows);
+                    Assert.That(reader.HasRows);
 
-                    int i = 0;
+                    var i = 0;
                     while (await reader.ReadAsync())
                     {
-                        Assert.AreEqual(expected[i], reader.GetString(0));
+                        Assert.That(reader.GetString(0), Is.EqualTo(expected[i]));
                         i++;
                     }
-                    Assert.AreEqual(expected.Length, i);
+                    Assert.That(i, Is.EqualTo(expected.Length));
                     await reader.CloseAsync();
                 }
             }
@@ -111,15 +111,15 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     com.CommandText = query;
                     using (EDBDataReader reader = com.ExecuteReader())
                     {
-                        Assert.IsTrue(reader.HasRows);
+                        Assert.That(reader.HasRows);
 
-                        int i = 0;
+                        var i = 0;
                         while (reader.Read())
                         {
-                            Assert.AreEqual(expected[i], reader.GetString(0));
+                            Assert.That(reader.GetString(0), Is.EqualTo(expected[i]));
                             i++;
                         }
-                        Assert.AreEqual(expected.Length, i);
+                        Assert.That(i, Is.EqualTo(expected.Length));
                         reader.Close();
                     }
                 }
@@ -243,9 +243,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     "Next run date : 12-Mar-2030 14:30:00"
             };
             var message1 = await ExecuteProcNotice(conn, "db_922_negative_bymonthday");
-            Assert.AreEqual(10, message1.Count);
+            Assert.That(message1.Count, Is.EqualTo(10));
             for(var i=0; i<10; i++)
-                Assert.AreEqual(procMsg[i], message1[i]);
+                Assert.That(message1[i], Is.EqualTo(procMsg[i]));
         }
 
         //--DB-2762 : DBMS SCHEDULER supporting INTERVAL keyword
@@ -270,9 +270,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     "Next run date : 31-Mar-2030 06:00:00"
             };
             var message1 = await ExecuteProcNotice(conn, "db_2762_support_interval_keyword");
-            Assert.AreEqual(10, message1.Count);
+            Assert.That(message1.Count, Is.EqualTo(10));
             for (var i = 0; i < 10; i++)
-                Assert.AreEqual(procMsg[i], message1[i]);
+                Assert.That(message1[i], Is.EqualTo(procMsg[i]));
         }
 
         //--DB-922 : Support negative values for BYMONTHDAY in DBMS_SCHEDULER
@@ -297,9 +297,9 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                     "Next run date : 12-Mar-2030 14:30:00"
             };
             var message1 = await ExecuteProcNotice(conn, "db_922_negative_bymonthday");
-            Assert.AreEqual(10, message1.Count);
+            Assert.That(message1.Count, Is.EqualTo(10));
             for (var i = 0; i < 10; i++)
-                Assert.AreEqual(procMsg[i], message1[i]);
+                Assert.That(message1[i], Is.EqualTo(procMsg[i]));
         }
     }
 }

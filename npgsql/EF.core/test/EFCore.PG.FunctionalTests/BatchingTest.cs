@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 // ReSharper disable InconsistentNaming
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
+
+#nullable disable
 
 public class BatchingTest(BatchingTest.BatchingTestFixture fixture) : IClassFixture<BatchingTest.BatchingTestFixture>
 {

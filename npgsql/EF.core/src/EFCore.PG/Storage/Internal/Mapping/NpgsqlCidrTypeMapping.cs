@@ -10,7 +10,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 /// <remarks>
 ///     See: https://www.postgresql.org/docs/current/static/datatype-net-types.html#DATATYPE-CIDR
 /// </remarks>
-public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
+public class EDBCidrTypeMapping : NpgsqlTypeMapping
 {
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -18,7 +18,7 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public static NpgsqlCidrTypeMapping Default { get; } = new();
+    public static EDBCidrTypeMapping Default { get; } = new();
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -26,8 +26,8 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public NpgsqlCidrTypeMapping()
-        : base("cidr", typeof(EDBCidr), EDBDbType.Cidr, JsonCidrReaderWriter.Instance)
+    public EDBCidrTypeMapping()
+        : base("cidr", typeof(IPNetwork), EDBDbType.Cidr, JsonCidrReaderWriter.Instance)
     {
     }
 
@@ -37,7 +37,7 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    protected NpgsqlCidrTypeMapping(RelationalTypeMappingParameters parameters)
+    protected EDBCidrTypeMapping(RelationalTypeMappingParameters parameters)
         : base(parameters, EDBDbType.Cidr)
     {
     }
@@ -49,7 +49,7 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters)
-        => new NpgsqlCidrTypeMapping(parameters);
+        => new EDBCidrTypeMapping(parameters);
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -59,8 +59,8 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     /// </summary>
     protected override string GenerateNonNullSqlLiteral(object value)
     {
-        var cidr = (EDBCidr)value;
-        return $"CIDR '{cidr.Address}/{cidr.Netmask}'";
+        var ipNetwork = (IPNetwork)value;
+        return $"CIDR '{ipNetwork.BaseAddress}/{ipNetwork.PrefixLength}'";
     }
 
     /// <summary>
@@ -71,17 +71,17 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     /// </summary>
     public override Expression GenerateCodeLiteral(object value)
     {
-        var cidr = (EDBCidr)value;
+        var cidr = (IPNetwork)value;
         return Expression.New(
-            NpgsqlCidrConstructor,
-            Expression.Call(ParseMethod, Expression.Constant(cidr.Address.ToString())),
-            Expression.Constant(cidr.Netmask));
+            EDBCidrConstructor,
+            Expression.Call(ParseMethod, Expression.Constant(cidr.BaseAddress.ToString())),
+            Expression.Constant(cidr.PrefixLength));
     }
 
     private static readonly MethodInfo ParseMethod = typeof(IPAddress).GetMethod("Parse", [typeof(string)])!;
 
-    private static readonly ConstructorInfo NpgsqlCidrConstructor =
-        typeof(EDBCidr).GetConstructor([typeof(IPAddress), typeof(byte)])!;
+    private static readonly ConstructorInfo EDBCidrConstructor =
+        typeof(IPNetwork).GetConstructor([typeof(IPAddress), typeof(int)])!;
 
     /// <summary>
     ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -89,7 +89,7 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
-    public sealed class JsonCidrReaderWriter : JsonValueReaderWriter<EDBCidr>
+    public sealed class JsonCidrReaderWriter : JsonValueReaderWriter<IPNetwork>
     {
         private static readonly PropertyInfo InstanceProperty = typeof(JsonCidrReaderWriter).GetProperty(nameof(Instance))!;
 
@@ -107,8 +107,8 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
         ///     any release. You should only use it directly in your code with extreme caution and knowing that
         ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
-        public override EDBCidr FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
-            => new(manager.CurrentReader.GetString()!);
+        public override IPNetwork FromJsonTyped(ref Utf8JsonReaderManager manager, object? existingObject = null)
+            => IPNetwork.Parse(manager.CurrentReader.GetString()!);
 
         /// <summary>
         ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
@@ -116,8 +116,8 @@ public class NpgsqlCidrTypeMapping : NpgsqlTypeMapping
         ///     any release. You should only use it directly in your code with extreme caution and knowing that
         ///     doing so can result in application failures when updating to a new Entity Framework Core release.
         /// </summary>
-        public override void ToJsonTyped(Utf8JsonWriter writer, EDBCidr value)
-            => writer.WriteStringValue(value.ToString());
+        public override void ToJsonTyped(Utf8JsonWriter writer, IPNetwork ipNetwork)
+            => writer.WriteStringValue(ipNetwork.ToString());
 
         /// <inheritdoc />
         public override Expression ConstructorExpression => Expression.Property(null, InstanceProperty);

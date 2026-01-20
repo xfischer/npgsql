@@ -65,6 +65,7 @@ internal class EDBVariableDeclarationTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -131,14 +132,14 @@ internal class EDBVariableDeclarationTest : EPASTestBase
             }
             mre.WaitOne(5000);
 
-            Assert.AreEqual(2, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(2));
 
             var titleStart = "Report For Department # 20 on";
             var notice1 = (PostgresNotice?)notices[0];
-            Assert.IsTrue(notice1.MessageText.StartsWith(titleStart));
+            Assert.That(notice1.MessageText.StartsWith(titleStart));
 
             var notice2 = (PostgresNotice?)notices[1];
-            Assert.AreEqual("Base Annual Salary: 47366.55", notice2.MessageText);
+            Assert.That(notice2.MessageText, Is.EqualTo("Base Annual Salary: 47366.55"));
         }
         finally
         {
@@ -209,7 +210,7 @@ internal class EDBVariableDeclarationTest : EPASTestBase
             }
             mre.WaitOne(5000);
 
-            Assert.AreEqual(7, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(7));
 
             //Date value is "01-NOV-07 00:00:00" in .NET
             //While it is "2007-11-01 00:00:00" in JDBC
@@ -220,7 +221,7 @@ internal class EDBVariableDeclarationTest : EPASTestBase
                 var value = notice.MessageText;
                 var arr = value.Split(":", 2);
                 var field = arr[1].Trim();
-                Assert.AreEqual(emp01[i], field);
+                Assert.That(field, Is.EqualTo(emp01[i]));
             }
         }
         finally
@@ -272,11 +273,11 @@ internal class EDBVariableDeclarationTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
 
-        Assert.AreEqual(ENAME, name.Value as string);
-        Assert.AreEqual(JOB, job.Value as string);
-        Assert.AreEqual(DATE, date.Value as DateTime?);
-        Assert.AreEqual(SALARY, sal.Value as decimal?);
-        Assert.AreEqual(DEPTNO, deptno.Value as decimal?);
+        Assert.That(name.Value as string, Is.EqualTo(ENAME));
+        Assert.That(job.Value as string, Is.EqualTo(JOB));
+        Assert.That(date.Value as DateTime?, Is.EqualTo(DATE));
+        Assert.That(sal.Value as decimal?, Is.EqualTo(SALARY));
+        Assert.That(deptno.Value as decimal?, Is.EqualTo(DEPTNO));
     }
 
     [Test]

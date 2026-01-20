@@ -51,6 +51,6 @@ public class JsonPathTests(MultiplexingMode multiplexingMode) : MultiplexingTest
         using var cmd = new EDBCommand($"SELECT 'Passed' WHERE @p::text = {query}::text", conn) { Parameters = { new EDBParameter("p", EDBDbType.JsonPath) { Value = expected } } };
         using var rdr = await cmd.ExecuteReaderAsync();
 
-        Assert.True(rdr.Read());
+        Assert.That(rdr.Read());
     }
 }

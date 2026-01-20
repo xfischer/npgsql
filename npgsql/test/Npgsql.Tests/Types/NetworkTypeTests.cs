@@ -52,15 +52,6 @@ class NetworkTypeTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase
     public Task IPAddress_Any()
         => AssertTypeWrite(IPAddress.Any, "0.0.0.0/32", "inet", EDBDbType.Inet, skipArrayCheck: true);
 
-    [Test]
-    public Task Cidr()
-        => AssertType(
-            new EDBCidr(IPAddress.Parse("192.168.1.0"), netmask: 24),
-            "192.168.1.0/24",
-            "cidr",
-            EDBDbType.Cidr,
-            isDefaultForWriting: false);
-
 #if NET8_0_OR_GREATER
     [Test]
     public Task IPNetwork_as_cidr()
@@ -68,10 +59,19 @@ class NetworkTypeTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase
             new IPNetwork(IPAddress.Parse("192.168.1.0"), 24),
             "192.168.1.0/24",
             "cidr",
-            EDBDbType.Cidr,
-            isDefaultForWriting: false,
-            isDefaultForReading: false);
+            EDBDbType.Cidr);
 #endif
+
+#pragma warning disable CS0618 // EDBCidr is obsolete
+    [Test]
+    public Task Cidr()
+        => AssertType(
+            new EDBCidr(IPAddress.Parse("192.168.1.0"), netmask: 24),
+            "192.168.1.0/24",
+            "cidr",
+            EDBDbType.Cidr,
+            isDefaultForReading: false);
+#pragma warning restore CS0618
 
     [Test]
     public Task Inet_v4_as_NpgsqlInet()

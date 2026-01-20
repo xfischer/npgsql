@@ -74,10 +74,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "SMITH";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows);
+        Assert.That(Reader.HasRows);
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+            Assert.That(Reader.GetDecimal(0), Is.InstanceOf<decimal>());
         }
         Reader.Close();
         con.Close();
@@ -100,10 +100,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "t";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows);
+        Assert.That(Reader.HasRows);
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+            Assert.That(Reader.GetDecimal(0), Is.InstanceOf<decimal>());
         }
         Reader.Close();
         DropTableQuote(con);
@@ -122,10 +122,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "SMITH";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         con.Close();
@@ -148,10 +148,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "t";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         DropTableQuote(con);
@@ -170,10 +170,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "SMITH";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+            Assert.That(Reader.GetDecimal(0), Is.InstanceOf<decimal>());
         }
         Reader.Close();
         con.Close();
@@ -200,10 +200,10 @@ public class EDBQuotesTests : EPASTestBase
         Reader = com.ExecuteReader();
 
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         DropTableQuote(con);
@@ -228,10 +228,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "t";
         Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         DropTableQuote(con);
@@ -255,10 +255,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "t";
         Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
 
         Reader.Close();
@@ -283,10 +283,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "t";
         Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         DropTableQuote(con);
@@ -305,10 +305,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "SMITH";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         con.Close();
@@ -328,10 +328,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "SMITH";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+            Assert.That(Reader.GetDecimal(0), Is.InstanceOf<decimal>());
         }
         Reader.Close();
         con.Close();
@@ -354,10 +354,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "t";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         DropTableQuote(con);
@@ -382,10 +382,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "t";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         DropTableQuote(con);
@@ -404,10 +404,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "SMITH";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         con.Close();
@@ -427,10 +427,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "SMITH";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<decimal>(Reader.GetDecimal(0));
+            Assert.That(Reader.GetDecimal(0), Is.InstanceOf<decimal>());
         }
         Reader.Close();
         con.Close();
@@ -453,10 +453,10 @@ public class EDBQuotesTests : EPASTestBase
         com.Parameters[0].Value = "t";
         var Reader = com.ExecuteReader();
 
-        Assert.IsTrue(Reader.HasRows, "Expected rows were not returned.");
+        Assert.That(Reader.HasRows, "Expected rows were not returned.");
         while (Reader.Read())
         {
-            Assert.IsInstanceOf<int>(Reader.GetInt32(0));
+            Assert.That(Reader.GetInt32(0), Is.InstanceOf<int>());
         }
         Reader.Close();
         DropTableQuote(con);

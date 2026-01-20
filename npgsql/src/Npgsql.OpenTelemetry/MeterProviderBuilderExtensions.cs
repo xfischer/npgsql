@@ -15,5 +15,5 @@ public static class MeterProviderBuilderExtensions
     public static MeterProviderBuilder AddEDBInstrumentation(
         this MeterProviderBuilder builder,
         Action<EDBMetricsOptions>? options = null)
-        => builder.AddMeter("EDB");
+        => builder.AddMeter("edb-dotnet");
 }

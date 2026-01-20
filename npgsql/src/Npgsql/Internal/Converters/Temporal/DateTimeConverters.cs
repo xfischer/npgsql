@@ -18,7 +18,7 @@ sealed class DateTimeConverter(bool dateTimeInfinityConversions, DateTimeKind ki
         => writer.WriteInt64(PgTimestamp.Encode(value, dateTimeInfinityConversions));
 }
 
-#if NET6_0_OR_GREATER 
+#if NET8_0_OR_GREATER 
 // EnterpriseDB
 sealed class DateOnlyFromRedwoodDateConverter : PgBufferedConverter<DateOnly>
 {

@@ -10,6 +10,7 @@ using NUnit.Framework;
 using EnterpriseDB.EDBClient.Replication;
 using EnterpriseDB.EDBClient.Replication.PgOutput;
 using EnterpriseDB.EDBClient.Replication.PgOutput.Messages;
+using EnterpriseDB.EDBClient.Util;
 using TruncateOptions = EnterpriseDB.EDBClient.Replication.PgOutput.Messages.TruncateMessage.TruncateOptions;
 using ReplicaIdentitySetting = EnterpriseDB.EDBClient.Replication.PgOutput.Messages.RelationMessage.ReplicaIdentitySetting;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
@@ -644,7 +645,6 @@ CREATE PUBLICATION {publicationName} FOR TABLE {tableName};
                 await NextMessage<BeginMessage>(messages);
             }, nameof(Dispose_while_replicating));
 
-    [Platform(Exclude = "MacOsX", Reason = "Test is flaky in CI on Mac, see https://github.com/npgsql/npgsql/issues/5294")]
     [TestCase(true, true)]
     [TestCase(true, false)]
     [TestCase(false, false)]
@@ -728,77 +728,99 @@ CREATE PUBLICATION {publicationName} FOR TABLE {tableName};
                     }
                 }
 
-                if (IsStreaming)
+                // PostgreSQL 18 skips logical decoding of already-aborted transactions
+                if (c.PostgreSqlVersion.IsGreaterOrEqual(18))
                 {
-                    // Begin Transaction 2
-                    transactionXid = await AssertTransactionStart(messages);
-
-                    // Relation
-                    await NextMessage<RelationMessage>(messages);
-
-                    // Inserts
-                    for (var insertCount = 0; insertCount < 10; insertCount++)
-                        await NextMessage<InsertMessage>(messages);
-
-                    // LogicalDecodingMessage 2 (transactional)
+                    // LogicalDecodingMessage 2 (non-transactional)
                     if (writeMessages)
                     {
                         var msg = await NextMessage<LogicalDecodingMessage>(messages);
-                        Assert.That(msg.TransactionXid, IsStreaming ? Is.EqualTo(transactionXid) : Is.Null);
-                        Assert.That(msg.Flags, Is.EqualTo(1));
+                        Assert.That(msg.TransactionXid, Is.Null);
+                        Assert.That(msg.Flags, Is.EqualTo(0));
                         Assert.That(msg.Prefix, Is.EqualTo(prefix));
-                        Assert.That(msg.Data.Length, Is.EqualTo(transactionalMessage.Length));
+                        Assert.That(msg.Data.Length, Is.EqualTo(nonTransactionalMessage.Length));
                         if (readMessages)
                         {
                             var buffer = new MemoryStream();
                             await msg.Data.CopyToAsync(buffer, CancellationToken.None);
-                            Assert.That(rc.Encoding.GetString(buffer.ToArray()), Is.EqualTo(transactionalMessage));
+                            Assert.That(rc.Encoding.GetString(buffer.ToArray()), Is.EqualTo(nonTransactionalMessage));
                         }
                     }
-
-                    // Further inserts
-                    // We don't try to predict how many insert messages we get here
-                    // since the streaming transaction will most likely abort before
-                    // we reach the expected number
-                    while (await messages.MoveNextAsync() && messages.Current is InsertMessage
-                           || messages.Current is StreamStopMessage
-                           && await messages.MoveNextAsync()
-                           && messages.Current is StreamStartMessage
-                           && await messages.MoveNextAsync()
-                           && messages.Current is InsertMessage)
-                    {
-                        // Ignore
-                    }
                 }
-                else if (writeMessages)
-                    await messages.MoveNextAsync();
-
-                // LogicalDecodingMessage 3 (non-transactional)
-                if (writeMessages)
+                else
                 {
-                    var msg = (LogicalDecodingMessage)messages.Current;
-                    Assert.That(msg.TransactionXid, Is.Null);
-                    Assert.That(msg.Flags, Is.EqualTo(0));
-                    Assert.That(msg.Prefix, Is.EqualTo(prefix));
-                    Assert.That(msg.Data.Length, Is.EqualTo(nonTransactionalMessage.Length));
-                    if (readMessages)
-                    {
-                        var buffer = new MemoryStream();
-                        await msg.Data.CopyToAsync(buffer, CancellationToken.None);
-                        Assert.That(rc.Encoding.GetString(buffer.ToArray()), Is.EqualTo(nonTransactionalMessage));
-                    }
+					if (IsStreaming)
+					{
+					    // Begin Transaction 2
+					    transactionXid = await AssertTransactionStart(messages);
 
-                    if (IsStreaming)
-                        await messages.MoveNextAsync();
-                }
+					    // Relation
+					    await NextMessage<RelationMessage>(messages);
 
-                // Rollback Transaction 2
-                if (IsStreaming)
-                {
-                    Assert.That(messages.Current,
-                        _streamingMode == PgOutputStreamingMode.On
-                            ? Is.TypeOf<StreamAbortMessage>()
-                            : Is.TypeOf<ParallelStreamAbortMessage>());
+					    // Inserts
+					    for (var insertCount = 0; insertCount < 10; insertCount++)
+					        await NextMessage<InsertMessage>(messages);
+
+					    // LogicalDecodingMessage 2 (transactional)
+					    if (writeMessages)
+					    {
+					        var msg = await NextMessage<LogicalDecodingMessage>(messages);
+					        Assert.That(msg.TransactionXid, IsStreaming ? Is.EqualTo(transactionXid) : Is.Null);
+					        Assert.That(msg.Flags, Is.EqualTo(1));
+					        Assert.That(msg.Prefix, Is.EqualTo(prefix));
+					        Assert.That(msg.Data.Length, Is.EqualTo(transactionalMessage.Length));
+					        if (readMessages)
+					        {
+					            var buffer = new MemoryStream();
+					            await msg.Data.CopyToAsync(buffer, CancellationToken.None);
+					            Assert.That(rc.Encoding.GetString(buffer.ToArray()), Is.EqualTo(transactionalMessage));
+					        }
+					    }
+
+					    // Further inserts
+					    // We don't try to predict how many insert messages we get here
+					    // since the streaming transaction will most likely abort before
+					    // we reach the expected number
+					    while (await messages.MoveNextAsync() && messages.Current is InsertMessage
+					           || messages.Current is StreamStopMessage
+					           && await messages.MoveNextAsync()
+					           && messages.Current is StreamStartMessage
+					           && await messages.MoveNextAsync()
+					           && messages.Current is InsertMessage)
+					    {
+					        // Ignore
+					    }
+					}
+					else if (writeMessages)
+					    await messages.MoveNextAsync();
+
+					// LogicalDecodingMessage 3 (non-transactional)
+					if (writeMessages)
+					{
+					    var msg = (LogicalDecodingMessage)messages.Current;
+					    Assert.That(msg.TransactionXid, Is.Null);
+					    Assert.That(msg.Flags, Is.EqualTo(0));
+					    Assert.That(msg.Prefix, Is.EqualTo(prefix));
+					    Assert.That(msg.Data.Length, Is.EqualTo(nonTransactionalMessage.Length));
+					    if (readMessages)
+					    {
+					        var buffer = new MemoryStream();
+					        await msg.Data.CopyToAsync(buffer, CancellationToken.None);
+					        Assert.That(rc.Encoding.GetString(buffer.ToArray()), Is.EqualTo(nonTransactionalMessage));
+					    }
+
+					    if (IsStreaming)
+					        await messages.MoveNextAsync();
+					}
+
+					// Rollback Transaction 2
+					if (IsStreaming)
+					{
+					    Assert.That(messages.Current,
+					        _streamingMode == PgOutputStreamingMode.On
+					            ? Is.TypeOf<StreamAbortMessage>()
+					            : Is.TypeOf<ParallelStreamAbortMessage>());
+					}
                 }
 
                 streamingCts.Cancel();
@@ -1358,7 +1380,7 @@ INSERT INTO {tableNames[0]} VALUES ('5F89F5FE-6F4F-465F-BB87-716B1413F88D', 'ano
 
     async Task<uint?> AssertTransactionStart(IAsyncEnumerator<PgOutputReplicationMessage> messages)
     {
-        Assert.True(await messages.MoveNextAsync());
+        Assert.That(await messages.MoveNextAsync());
 
         switch (messages.Current)
         {
@@ -1379,13 +1401,13 @@ INSERT INTO {tableNames[0]} VALUES ('5F89F5FE-6F4F-465F-BB87-716B1413F88D', 'ano
 
     async Task AssertTransactionCommit(IAsyncEnumerator<PgOutputReplicationMessage> messages)
     {
-        Assert.True(await messages.MoveNextAsync());
+        Assert.That(await messages.MoveNextAsync());
 
         switch (messages.Current)
         {
         case StreamStopMessage:
             Assert.That(IsStreaming);
-            Assert.True(await messages.MoveNextAsync());
+            Assert.That(await messages.MoveNextAsync());
             Assert.That(messages.Current, Is.TypeOf<StreamCommitMessage>());
             return;
         case CommitMessage:
@@ -1398,10 +1420,10 @@ INSERT INTO {tableNames[0]} VALUES ('5F89F5FE-6F4F-465F-BB87-716B1413F88D', 'ano
 
     async Task<PrepareMessageBase> AssertPrepare(IAsyncEnumerator<PgOutputReplicationMessage> enumerator)
     {
-        Assert.True(await enumerator.MoveNextAsync());
+        Assert.That(await enumerator.MoveNextAsync());
         if (IsStreaming && enumerator.Current is StreamStopMessage)
         {
-            Assert.True(await enumerator.MoveNextAsync());
+            Assert.That(await enumerator.MoveNextAsync());
             Assert.That(enumerator.Current, Is.TypeOf<StreamPrepareMessage>());
             return (PrepareMessageBase)enumerator.Current!;
         }
@@ -1413,16 +1435,16 @@ INSERT INTO {tableNames[0]} VALUES ('5F89F5FE-6F4F-465F-BB87-716B1413F88D', 'ano
     async ValueTask<TExpected> NextMessage<TExpected>(IAsyncEnumerator<PgOutputReplicationMessage> enumerator, bool expectRelationMessage = false)
         where TExpected : PgOutputReplicationMessage
     {
-        Assert.True(await enumerator.MoveNextAsync());
+        Assert.That(await enumerator.MoveNextAsync());
         if (IsStreaming && enumerator.Current is StreamStopMessage)
         {
-            Assert.True(await enumerator.MoveNextAsync());
+            Assert.That(await enumerator.MoveNextAsync());
             Assert.That(enumerator.Current, Is.TypeOf<StreamStartMessage>());
-            Assert.True(await enumerator.MoveNextAsync());
+            Assert.That(await enumerator.MoveNextAsync());
             if (expectRelationMessage)
             {
                 Assert.That(enumerator.Current, Is.TypeOf<RelationMessage>());
-                Assert.True(await enumerator.MoveNextAsync());
+                Assert.That(await enumerator.MoveNextAsync());
             }
         }
 

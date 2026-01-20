@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore.TestModels.OptionalDependent;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+namespace Microsoft.EntityFrameworkCore.Query;
 
 public class OptionalDependentQueryNpgsqlTest : OptionalDependentQueryTestBase<
     OptionalDependentQueryNpgsqlTest.OptionalDependentQueryNpgsqlFixture>

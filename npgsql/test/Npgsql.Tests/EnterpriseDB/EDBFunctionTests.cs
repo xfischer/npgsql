@@ -152,6 +152,8 @@ public class EDBFunctionTests : EPASTestBase
         com.ExecuteNonQuery();
 
         TestUtil.closeDB(con);
+
+        con?.Dispose();
     }
 
     #endregion
@@ -179,11 +181,11 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(200, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(3, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
-        Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(100));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(200));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(3));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(400));
+        Assert.That(command.Parameters[4].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         con.Close();
     }
@@ -200,7 +202,7 @@ public class EDBFunctionTests : EPASTestBase
 
         command.Prepare();
         command.ExecuteNonQuery();
-        Assert.AreEqual("EnterpriseDB", command.Parameters[0].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
     }
 
@@ -223,8 +225,8 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(3));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("EnterpriseDB"));
     }
 
     /* To verify the sanity of functions with three IN parameters*/
@@ -255,10 +257,10 @@ public class EDBFunctionTests : EPASTestBase
         }
         result.Close();
 
-        Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(30, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(10));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(20));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(30));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
     }
 
@@ -284,11 +286,11 @@ public class EDBFunctionTests : EPASTestBase
 
         var result = command.ExecuteReader();
 
-        Assert.IsTrue(result.Read());
+        Assert.That(result.Read());
 
-        Assert.AreEqual("EnterpriseDB", result[0].ToString());
+        Assert.That(result[0].ToString(), Is.EqualTo("EnterpriseDB"));
 
-        Assert.IsFalse(result.Read());
+        Assert.That(result.Read(), Is.False);
 
     }
 
@@ -314,8 +316,8 @@ public class EDBFunctionTests : EPASTestBase
 
         var result = command.ExecuteScalar();
 
-        Assert.IsNotNull(result);
-        Assert.AreEqual("EnterpriseDB", result.ToString());
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.ToString(), Is.EqualTo("EnterpriseDB"));
 
     }
 
@@ -340,14 +342,14 @@ public class EDBFunctionTests : EPASTestBase
         command.Parameters["paramIn"].Value = 25;
 
         var reader = command.ExecuteReader();
-        Assert.IsTrue(reader.HasRows);
-        Assert.AreEqual(20m, command.Parameters["paramInOut"].Value);
-        Assert.AreEqual(25m, command.Parameters["paramOut"].Value);
-        Assert.AreEqual(24, command.Parameters["paramRetVal"].Value);
+        Assert.That(reader.HasRows);
+        Assert.That(command.Parameters["paramInOut"].Value, Is.EqualTo(20m));
+        Assert.That(command.Parameters["paramOut"].Value, Is.EqualTo(25m));
+        Assert.That(command.Parameters["paramRetVal"].Value, Is.EqualTo(24));
 
-        Assert.AreEqual(3, reader.FieldCount);
+        Assert.That(reader.FieldCount, Is.EqualTo(3));
 
-        Assert.IsTrue(reader.Read());
+        Assert.That(reader.Read());
 
 
         var values = new object[reader.FieldCount];
@@ -356,15 +358,15 @@ public class EDBFunctionTests : EPASTestBase
         int[] expected = [20, 25, 24];
         for (var i = 0; i < expected.Length; i++)
         {
-            Assert.AreEqual(expected[i], values[i]);
+            Assert.That(values[i], Is.EqualTo(expected[i]));
         }
 
-        Assert.IsFalse(reader.Read());
+        Assert.That(reader.Read(), Is.False);
 
 
-        Assert.AreEqual(20, int.Parse(command.Parameters["paramInOut"].Value.ToString()));
-        Assert.AreEqual(25, int.Parse(command.Parameters["paramOut"].Value.ToString()));
-        Assert.AreEqual(24, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters["paramInOut"].Value.ToString()), Is.EqualTo(20));
+        Assert.That(int.Parse(command.Parameters["paramOut"].Value.ToString()), Is.EqualTo(25));
+        Assert.That(int.Parse(command.Parameters["paramRetVal"].Value.ToString()), Is.EqualTo(24));
 
         reader.Close();
         Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
@@ -394,16 +396,16 @@ public class EDBFunctionTests : EPASTestBase
         command.Parameters["paramIn"].Value = 25;
 
         var reader = command.ExecuteReader();
-        Assert.IsTrue(reader.HasRows);
-        Assert.AreEqual(DBNull.Value, command.Parameters["paramInOut"].Value);
-        Assert.AreEqual(25m, command.Parameters["paramOut"].Value);
-        Assert.AreEqual(24, command.Parameters["paramRetVal"].Value);
+        Assert.That(reader.HasRows);
+        Assert.That(command.Parameters["paramInOut"].Value, Is.EqualTo(DBNull.Value));
+        Assert.That(command.Parameters["paramOut"].Value, Is.EqualTo(25m));
+        Assert.That(command.Parameters["paramRetVal"].Value, Is.EqualTo(24));
 
-        Assert.AreEqual(3, reader.FieldCount);
+        Assert.That(reader.FieldCount, Is.EqualTo(3));
 
-        Assert.IsTrue(reader.Read());
+        Assert.That(reader.Read());
 
-        Assert.IsTrue(reader.IsDBNull("paramInOut"));
+        Assert.That(reader.IsDBNull("paramInOut"));
 
         var values = new object[reader.FieldCount];
         reader.GetValues(values);
@@ -411,10 +413,10 @@ public class EDBFunctionTests : EPASTestBase
         object[] expected = [DBNull.Value, 25, 24];
         for (var i = 0; i < expected.Length; i++)
         {
-            Assert.AreEqual(expected[i], values[i]);
+            Assert.That(values[i], Is.EqualTo(expected[i]));
         }
 
-        Assert.IsFalse(reader.Read());
+        Assert.That(reader.Read(), Is.False);
 
         reader.Close();
         Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
@@ -442,18 +444,18 @@ public class EDBFunctionTests : EPASTestBase
         command.Parameters["paramIn"].Value = 25;
 
         var reader = await command.ExecuteReaderAsync();
-        Assert.IsTrue(reader.HasRows);
-        Assert.AreEqual(DBNull.Value, command.Parameters["paramInOut"].Value);
-        Assert.AreEqual(25m, command.Parameters["paramOut"].Value);
-        Assert.AreEqual(24, command.Parameters["paramRetVal"].Value);
+        Assert.That(reader.HasRows);
+        Assert.That(command.Parameters["paramInOut"].Value, Is.EqualTo(DBNull.Value));
+        Assert.That(command.Parameters["paramOut"].Value, Is.EqualTo(25m));
+        Assert.That(command.Parameters["paramRetVal"].Value, Is.EqualTo(24));
 
-        Assert.AreEqual(3, reader.FieldCount);
+        Assert.That(reader.FieldCount, Is.EqualTo(3));
 
-        Assert.IsTrue(await reader.ReadAsync());
+        Assert.That(await reader.ReadAsync());
 
-        Assert.IsTrue(await reader.IsDBNullAsync(0));
+        Assert.That(await reader.IsDBNullAsync(0));
 #if !NETFRAMEWORK
-        Assert.IsTrue(await reader.IsDBNullAsync("paramInOut"));
+        Assert.That(await reader.IsDBNullAsync("paramInOut"));
 #endif
 
         var values = new object[reader.FieldCount];
@@ -462,10 +464,10 @@ public class EDBFunctionTests : EPASTestBase
         object[] expected = [DBNull.Value, 25, 24];
         for (var i = 0; i < expected.Length; i++)
         {
-            Assert.AreEqual(expected[i], values[i]);
+            Assert.That(values[i], Is.EqualTo(expected[i]));
         }
 
-        Assert.IsFalse(await reader.ReadAsync());
+        Assert.That(await reader.ReadAsync(), Is.False);
 
         await reader.CloseAsync();
         Assert.DoesNotThrowAsync(async () => await reader.DisposeAsync());
@@ -488,12 +490,12 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
 
         var reader = command.ExecuteReader();
-        Assert.IsTrue(reader.HasRows);
-        Assert.AreEqual(10, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
+        Assert.That(reader.HasRows);
+        Assert.That(int.Parse(command.Parameters["paramRetVal"].Value.ToString()), Is.EqualTo(10));
 
-        Assert.AreEqual(1, reader.FieldCount);
+        Assert.That(reader.FieldCount, Is.EqualTo(1));
 
-        Assert.IsTrue(reader.Read());
+        Assert.That(reader.Read());
 
 
         var values = new object[reader.FieldCount];
@@ -502,17 +504,17 @@ public class EDBFunctionTests : EPASTestBase
         int[] expected = [10];
         for (var i = 0; i < expected.Length; i++)
         {
-            Assert.AreEqual(expected[i], values[i]);
+            Assert.That(values[i], Is.EqualTo(expected[i]));
         }
 
-        Assert.IsFalse(reader.Read());
+        Assert.That(reader.Read(), Is.False);
 
-        Assert.AreEqual(10, int.Parse(command.Parameters["paramRetVal"].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters["paramRetVal"].Value.ToString()), Is.EqualTo(10));
 
     }
 
     // Callable stmt test with return value, no parameter bound, fails
-    [Test, Timeout(6000)]
+    [Test, CancelAfter(6000)]
     public void TestretValFuncNoBindingNonQuery_test()
     {
         Assert.DoesNotThrow(() =>
@@ -528,7 +530,7 @@ public class EDBFunctionTests : EPASTestBase
         });
     }
 
-    [Test, Timeout(15000)]
+    [Test, CancelAfter(15000)]
     [TestCase(true)]
     [TestCase(false)]
     public void TestretValFuncNoBindingReader_test(bool bindValue)
@@ -588,10 +590,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(100, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(2000, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(12000, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(100));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(100));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(2000));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(12000));
 
         //////////tear down
         command.Dispose();
@@ -632,10 +634,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(2000, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(12000, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(2000));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(12000));
 
         //////////tear down
         command.Dispose();
@@ -675,10 +677,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(20000));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(1010));
 
         //////////tear down
         command.Dispose();
@@ -719,10 +721,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(20000));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(1010));
 
         //////////tear down
         command.Dispose();
@@ -763,10 +765,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(20000));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(1010));
 
         //////////tear down
         command.Dispose();
@@ -808,10 +810,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(100906, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(100906, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(200906, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(101000, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(100906));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(200906));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(220905));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(180902));
 
         //////////tear down
         command.Dispose();
@@ -852,10 +854,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(10000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(10000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(-2));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(1234));
 
         //////////tear down
         command.Dispose();
@@ -896,10 +898,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(10000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(10000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(-2));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(1234));
 
         //////////tear down
         ///
@@ -941,10 +943,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(1234, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(10000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(10000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(-2));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(1234));
 
         //////////tear down
         command.Dispose();
@@ -986,10 +988,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(10000, int.Parse(s: command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(10000, int.Parse(s: command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(-2, int.Parse(s: command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(1234, int.Parse(s: command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(10000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(10000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(-2));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(1234));
 
         //////////tear down
         command.Dispose();
@@ -1034,10 +1036,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1.10001f, float.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1.10001f, float.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(-2.2131f, float.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(-0.999f, float.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(float.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1.10001f));
+        Assert.That(float.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1.10001f));
+        Assert.That(float.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(-2.2131f));
+        Assert.That(float.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(-0.999f));
 
         //////////tear down
         command.Dispose();
@@ -1080,10 +1082,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1.10001f, float.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1.10001f, float.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(-2.2131f, float.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(-0.999f, float.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(float.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1.10001f));
+        Assert.That(float.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1.10001f));
+        Assert.That(float.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(-2.2131f));
+        Assert.That(float.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(-0.999f));
 
         //////////tear down
         command.Dispose();
@@ -1125,10 +1127,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1.1f, float.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1.1f, float.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(2.2f, float.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(10.1111f, float.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(float.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1.1f));
+        Assert.That(float.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1.1f));
+        Assert.That(float.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(2.2f));
+        Assert.That(float.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(10.1111f));
 
         //////////tear down
         command.Dispose();
@@ -1168,10 +1170,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1211,10 +1213,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1254,10 +1256,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1297,10 +1299,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1340,10 +1342,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1383,10 +1385,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1427,10 +1429,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1470,10 +1472,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1513,10 +1515,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1557,10 +1559,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1600,10 +1602,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1644,10 +1646,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1690,10 +1692,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(10000, (int)(float.Parse(command.Parameters[0].Value.ToString())));
+        Assert.That((int)(float.Parse(command.Parameters[0].Value.ToString())), Is.EqualTo(10000));
         Console.WriteLine(command.Parameters[0].Value.ToString());
 
-        Assert.AreEqual(10000, (int)(float.Parse(command.Parameters[1].Value.ToString())));
+        Assert.That((int)(float.Parse(command.Parameters[1].Value.ToString())), Is.EqualTo(10000));
         Console.WriteLine(command.Parameters[1].Value.ToString());
         var val = command.Parameters[2].Value.ToString();
         //Not sure which AS version, but it returns ($2.00) for -2.
@@ -1703,9 +1705,9 @@ public class EDBFunctionTests : EPASTestBase
             expected = 2;
             val = val.Trim('(', ')', '$');
         }
-        Assert.AreEqual(expected, (int)(float.Parse(val)));
+        Assert.That((int)(float.Parse(val)), Is.EqualTo(expected));
         Console.WriteLine(command.Parameters[2].Value.ToString());
-        Assert.AreEqual(1234, (int)(float.Parse(command.Parameters[3].Value.ToString())));
+        Assert.That((int)(float.Parse(command.Parameters[3].Value.ToString())), Is.EqualTo(1234));
         Console.WriteLine(command.Parameters[3].Value.ToString());
 
         //////////tear down
@@ -1747,10 +1749,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("10000", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("10000", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("-2", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("1234", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("10000"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("10000"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("-2"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("1234"));
 
         //////////tear down
         command.Dispose();
@@ -1791,10 +1793,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1835,10 +1837,10 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("EnterpriseDB", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         //////////tear down
         command.Dispose();
@@ -1880,10 +1882,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.IsTrue((bool)command.Parameters["v_in"].Value);
-        Assert.IsTrue((bool)command.Parameters["v_inout"].Value);
-        Assert.IsFalse((bool)command.Parameters["v_out"].Value);
-        Assert.IsTrue((bool)command.Parameters["v_ret"].Value);
+        Assert.That((bool)command.Parameters["v_in"].Value);
+        Assert.That((bool)command.Parameters["v_inout"].Value);
+        Assert.That((bool)command.Parameters["v_out"].Value, Is.False);
+        Assert.That((bool)command.Parameters["v_ret"].Value);
 
         //////////tear down
         command.Dispose();
@@ -1923,11 +1925,11 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.IsTrue(bool.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual("True", command.Parameters[1].Value.ToString());
+        Assert.That(bool.Parse(command.Parameters[0].Value.ToString()));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("True"));
         var p_out = false;
-        Assert.AreEqual(p_out, command.Parameters[2].Value);
-        Assert.AreEqual("True", command.Parameters[3].Value.ToString());
+        Assert.That(command.Parameters[2].Value, Is.EqualTo(p_out));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("True"));
 
         //////////tear down
         command.Dispose();
@@ -1969,10 +1971,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1.1f, float.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1.1f, float.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(2.2f, float.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(10.1111f, float.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(float.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1.1f));
+        Assert.That(float.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1.1f));
+        Assert.That(float.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(2.2f));
+        Assert.That(float.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(10.1111f));
 
         //////////tear down
         command.Dispose();
@@ -2013,10 +2015,10 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(1010, int.Parse(command.Parameters[3].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1000));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(20000));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(1010));
 
         //////////tear down
         command.Dispose();
@@ -2069,8 +2071,8 @@ public class EDBFunctionTests : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
         for (var i = 0; i < 128; i++)
-            Assert.AreEqual((i + 1).ToString(), command.Parameters[i].Value.ToString());
-        Assert.AreEqual("203", command.Parameters[128].Value.ToString());
+            Assert.That(command.Parameters[i].Value.ToString(), Is.EqualTo((i + 1).ToString()));
+        Assert.That(command.Parameters[128].Value.ToString(), Is.EqualTo("203"));
 
 
     }
@@ -2255,147 +2257,147 @@ public class EDBFunctionTests : EPASTestBase
 
         command.ExecuteNonQuery();
 
-        Assert.AreEqual("127", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[3].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[4].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[5].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[6].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[7].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[8].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[9].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[4].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[5].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[6].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[7].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[8].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[9].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("127", command.Parameters[10].Value.ToString());
-        Assert.AreEqual("127", command.Parameters[11].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[12].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[13].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[14].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[15].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[16].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[17].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[18].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[19].Value.ToString());
+        Assert.That(command.Parameters[10].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[11].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[12].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[13].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[14].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[15].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[16].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[17].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[18].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[19].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("128", command.Parameters[20].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[21].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[22].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[23].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[24].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[25].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[26].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[27].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[28].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[29].Value.ToString());
+        Assert.That(command.Parameters[20].Value.ToString(), Is.EqualTo("128"));
+        Assert.That(command.Parameters[21].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[22].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[23].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[24].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[25].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[26].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[27].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[28].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[29].Value.ToString(), Is.EqualTo("119"));
 
-        Assert.AreEqual("127", command.Parameters[30].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[31].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[32].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[33].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[34].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[35].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[36].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[37].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[38].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[39].Value.ToString());
+        Assert.That(command.Parameters[30].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[31].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[32].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[33].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[34].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[35].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[36].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[37].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[38].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[39].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("127", command.Parameters[40].Value.ToString());
-        Assert.AreEqual("127", command.Parameters[41].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[42].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[43].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[44].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[45].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[46].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[47].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[48].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[49].Value.ToString());
+        Assert.That(command.Parameters[40].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[41].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[42].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[43].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[44].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[45].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[46].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[47].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[48].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[49].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("128", command.Parameters[50].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[51].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[52].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[53].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[54].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[55].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[56].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[57].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[58].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[59].Value.ToString());
+        Assert.That(command.Parameters[50].Value.ToString(), Is.EqualTo("128"));
+        Assert.That(command.Parameters[51].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[52].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[53].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[54].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[55].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[56].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[57].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[58].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[59].Value.ToString(), Is.EqualTo("119"));
 
-        Assert.AreEqual("127", command.Parameters[60].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[61].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[62].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[63].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[64].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[65].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[66].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[67].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[68].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[69].Value.ToString());
+        Assert.That(command.Parameters[60].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[61].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[62].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[63].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[64].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[65].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[66].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[67].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[68].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[69].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("127", command.Parameters[70].Value.ToString());
-        Assert.AreEqual("127", command.Parameters[71].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[72].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[73].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[74].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[75].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[76].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[77].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[78].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[79].Value.ToString());
+        Assert.That(command.Parameters[70].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[71].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[72].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[73].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[74].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[75].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[76].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[77].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[78].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[79].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("128", command.Parameters[80].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[81].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[82].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[83].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[84].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[85].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[86].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[87].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[88].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[89].Value.ToString());
+        Assert.That(command.Parameters[80].Value.ToString(), Is.EqualTo("128"));
+        Assert.That(command.Parameters[81].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[82].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[83].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[84].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[85].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[86].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[87].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[88].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[89].Value.ToString(), Is.EqualTo("119"));
 
-        Assert.AreEqual("127", command.Parameters[90].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[91].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[92].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[93].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[94].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[95].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[96].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[97].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[98].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[99].Value.ToString());
+        Assert.That(command.Parameters[90].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[91].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[92].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[93].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[94].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[95].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[96].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[97].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[98].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[99].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("127", command.Parameters[100].Value.ToString());
-        Assert.AreEqual("127", command.Parameters[101].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[102].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[103].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[104].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[105].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[106].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[107].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[108].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[109].Value.ToString());
+        Assert.That(command.Parameters[100].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[101].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[102].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[103].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[104].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[105].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[106].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[107].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[108].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[109].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("128", command.Parameters[110].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[111].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[112].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[113].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[114].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[115].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[116].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[117].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[118].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[119].Value.ToString());
+        Assert.That(command.Parameters[110].Value.ToString(), Is.EqualTo("128"));
+        Assert.That(command.Parameters[111].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[112].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[113].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[114].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[115].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[116].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[117].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[118].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[119].Value.ToString(), Is.EqualTo("119"));
 
-        Assert.AreEqual("127", command.Parameters[120].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[121].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[122].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[123].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[124].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[125].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[126].Value.ToString());
-        Assert.AreEqual("200", command.Parameters[127].Value.ToString());
-        Assert.AreEqual("300", command.Parameters[128].Value.ToString());
+        Assert.That(command.Parameters[120].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[121].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[122].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[123].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[124].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[125].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[126].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[127].Value.ToString(), Is.EqualTo("200"));
+        Assert.That(command.Parameters[128].Value.ToString(), Is.EqualTo("300"));
 
 
     }
@@ -2442,8 +2444,8 @@ public class EDBFunctionTests : EPASTestBase
         command.ExecuteNonQuery();
 
         for (var i = 0; i < 128; i++)
-            Assert.AreEqual((i + 1).ToString(), command.Parameters[i].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[128].Value.ToString());
+            Assert.That(command.Parameters[i].Value.ToString(), Is.EqualTo((i + 1).ToString()));
+        Assert.That(command.Parameters[128].Value.ToString(), Is.EqualTo("Hashim"));
 
 
     }
@@ -2496,9 +2498,9 @@ public class EDBFunctionTests : EPASTestBase
             // read to end
         }
 
-        Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(3));
 
-        Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         result.Close();
         command.Dispose();
@@ -2561,8 +2563,8 @@ public class EDBFunctionTests : EPASTestBase
         Command.Prepare();
 
         Command.ExecuteNonQuery();
-        Assert.AreEqual(10, int.Parse(Command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(20, int.Parse(Command.Parameters[1].Value.ToString()));
+        Assert.That(int.Parse(Command.Parameters[0].Value.ToString()), Is.EqualTo(10));
+        Assert.That(int.Parse(Command.Parameters[1].Value.ToString()), Is.EqualTo(20));
         Command.Dispose();
 
         Command = new EDBCommand("END;", con);
@@ -2621,11 +2623,11 @@ public class EDBFunctionTests : EPASTestBase
             // read to end
         }
 
-        Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(200, int.Parse(command.Parameters[1].Value.ToString()));
-        Assert.AreEqual(3, int.Parse(command.Parameters[2].Value.ToString()));
-        Assert.AreEqual(400, int.Parse(command.Parameters[3].Value.ToString()));
-        Assert.AreEqual("EnterpriseDB", command.Parameters[4].Value.ToString());
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(100));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(200));
+        Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(3));
+        Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(400));
+        Assert.That(command.Parameters[4].Value.ToString(), Is.EqualTo("EnterpriseDB"));
         result.Close();
 
         command.Dispose();
@@ -2707,68 +2709,68 @@ public class EDBFunctionTests : EPASTestBase
         var cur = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
         cur.Read();
-        Assert.AreEqual(1, cur[0]);
-        Assert.IsFalse((bool)cur[1]);
-        Assert.IsInstanceOf<byte[]>(cur[2]);
-        Assert.AreEqual("a", cur[3]);
-        Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
-        Assert.AreEqual(1.1, cur[5]);
-        Assert.AreEqual(1, cur[6]);
-        Assert.AreEqual(1, cur[7]);
-        Assert.AreEqual(2.20, cur[8]);
-        Assert.AreEqual(2.2f, cur[9]);
-        Assert.AreEqual(1, cur[10]);
-        Assert.AreEqual("Shehzad", cur[11]);
-        Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
-        Assert.AreEqual("Hashim", cur[13]);
+        Assert.That(cur[0], Is.EqualTo(1));
+        Assert.That((bool)cur[1], Is.False);
+        Assert.That(cur[2], Is.InstanceOf<byte[]>());
+        Assert.That(cur[3], Is.EqualTo("a"));
+        Assert.That(cur[4], Is.EqualTo(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(cur[5], Is.EqualTo(1.1));
+        Assert.That(cur[6], Is.EqualTo(1));
+        Assert.That(cur[7], Is.EqualTo(1));
+        Assert.That(cur[8], Is.EqualTo(2.20));
+        Assert.That(cur[9], Is.EqualTo(2.2f));
+        Assert.That(cur[10], Is.EqualTo(1));
+        Assert.That(cur[11], Is.EqualTo("Shehzad"));
+        Assert.That(cur[12], Is.EqualTo(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(cur[13], Is.EqualTo("Hashim"));
 
         cur.Read();
-        Assert.AreEqual(2, cur[0]);
-        Assert.IsTrue((bool)cur[1]);
-        Assert.IsInstanceOf<byte[]>(cur[2]);
-        Assert.AreEqual("b", cur[3]);
-        Assert.AreEqual(new DateTime(2007, 10, 10, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
-        Assert.AreEqual(1.2, cur[5]);
-        Assert.AreEqual(2, cur[6]);
-        Assert.AreEqual(2, cur[7]);
-        Assert.AreEqual(3.30, cur[8]);
-        Assert.AreEqual(3.3f, cur[9]);
-        Assert.AreEqual(2, cur[10]);
-        Assert.AreEqual("EnterpriseDB", cur[11]);
-        Assert.AreEqual(new DateTime(2005, 2, 3, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
-        Assert.AreEqual("Great", cur.GetString(13));
+        Assert.That(cur[0], Is.EqualTo(2));
+        Assert.That((bool)cur[1]);
+        Assert.That(cur[2], Is.InstanceOf<byte[]>());
+        Assert.That(cur[3], Is.EqualTo("b"));
+        Assert.That(cur[4], Is.EqualTo(new DateTime(2007, 10, 10, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(cur[5], Is.EqualTo(1.2));
+        Assert.That(cur[6], Is.EqualTo(2));
+        Assert.That(cur[7], Is.EqualTo(2));
+        Assert.That(cur[8], Is.EqualTo(3.30));
+        Assert.That(cur[9], Is.EqualTo(3.3f));
+        Assert.That(cur[10], Is.EqualTo(2));
+        Assert.That(cur[11], Is.EqualTo("EnterpriseDB"));
+        Assert.That(cur[12], Is.EqualTo(new DateTime(2005, 2, 3, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(cur.GetString(13), Is.EqualTo("Great"));
 
         cur.Read();
-        Assert.AreEqual(3, cur[0]);
-        Assert.IsTrue((bool)cur[1]);
-        Assert.IsInstanceOf<byte[]>(cur[2]);
-        Assert.AreEqual("c", cur[3]);
-        Assert.AreEqual(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
-        Assert.AreEqual(1.3, cur[5]);
-        Assert.AreEqual(3, cur[6]);
-        Assert.AreEqual(3, cur[7]);
-        Assert.AreEqual(2.10, cur[8]);
-        Assert.AreEqual(2.2f, cur[9]);
-        Assert.AreEqual(1, cur[10]);
-        Assert.AreEqual("Islamabad", cur[11]);
-        Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
-        Assert.AreEqual("Sirsyed", cur[13]);
+        Assert.That(cur[0], Is.EqualTo(3));
+        Assert.That((bool)cur[1]);
+        Assert.That(cur[2], Is.InstanceOf<byte[]>());
+        Assert.That(cur[3], Is.EqualTo("c"));
+        Assert.That(cur[4], Is.EqualTo(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(cur[5], Is.EqualTo(1.3));
+        Assert.That(cur[6], Is.EqualTo(3));
+        Assert.That(cur[7], Is.EqualTo(3));
+        Assert.That(cur[8], Is.EqualTo(2.10));
+        Assert.That(cur[9], Is.EqualTo(2.2f));
+        Assert.That(cur[10], Is.EqualTo(1));
+        Assert.That(cur[11], Is.EqualTo("Islamabad"));
+        Assert.That(cur[12], Is.EqualTo(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(cur[13], Is.EqualTo("Sirsyed"));
 
         cur.Read();
-        Assert.AreEqual(4, cur[0]);
-        Assert.IsFalse((bool)cur[1]);
-        Assert.IsInstanceOf<byte[]>(cur[2]);
-        Assert.AreEqual("d", cur[3]);
-        Assert.AreEqual(new DateTime(1997, 2, 3, 0, 0, 0, DateTimeKind.Unspecified), cur[4]);
-        Assert.AreEqual(1.4, cur[5]);
-        Assert.AreEqual(4, cur[6]);
-        Assert.AreEqual(5, cur[7]);
-        Assert.AreEqual(2.20, cur[8]);
-        Assert.AreEqual(2.2f, cur[9]);
-        Assert.AreEqual(1, cur[10]);
-        Assert.AreEqual("Pakistan", cur[11]);
-        Assert.AreEqual(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified), cur[12]);
-        Assert.AreEqual("Endnews", cur[13]);
+        Assert.That(cur[0], Is.EqualTo(4));
+        Assert.That((bool)cur[1], Is.False);
+        Assert.That(cur[2], Is.InstanceOf<byte[]>());
+        Assert.That(cur[3], Is.EqualTo("d"));
+        Assert.That(cur[4], Is.EqualTo(new DateTime(1997, 2, 3, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(cur[5], Is.EqualTo(1.4));
+        Assert.That(cur[6], Is.EqualTo(4));
+        Assert.That(cur[7], Is.EqualTo(5));
+        Assert.That(cur[8], Is.EqualTo(2.20));
+        Assert.That(cur[9], Is.EqualTo(2.2f));
+        Assert.That(cur[10], Is.EqualTo(1));
+        Assert.That(cur[11], Is.EqualTo("Pakistan"));
+        Assert.That(cur[12], Is.EqualTo(new DateTime(2006, 1, 1, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(cur[13], Is.EqualTo("Endnews"));
 
         cur.Close();
 
@@ -2828,8 +2830,8 @@ public class EDBFunctionTests : EPASTestBase
         command.ExecuteNonQuery();
 
 
-        Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual("100", Convert.ToString(command.Parameters[3].Value.ToString()));
+        Assert.That(Convert.ToString(command.Parameters[0].Value.ToString()), Is.EqualTo("100"));
+        Assert.That(Convert.ToString(command.Parameters[3].Value.ToString()), Is.EqualTo("100"));
 
         var cursorName1 = command.Parameters[1].Value.ToString();
         var cursorName2 = command.Parameters[2].Value.ToString();
@@ -2841,11 +2843,11 @@ public class EDBFunctionTests : EPASTestBase
         reader.Read();
         reader.Read();
 
-        Assert.AreEqual("7499", Convert.ToString(reader.GetString(0)));
-        Assert.AreEqual("ALLEN", Convert.ToString(reader.GetString(1)));
-        Assert.AreEqual("SALESMAN", Convert.ToString(reader.GetString(2)));
-        Assert.AreEqual("7698", Convert.ToString(reader.GetString(3)));
-        Assert.AreEqual("1600", Convert.ToString(reader.GetString(5)));
+        Assert.That(Convert.ToString(reader.GetString(0)), Is.EqualTo("7499"));
+        Assert.That(Convert.ToString(reader.GetString(1)), Is.EqualTo("ALLEN"));
+        Assert.That(Convert.ToString(reader.GetString(2)), Is.EqualTo("SALESMAN"));
+        Assert.That(Convert.ToString(reader.GetString(3)), Is.EqualTo("7698"));
+        Assert.That(Convert.ToString(reader.GetString(5)), Is.EqualTo("1600"));
         reader.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
@@ -2853,7 +2855,7 @@ public class EDBFunctionTests : EPASTestBase
         reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
         reader.Read();
-        Assert.AreEqual("SMITH", Convert.ToString(reader.GetString(0)));
+        Assert.That(Convert.ToString(reader.GetString(0)), Is.EqualTo("SMITH"));
         reader.Close();
         tran.Commit();
 
@@ -2907,8 +2909,8 @@ public class EDBFunctionTests : EPASTestBase
             // read to end
         }
 
-        Assert.AreEqual(3, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual("EnterpriseDB", command.Parameters[1].Value.ToString());
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(3));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("EnterpriseDB"));
 
         result.Close();
         command.Dispose();

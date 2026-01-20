@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.TestModels.Northwind;
 using Xunit.Sdk;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+namespace Microsoft.EntityFrameworkCore.Query;
 
 public class FromSqlQueryNpgsqlTest(NorthwindQueryNpgsqlFixture<NoopModelCustomizer> fixture)
     : FromSqlQueryTestBase<NorthwindQueryNpgsqlFixture<NoopModelCustomizer>>(fixture)

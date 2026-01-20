@@ -80,7 +80,7 @@ internal class EDBAS16Tests : EPASTestBase
                 com.CommandText = query;
                 var reader = await com.ExecuteReaderAsync();
 
-                Assert.IsTrue(reader.HasRows);
+                Assert.That(reader.HasRows);
 
                 if (await reader.ReadAsync())
                 {
@@ -108,7 +108,7 @@ internal class EDBAS16Tests : EPASTestBase
                 com.CommandText = query;
                 var reader = await com.ExecuteReaderAsync();
 
-                Assert.IsTrue(reader.HasRows);
+                Assert.That(reader.HasRows);
 
                 if (await reader.ReadAsync())
                 {
@@ -223,8 +223,8 @@ internal class EDBAS16Tests : EPASTestBase
                     + "            db1712_t1.c2\n"
                     + "           FROM db1712_t1) v1";
         var message1 = await ExecuteProcNotice(conn, "test_expand_sql_text_select_valid");
-        Assert.AreEqual(1, message1.Count);
-        Assert.AreEqual(msg1, message1[0]);
+        Assert.That(message1.Count, Is.EqualTo(1));
+        Assert.That(message1[0], Is.EqualTo(msg1));
 
         //--Only SELECT command is allowed in input string
         //In this case the procedure call throws exception.
@@ -232,11 +232,11 @@ internal class EDBAS16Tests : EPASTestBase
         try
         {
             var message2 = await ExecuteProcNotice(conn, "test_expand_sql_text_noselect_invalid");
-            Assert.AreEqual(5, message2.Count);
+            Assert.That(message2.Count, Is.EqualTo(5));
         }
         catch (Exception ex)
         {
-            Assert.AreEqual(msg2, ex.Message);
+            Assert.That(ex.Message, Is.EqualTo(msg2));
         }
     }
 
@@ -251,24 +251,24 @@ internal class EDBAS16Tests : EPASTestBase
 #nullable restore
         //Clean
         var tz1 = await ExecuteSimpleReader(conn, "SELECT sessiontimezone FROM dual;");
-        Assert.IsNotNull(tz1);
+        Assert.That(tz1, Is.Not.Null);
 
         ////We are only checking the first part as we are not sure about the second part.
         ////Also the actual test is to set and get values.
         // XFI : removed, results may vary as initial timezone can be different depending on local setup
-        //Assert.IsTrue(tz1.ToString().StartsWith("America"));
+        //Assert.That(tz1.ToString().StartsWith("America"));
 
         await Execute(conn, "SET timezone TO '-5:30';", true);
 
         var tz2 = await ExecuteSimpleReader(conn, "SELECT sessiontimezone FROM dual;");
-        Assert.IsNotNull(tz2);
-        Assert.AreEqual("-5:30", tz2.ToString());
+        Assert.That(tz2, Is.Not.Null);
+        Assert.That(tz2.ToString(), Is.EqualTo("-5:30"));
 
         await Execute(conn, "ALTER SESSION SET timezone='Europe/Berlin';", true);
 
         var tz3 = await ExecuteSimpleReader(conn, "SELECT sessiontimezone FROM dual;");
-        Assert.IsNotNull(tz3);
-        Assert.AreEqual("Europe/Berlin", tz3.ToString());
+        Assert.That(tz3, Is.Not.Null);
+        Assert.That(tz3.ToString(), Is.EqualTo("Europe/Berlin"));
     }
 
     //--DB-2028 : FETCH cursor BULK COLLECT INTO x, y
@@ -328,14 +328,14 @@ internal class EDBAS16Tests : EPASTestBase
             "(3,30) 3.3 (300,3000) \"03-MAR-23 04:20:33\""
             };
         var messages = await ExecuteProcNotice(conn, "fetch_cursor_bulk_collection_intoxy");
-        Assert.AreEqual(6, messages.Count);
+        Assert.That(messages.Count, Is.EqualTo(6));
 
         for (var i = 0; i < messages.Count; i++)
-            Assert.AreEqual(listMsg[i], messages[i]);
+            Assert.That(messages[i], Is.EqualTo(listMsg[i]));
     }
 
     //--DB-1955 : Implement the Oracle DBTIMEZONE function in Advanced Server
-    [Test, Timeout(15000)]
+    [Test, CancelAfter(15000)]
     public async Task Oracle_DBTIMEZONE_FunctionTest()
     {
         await using var conn = await OpenConnectionAsync();
@@ -361,14 +361,14 @@ internal class EDBAS16Tests : EPASTestBase
         await using var conn2 = await OpenConnectionAsync(newConnString);
 
         var dbtz1 = await ExecuteSimpleReader(conn2, "SELECT dbtimezone FROM dual;");
-        Assert.IsNotNull(dbtz1);
-        Assert.AreEqual("+00:00", dbtz1.ToString());
+        Assert.That(dbtz1, Is.Not.Null);
+        Assert.That(dbtz1.ToString(), Is.EqualTo("+00:00"));
 
         await Execute(conn2, "ALTER ROLE dbtimezoneuser1 IN DATABASE dbtimezonedb1 SET timezone='+4:30';", true);
 
         var dbtz2 = await ExecuteSimpleReader(conn2, "SELECT dbtimezone FROM dual;");
-        Assert.IsNotNull(dbtz2);
-        Assert.AreEqual("+00:00", dbtz2.ToString());
+        Assert.That(dbtz2, Is.Not.Null);
+        Assert.That(dbtz2.ToString(), Is.EqualTo("+00:00"));
     }
 
     //--DB-1975 : Implement version of Oracle TO_TIMESTAMP_TZ function with single option
@@ -399,14 +399,14 @@ internal class EDBAS16Tests : EPASTestBase
         await Execute(conn, "SET TIME ZONE -4;", true);
 
         var tz2 = await ExecuteDateTimeReader(conn, "SELECT TO_TIMESTAMP_TZ('20-MAR-20 04:30:00.123456 PM +03:00') FROM DUAL;");
-        Assert.IsNotNull(tz2);
-        Assert.AreEqual(new DateTime(2020, 3, 20, 13, 30, 0).ToString(), tz2.ToString());
+        Assert.That(tz2, Is.Not.Null);
+        Assert.That(tz2.ToString(), Is.EqualTo(new DateTime(2020, 3, 20, 13, 30, 0).ToString()));
 
         await Execute(conn, "SET TIME ZONE 5.5;", true);
 
         var tz3 = await ExecuteDateTimeReader(conn, "SELECT TO_TIMESTAMP_TZ('06-OCT-85 06.40:14.745623 AM +06:00') FROM DUAL;");
-        Assert.IsNotNull(tz3);
-        Assert.AreEqual(new DateTime(1985, 10, 6, 0, 40, 14).ToString(), tz3.ToString());
+        Assert.That(tz3, Is.Not.Null);
+        Assert.That(tz3.ToString(), Is.EqualTo(new DateTime(1985, 10, 6, 0, 40, 14).ToString()));
     }
 
     //--DB-1958 : Implement the Oracle NANVL function in Advanced Server
@@ -426,14 +426,14 @@ internal class EDBAS16Tests : EPASTestBase
             com.CommandText = query1;
             var reader = await com.ExecuteReaderAsync();
 
-            Assert.IsTrue(reader.HasRows);
+            Assert.That(reader.HasRows);
 
             if (await reader.ReadAsync())
             {
-                Assert.AreEqual(124346, reader.GetDouble(0));
-                Assert.AreEqual(2, reader.GetDouble(1));
-                Assert.AreEqual(124346, reader.GetDouble(2));
-                Assert.AreEqual(124346, reader.GetDouble(3));
+                Assert.That(reader.GetDouble(0), Is.EqualTo(124346));
+                Assert.That(reader.GetDouble(1), Is.EqualTo(2));
+                Assert.That(reader.GetDouble(2), Is.EqualTo(124346));
+                Assert.That(reader.GetDouble(3), Is.EqualTo(124346));
             }
             await reader.CloseAsync();
         }
@@ -446,13 +446,13 @@ internal class EDBAS16Tests : EPASTestBase
             com.CommandText = query2;
             var reader = await com.ExecuteReaderAsync();
 
-            Assert.IsTrue(reader.HasRows);
+            Assert.That(reader.HasRows);
 
             if (await reader.ReadAsync())
             {
-                Assert.AreEqual(1, reader.GetDouble(0));
-                Assert.AreEqual(124346, reader.GetDouble(1));
-                Assert.AreEqual(double.NaN, reader.GetDouble(2));
+                Assert.That(reader.GetDouble(0), Is.EqualTo(1));
+                Assert.That(reader.GetDouble(1), Is.EqualTo(124346));
+                Assert.That(reader.GetDouble(2), Is.EqualTo(double.NaN));
             }
             await reader.CloseAsync();
         }
@@ -492,11 +492,11 @@ internal class EDBAS16Tests : EPASTestBase
             com.CommandText = query1;
             var reader = await com.ExecuteReaderAsync();
 
-            Assert.IsTrue(reader.HasRows);
+            Assert.That(reader.HasRows);
 
             if (await reader.ReadAsync())
             {
-                Assert.IsTrue(reader.GetBoolean(0));
+                Assert.That(reader.GetBoolean(0));
             }
             await reader.CloseAsync();
         }
@@ -513,25 +513,25 @@ internal class EDBAS16Tests : EPASTestBase
             com.CommandText = query2;
             var reader = await com.ExecuteReaderAsync();
 
-            Assert.IsTrue(reader.HasRows);
+            Assert.That(reader.HasRows);
 
             if (await reader.ReadAsync())
             {
-                Assert.AreEqual(1, reader.GetInt32(0));
-                Assert.AreEqual(1, reader.GetInt32(1));
+                Assert.That(reader.GetInt32(0), Is.EqualTo(1));
+                Assert.That(reader.GetInt32(1), Is.EqualTo(1));
             }
 
             if (await reader.ReadAsync())
             {
-                Assert.AreEqual(2, reader.GetInt32(0));
-                Assert.AreEqual(2, reader.GetInt32(1));
+                Assert.That(reader.GetInt32(0), Is.EqualTo(2));
+                Assert.That(reader.GetInt32(1), Is.EqualTo(2));
             }
 
             if (await reader.ReadAsync())
             {
-                Assert.AreEqual(10, reader.GetInt32(0));
+                Assert.That(reader.GetInt32(0), Is.EqualTo(10));
                 var obj = reader.GetValue(1);
-                Assert.AreEqual(string.Empty, obj.ToString());
+                Assert.That(obj.ToString(), Is.EqualTo(string.Empty));
             }
             await reader.CloseAsync();
         }
@@ -575,16 +575,16 @@ internal class EDBAS16Tests : EPASTestBase
         //PSQL:        Typ=1184 Len=8 CharacterSet=UTF8: 0,1,120,62,26,163,2,0
         //.NET Driver: Typ=1184 Len=8 CharacterSet=UTF8: 0,355,12,266,30,163,2,0
         var dump1 = await ExecuteSimpleReader(conn, "select dump(to_timestamp('11-06-2021 12:45:24','MM-DD-YYYY HH:MI:SS'), 1008);");
-        Assert.IsNotNull(dump1);
-        //Assert.AreEqual("Typ=1184 Len=8 CharacterSet=UTF8: 0,153,325,73,16,163,2,0", dump1.ToString());
+        Assert.That(dump1, Is.Not.Null);
+        //Assert.That(dump1.ToString(), Is.EqualTo("Typ=1184 Len=8 CharacterSet=UTF8: 0,153,325,73,16,163,2,0"));
 
         var dump2 = await ExecuteSimpleReader(conn, "select dump('CHALLENGE',16);");
-        Assert.IsNotNull(dump2);
-        Assert.AreEqual("Typ=25 Len=9: 43,48,41,4c,4c,45,4e,47,45", dump2.ToString());
+        Assert.That(dump2, Is.Not.Null);
+        Assert.That(dump2.ToString(), Is.EqualTo("Typ=25 Len=9: 43,48,41,4c,4c,45,4e,47,45"));
 
         var dump3 = await ExecuteSimpleReader(conn, "select dump(100/4, 10);");
-        Assert.IsNotNull(dump3);
-        Assert.AreEqual("Typ=1700 Len=4: 0,128,25,0", dump3.ToString());
+        Assert.That(dump3, Is.Not.Null);
+        Assert.That(dump3.ToString(), Is.EqualTo("Typ=1700 Len=4: 0,128,25,0"));
     }
 
     //---DB-1419 : case #72516:Calling the cursor recursively in a function will result in an error
@@ -635,24 +635,24 @@ internal class EDBAS16Tests : EPASTestBase
 
                 var reader = await cstmt.ExecuteReaderAsync();
 
-                Assert.IsTrue(reader.HasRows);
+                Assert.That(reader.HasRows);
 
                 if (await reader.ReadAsync())
                 {
-                    Assert.AreEqual("Done", reader.GetString(0));
+                    Assert.That(reader.GetString(0), Is.EqualTo("Done"));
                 }
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(3, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(3));
 
             var notice1 = (PostgresNotice?)notices[0];
-            Assert.AreEqual("Func Round 0 rec = (1,A)", notice1.MessageText);
+            Assert.That(notice1.MessageText, Is.EqualTo("Func Round 0 rec = (1,A)"));
 
             var notice2 = (PostgresNotice?)notices[1];
-            Assert.AreEqual("Func Round 1 rec = (1,A)", notice2.MessageText);
+            Assert.That(notice2.MessageText, Is.EqualTo("Func Round 1 rec = (1,A)"));
 
             var notice3 = (PostgresNotice?)notices[2];
-            Assert.AreEqual("Func Round 2 rec = (1,A)", notice3.MessageText);
+            Assert.That(notice3.MessageText, Is.EqualTo("Func Round 2 rec = (1,A)"));
         }
         finally
         {
@@ -705,16 +705,16 @@ internal class EDBAS16Tests : EPASTestBase
         + "END;", false);
 
         var messages1 = await ExecuteProcNotice(conn, "multiset_intersect_test");
-        Assert.AreEqual(2, messages1.Count);
-        Assert.AreEqual("Orange", messages1[0]);
-        Assert.AreEqual("Peach", messages1[1]);
+        Assert.That(messages1.Count, Is.EqualTo(2));
+        Assert.That(messages1[0], Is.EqualTo("Orange"));
+        Assert.That(messages1[1], Is.EqualTo("Peach"));
 
         var messages2 = await ExecuteProcNotice(conn, "multiset_except_test");
-        Assert.AreEqual(4, messages2.Count);
-        Assert.AreEqual("Blue", messages2[0]);
-        Assert.AreEqual("Green", messages2[1]);
-        Assert.AreEqual("Red", messages2[2]);
-        Assert.AreEqual("Yellow", messages2[3]);
+        Assert.That(messages2.Count, Is.EqualTo(4));
+        Assert.That(messages2[0], Is.EqualTo("Blue"));
+        Assert.That(messages2[1], Is.EqualTo("Green"));
+        Assert.That(messages2[2], Is.EqualTo("Red"));
+        Assert.That(messages2[3], Is.EqualTo("Yellow"));
     }
 
     //--DB-2160 : Implement Oracle NLS CHARSET functions in Advanced Server
@@ -727,16 +727,16 @@ internal class EDBAS16Tests : EPASTestBase
         TestUtil.MinimumPgVersion(conn, "16.0.0");
 #nullable restore
         var val1 = await ExecuteSimpleReader(conn, "Select nls_charset_id('utf8');");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("6", val1.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1.ToString(), Is.EqualTo("6"));
 
         var val2 = await ExecuteSimpleReader(conn, "Select 1 from dual where nls_charset_name(98) is null;");
-        Assert.IsNotNull(val2);
-        Assert.AreEqual("1", val2.ToString());
+        Assert.That(val2, Is.Not.Null);
+        Assert.That(val2.ToString(), Is.EqualTo("1"));
 
         var val3 = await ExecuteSimpleReader(conn, "Select nls_charset_decl_len(100,nls_charset_id('utf8'));");
-        Assert.IsNotNull(val3);
-        Assert.AreEqual("100", val3.ToString());
+        Assert.That(val3, Is.Not.Null);
+        Assert.That(val3.ToString(), Is.EqualTo("100"));
     }
 
     //--DB-1709 : Implement DBMS_SQL Subprograms Not Currently Implemented in Advanced Server
@@ -823,9 +823,9 @@ internal class EDBAS16Tests : EPASTestBase
         };
 
         var messages1 = await ExecuteProcNotice(conn, "define_array_test");
-        Assert.AreEqual(msgExpected1.Count, messages1.Count);
+        Assert.That(messages1.Count, Is.EqualTo(msgExpected1.Count));
         for (var i = 0; i < msgExpected1.Count; i++)
-            Assert.AreEqual(msgExpected1[i], messages1[i]);
+            Assert.That(messages1[i], Is.EqualTo(msgExpected1[i]));
 
         //--dbms_sql.describe_columns3
         await Execute(conn, "CREATE TYPE PROJECT_T_DB2145 AS OBJECT\n"
@@ -865,9 +865,9 @@ internal class EDBAS16Tests : EPASTestBase
         };
 
         var messages2 = await ExecuteProcNotice(conn, "describe_columns3_test");
-        Assert.AreEqual(msgExpected2.Count, messages2.Count);
+        Assert.That(messages2.Count, Is.EqualTo(msgExpected2.Count));
         for (var i = 0; i < msgExpected2.Count; i++)
-            Assert.AreEqual(msgExpected2[i], messages2[i]);
+            Assert.That(messages2[i], Is.EqualTo(msgExpected2[i]));
     }
 
     //--DB-2155 : Request of Synonyms of Procedure to work as a procedure cross schemas
@@ -915,36 +915,36 @@ internal class EDBAS16Tests : EPASTestBase
         await Execute(conn, "SET search_path = db2155_sch_1;", false);
 
         var messages1 = await ExecuteProcNotice(conn, "db2155_pkg.proc");
-        Assert.AreEqual(1, messages1.Count);
-        Assert.AreEqual("In package procedure", messages1[0]);
+        Assert.That(messages1.Count, Is.EqualTo(1));
+        Assert.That(messages1[0], Is.EqualTo("In package procedure"));
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT db2155_pkg.func");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("1", val1.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1.ToString(), Is.EqualTo("1"));
 
         await Execute(conn, "CREATE TABLE db2155_test_syn(a db2155_pkg.typ);", false);
         await Execute(conn, "DROP TABLE db2155_test_syn;", false);
         var val2 = await ExecuteSimpleReader(conn, "SELECT db2155_pkg.var;");
-        Assert.IsNotNull(val2);
-        Assert.AreEqual("10", val2.ToString());
+        Assert.That(val2, Is.Not.Null);
+        Assert.That(val2.ToString(), Is.EqualTo("10"));
 
         //--Create a synonym in schema db2155_sch_2 for db2155_sch_1.db2155_pkg
         await Execute(conn, "SET search_path = db2155_sch_2;", false);
         await Execute(conn, "CREATE OR REPLACE SYNONYM db2155_syn FOR db2155_sch_1.db2155_pkg;", false);
 
         var messages2 = await ExecuteProcNotice(conn, "db2155_syn.proc");
-        Assert.AreEqual(1, messages2.Count);
-        Assert.AreEqual("In package procedure", messages2[0]);
+        Assert.That(messages2.Count, Is.EqualTo(1));
+        Assert.That(messages2[0], Is.EqualTo("In package procedure"));
 
         var val3 = await ExecuteSimpleReader(conn, "SELECT db2155_syn.func");
-        Assert.IsNotNull(val3);
-        Assert.AreEqual("1", val3.ToString());
+        Assert.That(val3, Is.Not.Null);
+        Assert.That(val3.ToString(), Is.EqualTo("1"));
 
         await Execute(conn, "CREATE TABLE db2155_test_syn(a db2155_syn.typ);", false);
         await Execute(conn, "DROP TABLE db2155_test_syn;", false);
         var val4 = await ExecuteSimpleReader(conn, "SELECT db2155_syn.var;");
-        Assert.IsNotNull(val4);
-        Assert.AreEqual("10", val4.ToString());
+        Assert.That(val4, Is.Not.Null);
+        Assert.That(val4.ToString(), Is.EqualTo("10"));
 
     }
 
@@ -1014,9 +1014,9 @@ internal class EDBAS16Tests : EPASTestBase
         };
 
         var messages1 = await ExecuteProcNotice(conn, "utl_file_fgetattr_test");
-        Assert.AreEqual(5, messages1.Count);
+        Assert.That(messages1.Count, Is.EqualTo(5));
         for (var i = 0; i < messages1.Count; i++)
-            Assert.AreEqual(msgExpected1[i], messages1[i]);
+            Assert.That(messages1[i], Is.EqualTo(msgExpected1[i]));
 
         await Execute(conn, "CREATE OR REPLACE PROCEDURE utl_file_fgetpos_fseek_test\n"
             + "IS\n"
@@ -1039,9 +1039,9 @@ internal class EDBAS16Tests : EPASTestBase
             "2.position: 10"
         };
         var messages2 = await ExecuteProcNotice(conn, "utl_file_fgetpos_fseek_test");
-        Assert.AreEqual(2, messages2.Count);
+        Assert.That(messages2.Count, Is.EqualTo(2));
         for (var i = 0; i < messages2.Count; i++)
-            Assert.AreEqual(msgExpected2[i], messages2[i]);
+            Assert.That(messages2[i], Is.EqualTo(msgExpected2[i]));
 
         //--Test fopen_nchar/put_nchar
         await Execute(conn, "create or replace function open_put_nchar_test return void as\n"
@@ -1060,7 +1060,7 @@ internal class EDBAS16Tests : EPASTestBase
 
         //No messages are expected in this case.
         var messages3 = await ExecuteProcNotice(conn, "open_put_nchar_test");
-        Assert.AreEqual(0, messages3.Count);
+        Assert.That(messages3.Count, Is.EqualTo(0));
 
         //--Prerequisite function covers test for fopen_nchar() and put_nchar()
         await Execute(conn, "create or replace function readmy_file_nchar return void as\n"
@@ -1080,9 +1080,9 @@ internal class EDBAS16Tests : EPASTestBase
             + "end;", false);
 
         var messages4 = await ExecuteProcNotice(conn, "readmy_file_nchar");
-        Assert.AreEqual(2, messages4.Count);
-
-
+        Assert.That(messages4.Count, Is.EqualTo(2));
+        Assert.That(messages4[0], Is.EqualTo("Hello - 1"));
+        Assert.That(messages4[1], Is.EqualTo("100"));
     }
 
 
@@ -1137,15 +1137,15 @@ internal class EDBAS16Tests : EPASTestBase
                 com.CommandText = query;
                 var reader = await com.ExecuteReaderAsync();
 
-                Assert.IsTrue(reader.HasRows);
+                Assert.That(reader.HasRows);
 
                 var i = 0;
                 while (await reader.ReadAsync())
                 {
-                    Assert.AreEqual(expected[i], reader.GetString(0));
+                    Assert.That(reader.GetString(0), Is.EqualTo(expected[i]));
                     i++;
                 }
-                Assert.AreEqual(expected.Length, i);
+                Assert.That(i, Is.EqualTo(expected.Length));
                 await reader.CloseAsync();
             }
         }

@@ -1,6 +1,4 @@
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public class WithConstructorsNpgsqlTest(WithConstructorsNpgsqlTest.WithConstructorsNpgsqlFixture fixture)
     : WithConstructorsTestBase<WithConstructorsNpgsqlTest.WithConstructorsNpgsqlFixture>(fixture)

@@ -45,6 +45,7 @@ public class MultirangeTests : TestBase
                 "{[3,7],(9,)}", "nummultirange", EDBDbType.NumericMultirange, true, true, default(EDBRange<decimal>))
             .SetName("Decimal"),
 
+#if NET8_0_OR_GREATER
         // daterange
         new TestCaseData(
                 new EDBRange<DateTime>[]
@@ -54,6 +55,7 @@ public class MultirangeTests : TestBase
                 },
                 "{[2020-01-01,2020-01-05),[2020-01-10,)}", "datemultirange", EDBDbType.DateMultirange, true, false, default(EDBRange<DateTime>))
             .SetName("DateTime DateMultirange"),
+#endif
 
         // tsmultirange
         new TestCaseData(
@@ -75,7 +77,7 @@ public class MultirangeTests : TestBase
                 """{["2020-01-01 01:00:00+01","2020-01-05 01:00:00+01"),["2020-01-10 01:00:00+01",)}""", "tstzmultirange", EDBDbType.TimestampTzMultirange, true, true, default(EDBRange<DateTime>))
             .SetName("DateTime TimestampTzMultirange"),
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
         new TestCaseData(
                 new EDBRange<DateOnly>[]
                 {
@@ -154,18 +156,18 @@ public class MultirangeTests : TestBase
                 new("moo", "zoo"),
             },
             multirangeTypeName, dataSource: dataSource); // EnterpriseDB : add datasource parameter
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedRead("""{["bar","foo"],["moo","zoo"]}""",
             multirangeTypeName, dataSource: dataSource); // EnterpriseDB : add datasource parameter
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedRead<EDBRange<string>>(
             """{["bar","foo"],["moo","zoo"]}""",
             multirangeTypeName, dataSource: dataSource); // EnterpriseDB : add datasource parameter
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
     }
 

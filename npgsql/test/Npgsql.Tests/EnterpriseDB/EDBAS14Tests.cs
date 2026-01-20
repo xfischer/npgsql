@@ -55,7 +55,7 @@ public class EDBAS14Tests : EPASTestBase
 
                 if (shouldHaveValues)
                 {
-                    Assert.True(reader.HasRows);
+                    Assert.That(reader.HasRows);
 
                     //Just for debugging.
                     //while (reader.Read())
@@ -105,21 +105,21 @@ public class EDBAS14Tests : EPASTestBase
         await Execute("CREATE TABLE db299_demo_tab1 (b1 NUMBER, b2 db299_demo_typ2);", false);
 
         //Test alias in insert statement for simple column
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_test_insert VALUES (1, 1);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_test_insert (col1, col2) VALUES (2, 2);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_test_insert ti (col1, col2) VALUES (3, 3);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_test_insert ti (ti.col1, ti.col2) VALUES (4, 4);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_test_insert AS ti (ti.col1, ti.col2) VALUES (5, 5);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_test_insert AS ti (ti.col1, col2) VALUES (6, 6);", false));
+        Assert.That(await Execute("INSERT INTO db299_test_insert VALUES (1, 1);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db299_test_insert (col1, col2) VALUES (2, 2);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db299_test_insert ti (col1, col2) VALUES (3, 3);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db299_test_insert ti (ti.col1, ti.col2) VALUES (4, 4);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db299_test_insert AS ti (ti.col1, ti.col2) VALUES (5, 5);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db299_test_insert AS ti (ti.col1, col2) VALUES (6, 6);", false), Is.EqualTo(1));
 
         //Test alias in insert statement for composite column
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_inventory (item.name, item.supplier_id, item.price) VALUES ('it1', 1, 20.2);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_inventory x (x.item.name, x.item.supplier_id, x.item.price) VALUES ('it2', 2, 20.4);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_inventory as x (x.item.name, x.item.supplier_id, x.item.price) VALUES ('it3', 3, 20.5);", false));
+        Assert.That(await Execute("INSERT INTO db299_inventory (item.name, item.supplier_id, item.price) VALUES ('it1', 1, 20.2);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db299_inventory x (x.item.name, x.item.supplier_id, x.item.price) VALUES ('it2', 2, 20.4);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db299_inventory as x (x.item.name, x.item.supplier_id, x.item.price) VALUES ('it3', 3, 20.5);", false), Is.EqualTo(1));
 
         //Test alias in nested composite type
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_demo_tab1 a1 (b2.a1.a2, b1) VALUES (1, 2);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db299_demo_tab1 a1 (a1.b2.a1.a2, b1) VALUES (1, 2);", false));
+        Assert.That(await Execute("INSERT INTO db299_demo_tab1 a1 (b2.a1.a2, b1) VALUES (1, 2);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db299_demo_tab1 a1 (a1.b2.a1.a2, b1) VALUES (1, 2);", false), Is.EqualTo(1));
     }
 
     [Test]
@@ -169,15 +169,15 @@ public class EDBAS14Tests : EPASTestBase
         //-- Check support in INSERT operation
         //--
         //-- Insert data into the table
-        Assert.AreEqual(1, await Execute("INSERT INTO db93_foo PARTITION (p1) VALUES (1, 10);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db93_foo SUBPARTITION (p1_s2) VALUES (2, 20);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db93_foo SUBPARTITION (p2_s1) VALUES (3, 30);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db93_foo PARTITION (p2) VALUES (4, 40);", false));
+        Assert.That(await Execute("INSERT INTO db93_foo PARTITION (p1) VALUES (1, 10);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db93_foo SUBPARTITION (p1_s2) VALUES (2, 20);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db93_foo SUBPARTITION (p2_s1) VALUES (3, 30);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db93_foo PARTITION (p2) VALUES (4, 40);", false), Is.EqualTo(1));
 
-        Assert.AreEqual(1, await Execute("INSERT INTO db93_bar PARTITION (p1) VALUES (5, 50);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db93_bar PARTITION (p1) VALUES (6, 60);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db93_bar SUBPARTITION (p2_s1) VALUES (7, 70);", false));
-        Assert.AreEqual(1, await Execute("INSERT INTO db93_bar SUBPARTITION (p2_s2) VALUES (8, 80);", false));
+        Assert.That(await Execute("INSERT INTO db93_bar PARTITION (p1) VALUES (5, 50);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db93_bar PARTITION (p1) VALUES (6, 60);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db93_bar SUBPARTITION (p2_s1) VALUES (7, 70);", false), Is.EqualTo(1));
+        Assert.That(await Execute("INSERT INTO db93_bar SUBPARTITION (p2_s2) VALUES (8, 80);", false), Is.EqualTo(1));
     }
 
     [Test]
@@ -279,7 +279,7 @@ public class EDBAS14Tests : EPASTestBase
               + "SID_NO 	 VARCHAR2(20)\n"
             + ");", false);
 
-        Assert.AreEqual(1, await Execute("INSERT INTO DB109_TBL_1 VALUES(USERENV('ISDBA'),USERENV('LANG'),USERENV('LANGUAGE'),USERENV('TERMINAL'),USERENV('SID'));", false));
+        Assert.That(await Execute("INSERT INTO DB109_TBL_1 VALUES(USERENV('ISDBA'),USERENV('LANG'),USERENV('LANGUAGE'),USERENV('TERMINAL'),USERENV('SID'));", false), Is.EqualTo(1));
 
         await ExecuteReader("SELECT * FROM DB109_TBL_1;", true);
     }

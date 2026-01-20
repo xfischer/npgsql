@@ -87,7 +87,7 @@ public class EDBPreparedStatements : EPASTestBase
             var reader = Prepared_command.ExecuteReader();
             while (reader.Read())
             {
-                Assert.AreEqual("SMITH", reader.GetValue(0).ToString().ToUpper());
+                Assert.That(reader.GetValue(0).ToString().ToUpper(), Is.EqualTo("SMITH"));
 
             }
             reader.Close();
@@ -121,11 +121,11 @@ public class EDBPreparedStatements : EPASTestBase
             var reader = Prepared_command.ExecuteReader();
             reader.Read();
 
-            Assert.AreEqual("7369", reader.GetValue(0).ToString());
-            Assert.AreEqual("SMITH", reader.GetValue(1).ToString().ToUpper());
-            Assert.AreEqual("CLERK", reader.GetValue(2).ToString().ToUpper());
-            Assert.AreEqual("7902", reader.GetValue(3).ToString());
-            Assert.AreEqual("800.00", reader.GetValue(5).ToString());
+            Assert.That(reader.GetValue(0).ToString(), Is.EqualTo("7369"));
+            Assert.That(reader.GetValue(1).ToString().ToUpper(), Is.EqualTo("SMITH"));
+            Assert.That(reader.GetValue(2).ToString().ToUpper(), Is.EqualTo("CLERK"));
+            Assert.That(reader.GetValue(3).ToString(), Is.EqualTo("7902"));
+            Assert.That(reader.GetValue(5).ToString(), Is.EqualTo("800.00"));
 
             Console.WriteLine("Success...");
             reader.Close();
@@ -157,11 +157,11 @@ public class EDBPreparedStatements : EPASTestBase
             var reader = Prepared_command.ExecuteReader();
             reader.Read();
 
-            Assert.AreEqual("7369", reader.GetValue(0).ToString());
-            Assert.AreEqual("SMITH", reader.GetValue(1).ToString().ToUpper());
-            Assert.AreEqual("CLERK", reader.GetValue(2).ToString().ToUpper());
-            Assert.AreEqual("7902", reader.GetValue(3).ToString());
-            Assert.AreEqual("800.00", reader.GetValue(5).ToString());
+            Assert.That(reader.GetValue(0).ToString(), Is.EqualTo("7369"));
+            Assert.That(reader.GetValue(1).ToString().ToUpper(), Is.EqualTo("SMITH"));
+            Assert.That(reader.GetValue(2).ToString().ToUpper(), Is.EqualTo("CLERK"));
+            Assert.That(reader.GetValue(3).ToString(), Is.EqualTo("7902"));
+            Assert.That(reader.GetValue(5).ToString(), Is.EqualTo("800.00"));
             reader.Close();
             Console.WriteLine("Success...");
 
@@ -199,12 +199,12 @@ public class EDBPreparedStatements : EPASTestBase
             var reader = Prepared_command.ExecuteReader();
             reader.Read();
 
-            Assert.AreEqual("7369", reader.GetValue(0).ToString());
-            Assert.AreEqual("SMITH", reader.GetValue(1).ToString().ToUpper());
-            Assert.AreEqual("CLERK", reader.GetValue(2).ToString().ToUpper());
-            Assert.AreEqual("7902", reader.GetValue(3).ToString());
-            Assert.AreEqual("800.00", reader.GetValue(5).ToString());
-            Assert.AreEqual("20", reader.GetValue(7).ToString());
+            Assert.That(reader.GetValue(0).ToString(), Is.EqualTo("7369"));
+            Assert.That(reader.GetValue(1).ToString().ToUpper(), Is.EqualTo("SMITH"));
+            Assert.That(reader.GetValue(2).ToString().ToUpper(), Is.EqualTo("CLERK"));
+            Assert.That(reader.GetValue(3).ToString(), Is.EqualTo("7902"));
+            Assert.That(reader.GetValue(5).ToString(), Is.EqualTo("800.00"));
+            Assert.That(reader.GetValue(7).ToString(), Is.EqualTo("20"));
             reader.Close();
 
             Console.WriteLine("Success...");
@@ -239,12 +239,12 @@ public class EDBPreparedStatements : EPASTestBase
 
             var reader = Prepared_command.ExecuteReader();
             reader.Read();
-            Assert.AreEqual("7369", reader.GetValue(0).ToString());
-            Assert.AreEqual("SMITH", reader.GetValue(1).ToString().ToUpper());
-            Assert.AreEqual("CLERK", reader.GetValue(2).ToString().ToUpper());
-            Assert.AreEqual("7902", reader.GetValue(3).ToString());
-            Assert.AreEqual("800.00", reader.GetValue(5).ToString());
-            Assert.AreEqual("20", reader.GetValue(7).ToString());
+            Assert.That(reader.GetValue(0).ToString(), Is.EqualTo("7369"));
+            Assert.That(reader.GetValue(1).ToString().ToUpper(), Is.EqualTo("SMITH"));
+            Assert.That(reader.GetValue(2).ToString().ToUpper(), Is.EqualTo("CLERK"));
+            Assert.That(reader.GetValue(3).ToString(), Is.EqualTo("7902"));
+            Assert.That(reader.GetValue(5).ToString(), Is.EqualTo("800.00"));
+            Assert.That(reader.GetValue(7).ToString(), Is.EqualTo("20"));
             reader.Close();
             Console.WriteLine("Success...");
         }

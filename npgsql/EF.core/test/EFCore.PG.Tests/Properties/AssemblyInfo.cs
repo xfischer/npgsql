@@ -5,7 +5,7 @@
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
-[assembly: CollectionBehavior(DisableTestParallelization = true)] // EnterpriseDB
+//[assembly: CollectionBehavior(DisableTestParallelization = true)] // EnterpriseDB
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("e1d99ad4-d88b-42ba-86df-90b98b2e9a01")]

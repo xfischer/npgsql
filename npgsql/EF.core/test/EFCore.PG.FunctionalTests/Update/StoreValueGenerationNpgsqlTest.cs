@@ -1,10 +1,7 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore.TestModels.StoreValueGenerationModel;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update;
-
-#nullable enable
+namespace Microsoft.EntityFrameworkCore.Update;
 
 public class StoreValueGenerationNpgsqlTest : StoreValueGenerationTestBase<
     StoreValueGenerationNpgsqlTest.StoreValueGenerationNpgsqlFixture>

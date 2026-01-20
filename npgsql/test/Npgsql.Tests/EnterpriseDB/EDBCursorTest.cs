@@ -53,6 +53,7 @@ public class EDBCursorTest : EPASTestBase
         com.ExecuteNonQuery();
 
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     [Test]
@@ -71,7 +72,7 @@ public class EDBCursorTest : EPASTestBase
         command.Prepare();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(7521, int.Parse(command.Parameters[0].Value!.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value!.ToString()), Is.EqualTo(7521));
     }
 }
 #pragma warning restore CS8604

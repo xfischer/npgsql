@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Internal.Postgres;
 using EnterpriseDB.EDBClient.Internal.ResolverFactories;
-using EDBTypes;
 
 namespace EnterpriseDB.EDBClient.TypeMapping;
 
@@ -19,7 +16,6 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
     readonly List<PgTypeInfoResolverFactory> _pluginResolverFactories = [];
     readonly ReaderWriterLockSlim _lock = new();
     PgTypeInfoResolverFactory[] _typeMappingResolvers = [];
-    internal List<HackyEnumTypeMapping> HackyEnumTypeMappings { get; } = new();
 
     internal IEnumerable<PgTypeInfoResolverFactory> GetPluginResolverFactories()
     {
@@ -99,7 +95,7 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         }
     }
 
-    internal DataTypeName? FindDataTypeName(Type type, object value)
+    internal DataTypeName? FindDataTypeName(Type type, object? value)
     {
         DataTypeName? dataTypeName;
         try
@@ -151,6 +147,9 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
             _lock.ExitWriteLock();
         }
     }
+	
+    public void AddDbTypeResolverFactory(DbTypeResolverFactory factory)
+    => throw new NotSupportedException("The global type mapper does not support DbTypeResolverFactories. Call this method on a data source builder instead.");
 
     // EnterpriseDB : remove optins (see EC-3060)
     public void RemoveTypeInfoResolverFactory(Type type)
@@ -207,7 +206,6 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         {
             _pluginResolverFactories.Clear();
             _userTypeMapper.Items.Clear();
-            HackyEnumTypeMappings.Clear();
         }
         finally
         {
@@ -291,13 +289,7 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         try
         {
             _userTypeMapper.MapEnum<TEnum>(pgName, nameTranslator);
-
-            // Temporary hack for EFCore.PG enum mapping compat
-            if (_userTypeMapper.Items.FirstOrDefault(i => i.ClrType == typeof(TEnum)) is UserTypeMapping userTypeMapping)
-                HackyEnumTypeMappings.Add(new(typeof(TEnum), userTypeMapping.PgTypeName, nameTranslator ?? DefaultNameTranslator));
-
             ResetTypeMappingCache();
-
             return this;
         }
         finally
@@ -313,13 +305,7 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         try
         {
             var removed = _userTypeMapper.UnmapEnum<TEnum>(pgName, nameTranslator);
-
-            // Temporary hack for EFCore.PG enum mapping compat
-            if (removed && ((List<UserTypeMapping>)_userTypeMapper.Items).FindIndex(m => m.ClrType == typeof(TEnum)) is > -1 and var index)
-                HackyEnumTypeMappings.RemoveAt(index);
-
             ResetTypeMappingCache();
-
             return removed;
         }
         finally
@@ -337,11 +323,6 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         try
         {
             _userTypeMapper.MapEnum(clrType, pgName, nameTranslator);
-
-            // Temporary hack for EFCore.PG enum mapping compat
-            if (_userTypeMapper.Items.FirstOrDefault(i => i.ClrType == clrType) is UserTypeMapping userTypeMapping)
-                HackyEnumTypeMappings.Add(new(clrType, userTypeMapping.PgTypeName, nameTranslator ?? DefaultNameTranslator));
-
             ResetTypeMappingCache();
             return this;
         }
@@ -359,11 +340,6 @@ sealed class GlobalTypeMapper : IEDBTypeMapper
         try
         {
             var removed = _userTypeMapper.UnmapEnum(clrType, pgName, nameTranslator);
-
-            // Temporary hack for EFCore.PG enum mapping compat
-            if (removed && ((List<UserTypeMapping>)_userTypeMapper.Items).FindIndex(m => m.ClrType == clrType) is > -1 and var index)
-                HackyEnumTypeMappings.RemoveAt(index);
-
             ResetTypeMappingCache();
             return removed;
         }

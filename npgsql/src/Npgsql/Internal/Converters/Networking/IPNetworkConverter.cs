@@ -1,5 +1,6 @@
 ﻿#if NET8_0_OR_GREATER
 
+using System;
 using System.Net;
 
 // ReSharper disable once CheckNamespace
@@ -20,7 +21,15 @@ sealed class IPNetworkConverter : PgBufferedConverter<IPNetwork>
     }
 
     protected override void WriteCore(PgWriter writer, IPNetwork value)
-        => EDBInetConverter.WriteImpl(writer, (value.BaseAddress, (byte)value.PrefixLength), isCidr: true);
+        => EDBInetConverter.WriteImpl(
+            writer,
+            (
+                value.BaseAddress,
+                value.PrefixLength <= byte.MaxValue
+                    ? (byte)value.PrefixLength
+                    : throw new ArgumentOutOfRangeException(nameof(value), "IPNetwork.PrefixLength is too large to fit in a byte")
+            ),
+            isCidr: true);
 }
 
 #endif

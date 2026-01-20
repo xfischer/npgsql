@@ -1,7 +1,6 @@
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public class SpatialNpgsqlFixture : SpatialFixtureBase
 {

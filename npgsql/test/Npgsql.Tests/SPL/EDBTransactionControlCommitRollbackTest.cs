@@ -95,6 +95,7 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -182,11 +183,11 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(INSERT_DEPT_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(INSERT_DEPT_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(INSERT_DEPT_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(INSERT_DEPT_RESULT[i]));
             }
         }
         finally
@@ -196,7 +197,7 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
         mre.Close();
 
         var count = getDeptCount();
-        Assert.AreEqual(DEPT_COUNT_COMMIT, count);
+        Assert.That(count, Is.EqualTo(DEPT_COUNT_COMMIT));
     }
 
     [Test]
@@ -240,11 +241,11 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(INSERT_DEPT_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(INSERT_DEPT_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(INSERT_DEPT_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(INSERT_DEPT_RESULT[i]));
             }
         }
         finally
@@ -254,7 +255,7 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
         mre.Close();
 
         var count = getDeptCount();
-        Assert.AreEqual(DEPT_COUNT_ROLLBACK, count);
+        Assert.That(count, Is.EqualTo(DEPT_COUNT_ROLLBACK));
     }
 
     [Test]
@@ -297,11 +298,11 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(INSERT_EMP_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(INSERT_EMP_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(INSERT_EMP_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(INSERT_EMP_RESULT[i]));
             }
         }
         finally
@@ -311,7 +312,7 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
         mre.Close();
 
         var count = getEmpCount();
-        Assert.AreEqual(EMP_COUNT_SUCCESS, count);
+        Assert.That(count, Is.EqualTo(EMP_COUNT_SUCCESS));
     }
 
     [Test]
@@ -354,11 +355,11 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(INSERT_EMP_FAILED_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(INSERT_EMP_FAILED_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(INSERT_EMP_FAILED_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(INSERT_EMP_FAILED_RESULT[i]));
             }
         }
         finally
@@ -368,7 +369,7 @@ internal class EDBTransactionControlCommitRollbackTest : EPASTestBase
         mre.Close();
 
         var count = getEmpCount();
-        Assert.AreEqual(EMP_COUNT_ROLLBACK, count);
+        Assert.That(count, Is.EqualTo(EMP_COUNT_ROLLBACK));
     }
 }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.

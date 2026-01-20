@@ -196,7 +196,16 @@ public interface IEDBTypeMapper
     /// Typically used by plugins.
     /// </summary>
     /// <param name="factory">The type resolver factory to be added.</param>
+    [Experimental(EDBDiagnostics.ConvertersExperimental)]
     void AddTypeInfoResolverFactory(PgTypeInfoResolverFactory factory);
+
+    /// <summary>
+    /// Adds a DbType resolver factory which can change how DbType cases are mapped to PostgreSQL data types.
+    /// Typically used by plugins.
+    /// </summary>
+    /// <param name="factory">The resolver factory to be added.</param>
+    [Experimental(EDBDiagnostics.DbTypeResolverExperimental)]
+    public void AddDbTypeResolverFactory(DbTypeResolverFactory factory);
 
     /// <summary>
     /// Configures the JSON serializer options used when reading and writing all System.Text.Json data.
@@ -247,8 +256,6 @@ public interface IEDBTypeMapper
     /// Resets all mapping changes performed on this type mapper and reverts it to its original, starting state.
     /// </summary>
     void Reset();
-
-
     
     // EnterpriseDB : remove optins (see EC-3060)
 
@@ -263,7 +270,6 @@ public interface IEDBTypeMapper
     /// </summary>
     /// <returns></returns>
     IEDBTypeMapper DisableUnmappedTypes();
-
 
     /// <summary>
     /// Reverts EnableRecordsAsTuples() call

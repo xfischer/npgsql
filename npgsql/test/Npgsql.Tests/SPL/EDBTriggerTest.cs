@@ -223,6 +223,7 @@ internal class EDBTriggerTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -274,16 +275,16 @@ internal class EDBTriggerTest : EPASTestBase
     //Compare if two list are equal
     private static void compareList(List<string> lista, List<string> listb)
     {
-        Assert.AreEqual(lista.Count, listb.Count);
+        Assert.That(lista.Count, Is.EqualTo(listb.Count));
 
         foreach (var a in lista)
         {
-            Assert.IsTrue(listb.Contains(a));
+            Assert.That(listb.Contains(a));
         }
 
         foreach (var b in listb)
         {
-            Assert.IsTrue(lista.Contains(b));
+            Assert.That(lista.Contains(b));
         }
     }
 
@@ -351,7 +352,7 @@ internal class EDBTriggerTest : EPASTestBase
             Execute(addEmp[i]);
         }
 
-        Assert.AreEqual(14, getEmpCount());
+        Assert.That(getEmpCount(), Is.EqualTo(14));
 
         //The following INSERT is constructed so that several new rows are inserted upon
         //a single execution of the command.
@@ -378,11 +379,11 @@ internal class EDBTriggerTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(BEFORE_STATEMENT_LEVEL_TRIGGER_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(BEFORE_STATEMENT_LEVEL_TRIGGER_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(BEFORE_STATEMENT_LEVEL_TRIGGER_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(BEFORE_STATEMENT_LEVEL_TRIGGER_RESULT[i]));
             }
         }
         finally
@@ -392,7 +393,7 @@ internal class EDBTriggerTest : EPASTestBase
         mre.Close();
 
         //Assert.assertArrayEquals(BEFORE_STATEMENT_LEVEL_TRIGGER_RESULT, v.toArray());
-        Assert.AreEqual(17, getEmpCount());
+        Assert.That(getEmpCount(), Is.EqualTo(17));
     }
 
     [Test]
@@ -423,9 +424,9 @@ internal class EDBTriggerTest : EPASTestBase
         }
         selectResult.Close();
 
-        Assert.AreEqual(AFTER_STATEMENT_LEVEL_TRIGGER_RESULT.Length, list.Count);
+        Assert.That(list.Count, Is.EqualTo(AFTER_STATEMENT_LEVEL_TRIGGER_RESULT.Length));
         for (var i = 0; i < list.Count; i++)
-            Assert.AreEqual(AFTER_STATEMENT_LEVEL_TRIGGER_RESULT[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(AFTER_STATEMENT_LEVEL_TRIGGER_RESULT[i]));
     }
 
     [Test]
@@ -435,8 +436,8 @@ internal class EDBTriggerTest : EPASTestBase
         //their commissions and inserted it as part of the new employee rows:
         Execute("INSERT INTO emp1 VALUES (9005,'ROBERS','SALESMAN',SYSDATE,3000.00,NULL,30);");
         Execute("INSERT INTO emp1 VALUES (9006,'ALLEN','SALESMAN',SYSDATE,4500.00,NULL,30);");
-        Assert.AreEqual(1200.00, getEmpCommission(9005), 0.01);
-        Assert.AreEqual(1800.00, getEmpCommission(9006), 0.01);
+        Assert.That(getEmpCommission(9005), Is.EqualTo(1200.00).Within(0.01));
+        Assert.That(getEmpCommission(9006), Is.EqualTo(1800.00).Within(0.01));
     }
 
     [Test]

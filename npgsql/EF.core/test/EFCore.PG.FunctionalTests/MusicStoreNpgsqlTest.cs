@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore.TestModels.MusicStore;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public class MusicStoreNpgsqlTest(MusicStoreNpgsqlTest.MusicStoreNpgsqlFixture fixture)
     : MusicStoreTestBase<MusicStoreNpgsqlTest.MusicStoreNpgsqlFixture>(fixture)

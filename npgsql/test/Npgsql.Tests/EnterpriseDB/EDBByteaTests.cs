@@ -310,7 +310,7 @@ public class EDBByteaTest : EPASTestBase
         cmd.Parameters[0].Value = ss;
         var reader = cmd.ExecuteReader();
         reader.Read();
-        Assert.True(reader.HasRows);
+        Assert.That(reader.HasRows);
         if (reader.HasRows)
         {
             var image = new byte[Convert.ToInt32(reader.GetBytes(0, 0, null, 0, int.MaxValue))];
@@ -453,11 +453,11 @@ public class EDBByteaTest : EPASTestBase
         command.Parameters[0].Value = data;
 
         var rowsAdded = command.ExecuteNonQuery();
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         // Retrieve
         command = new EDBCommand("select f1 from ByteaTest;", conn);
-        Assert.IsInstanceOf<byte[]>(command.ExecuteScalar());
+        Assert.That(command.ExecuteScalar(), Is.InstanceOf<byte[]>());
 
         // Update
         command = new EDBCommand("Update ByteaTest set f1 = :b where id = 1", conn);
@@ -465,19 +465,19 @@ public class EDBByteaTest : EPASTestBase
         command.Parameters[0].Value = data2;
 
         rowsAdded = command.ExecuteNonQuery();
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command = new EDBCommand("select f1 from ByteaTest;", conn);
-        Assert.IsInstanceOf<byte[]>(command.ExecuteScalar());
+        Assert.That(command.ExecuteScalar(), Is.InstanceOf<byte[]>());
 
         // Delete
         command = new EDBCommand("Delete from ByteaTest where id = 1", conn);
 
         rowsAdded = command.ExecuteNonQuery();
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command = new EDBCommand("select f1 from ByteaTest;", conn);
-        Assert.AreEqual(-1, command.ExecuteNonQuery());
+        Assert.That(command.ExecuteNonQuery(), Is.EqualTo(-1));
     }
 
 

@@ -23,13 +23,13 @@ public class EDBBigIntergerTests
 
         var bits = bigInt.ToByteArray().AsSpan();
 
-        Assert.AreEqual(1, bits.Length);
-        Assert.AreEqual(255, bits[0]);
+        Assert.That(bits.Length, Is.EqualTo(1));
+        Assert.That(bits[0], Is.EqualTo(255));
 
         var b = new PgNumeric.Builder(bigInt, destination);
         var pgNumeric = b.Build();
 
-        Assert.AreEqual(16384, pgNumeric.Sign);
-        Assert.AreEqual(1, pgNumeric.Digits.Array![0]);
+        Assert.That(pgNumeric.Sign, Is.EqualTo(16384));
+        Assert.That(pgNumeric.Digits.Array![0], Is.EqualTo(1));
     }
 }

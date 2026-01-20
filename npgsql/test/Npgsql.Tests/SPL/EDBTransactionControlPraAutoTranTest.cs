@@ -121,6 +121,7 @@ internal class EDBTransactionControlPraAutoTranTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -224,9 +225,9 @@ internal class EDBTransactionControlPraAutoTranTest : EPASTestBase
         }
 
         var list = getDeptnos();
-        Assert.AreEqual(DEPT_50_60_70.Length, list.Count);
+        Assert.That(list.Count, Is.EqualTo(DEPT_50_60_70.Length));
         for (var i = 0; i < list.Count; i++)
-            Assert.AreEqual(DEPT_50_60_70[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(DEPT_50_60_70[i]));
     }
 
     [Test]
@@ -283,7 +284,7 @@ internal class EDBTransactionControlPraAutoTranTest : EPASTestBase
 
         trans.Rollback();
         var list = getDeptnos();
-        Assert.AreEqual(0, list.Count);
+        Assert.That(list.Count, Is.EqualTo(0));
     }
 
     [Test]
@@ -331,7 +332,7 @@ public void Scenario1cTest()
         }
 
         var list = getDeptnos();
-        Assert.AreEqual(0, list.Count);
+        Assert.That(list.Count, Is.EqualTo(0));
     }
 
     [Test]
@@ -396,9 +397,9 @@ public void Scenario2aTest()
 
         trans.Rollback();
         var list = getDeptnos();
-        Assert.AreEqual(DEPT_60_70.Length, list.Count);
+        Assert.That(list.Count, Is.EqualTo(DEPT_60_70.Length));
         for (var i = 0; i < list.Count; i++)
-            Assert.AreEqual(DEPT_60_70[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(DEPT_60_70[i]));
     }
 
     [Test]
@@ -465,9 +466,9 @@ public void Scenario2bTest()
 
         trans.Commit();
         var list = getDeptnos();
-        Assert.AreEqual(DEPT_50.Length, list.Count);
+        Assert.That(list.Count, Is.EqualTo(DEPT_50.Length));
         for (var i = 0; i < list.Count; i++)
-            Assert.AreEqual(DEPT_50[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(DEPT_50[i]));
     }
 
     [Test]
@@ -514,9 +515,9 @@ public void Scenario2cTest()
 
         trans.Commit();
         var list = getDeptnos();
-        Assert.AreEqual(DEPT_50_60.Length, list.Count);
+        Assert.That(list.Count, Is.EqualTo(DEPT_50_60.Length));
         for (var i = 0; i < list.Count; i++)
-            Assert.AreEqual(DEPT_50_60[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(DEPT_50_60[i]));
 }
 
     [Test]
@@ -546,8 +547,8 @@ public void AutonomousTransactionTriggerTest()
         trans.Rollback();
     var empCount = getEmpCount();
     var auditCount = getEmpAuditLogCount();
-    Assert.AreEqual(0, empCount);
-    Assert.AreEqual(2, auditCount);
+    Assert.That(empCount, Is.EqualTo(0));
+    Assert.That(auditCount, Is.EqualTo(2));
 }
 
     [Test]
@@ -588,9 +589,9 @@ public void AutonomousTransactionObjectTypeMethodTest()
 
         trans.Commit();
         var list = getDeptnos();
-        Assert.AreEqual(DEPT_60.Length, list.Count);
+        Assert.That(list.Count, Is.EqualTo(DEPT_60.Length));
         for (var i = 0; i < list.Count; i++)
-            Assert.AreEqual(DEPT_60[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(DEPT_60[i]));
 }
 }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.

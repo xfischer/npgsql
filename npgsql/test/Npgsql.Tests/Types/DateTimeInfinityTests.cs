@@ -88,7 +88,7 @@ public sealed class DateTimeInfinityTests : TestBase, IDisposable
             "date", EDBDbType.Date, DbType.Date,
             isDefault: false);
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
     static readonly TestCaseData[] DateOnlyDateTimeValues =
     [
         new TestCaseData(DateOnly.MinValue.AddYears(1), "0002-01-01", "0002-01-01")

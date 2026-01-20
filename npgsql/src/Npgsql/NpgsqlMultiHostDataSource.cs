@@ -31,7 +31,7 @@ public sealed class EDBMultiHostDataSource : EDBDataSource
     volatile int _roundRobinIndex = -1;
 
     internal EDBMultiHostDataSource(EDBConnectionStringBuilder settings, EDBDataSourceConfiguration dataSourceConfig)
-        : base(settings, dataSourceConfig)
+        : base(settings, dataSourceConfig, reportMetrics: false)
     {
         var hosts = settings.Host!.Split(',');
         _pools = new EDBDataSource[hosts.Length];
@@ -54,9 +54,9 @@ public sealed class EDBMultiHostDataSource : EDBDataSource
         }
 
 #if NETSTANDARD || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-        var targetSessionAttributeValues = Enum.GetValues(typeof(TargetSessionAttributes)).Cast<TargetSessionAttributes>().ToArray();
+        var targetSessionAttributeValues = Enum.GetValues(typeof(TargetSessionAttributes)).Cast<TargetSessionAttributes>();
 #else
-        var targetSessionAttributeValues = Enum.GetValues<TargetSessionAttributes>().ToArray();
+        var targetSessionAttributeValues = Enum.GetValues<TargetSessionAttributes>();
 #endif
         var highestValue = 0;
         foreach (var value in targetSessionAttributeValues)
@@ -222,6 +222,12 @@ public sealed class EDBMultiHostDataSource : EDBDataSource
                         return connector;
                     }
                 }
+            }
+            catch (OperationCanceledException oce) when (cancellationToken.IsCancellationRequested && oce.CancellationToken == cancellationToken)
+            {
+                if (connector is not null)
+                    pool.Return(connector);
+                throw;
             }
             catch (Exception ex)
             {
@@ -460,6 +466,6 @@ public sealed class EDBMultiHostDataSource : EDBDataSource
     static TargetSessionAttributes GetTargetSessionAttributes(EDBConnection connection)
         => connection.Settings.TargetSessionAttributesParsed ??
            (PostgresEnvironment.TargetSessionAttributes is { } s
-               ? EDBConnectionStringBuilder.ParseTargetSessionAttributes(s)
+               ? EDBConnectionStringBuilder.ParseTargetSessionAttributes(s.ToLowerInvariant())
                : TargetSessionAttributes.Any);
 }

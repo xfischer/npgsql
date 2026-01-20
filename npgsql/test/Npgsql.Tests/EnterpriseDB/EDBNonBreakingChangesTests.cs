@@ -24,6 +24,7 @@ public class EDBNonBreakingChangesTests : TestBase
     {
         using var con = await DataSource.OpenConnectionAsync();
         //await DropSampleTableAsync(con);
+        DataSource?.Dispose();
     }
 
     private async static Task CreateSampleTableAsync(EDBConnection connection)
@@ -73,7 +74,7 @@ public class EDBNonBreakingChangesTests : TestBase
         // Read jsonb data as a POCO:
         await using var command2 = new EDBCommand("SELECT data FROM test_dynamicjson", con);
         await using var reader = await command2.ExecuteReaderAsync();
-        Assert.IsTrue(reader.Read());
+        Assert.That(reader.Read());
 
         var myPoco2 = reader.GetFieldValue<MyPoco>(0);
 
@@ -99,7 +100,7 @@ public class EDBNonBreakingChangesTests : TestBase
         // Read jsonb data as a POCO:
         await using var command2 = new EDBCommand("SELECT data FROM test_dynamicjson", con);
         await using var reader = await command2.ExecuteReaderAsync();
-        Assert.IsTrue(reader.Read());
+        Assert.That(reader.Read());
 
         var myPoco2 = reader.GetFieldValue<MyPoco>(0);
 

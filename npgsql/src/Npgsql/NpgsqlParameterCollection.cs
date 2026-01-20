@@ -41,7 +41,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
         get { return return_param; }
     }
 
-    // EnterpriseDB Team>
+    // EnterpriseDB Team
     internal bool HasRefCursorParam
     {
         get {
@@ -49,6 +49,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
         }
     }
 
+    // EnterpriseDB Team
     internal EDBParameter? RefCursorParam
     {
         get
@@ -208,7 +209,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
 
             var index = IndexOf(parameterName);
             if (index == -1)
-                throw new ArgumentException("Parameter not found");
+                ThrowHelper.ThrowArgumentException("Parameter not found");
 
             return InternalList[index];
         }
@@ -221,10 +222,10 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
 
             var index = IndexOf(parameterName);
             if (index == -1)
-                throw new ArgumentException("Parameter not found");
+                ThrowHelper.ThrowArgumentException("Parameter not found");
 
             if (!string.Equals(parameterName, value.TrimmedName, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("Parameter name must be a case-insensitive match with the property 'ParameterName' on the given EDBParameter", nameof(parameterName));
+                ThrowHelper.ThrowArgumentException("Parameter name must be a case-insensitive match with the property 'ParameterName' on the given EDBParameter", nameof(parameterName));
 
             var oldValue = InternalList[index];
             LookupChangeName(value, oldValue.ParameterName, oldValue.TrimmedName, index);
@@ -724,19 +725,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
         }
     }
 
-    //EnterpriseDB team
-    internal int getOutAndReturnParamCount()
-    {
-        var count = 0;
-        foreach (var p in InternalList)
-        {
-            if (p.IsOutReturnDirection)
-                count++;
-        }
-        return count;
-    }
-
-    internal void ProcessParameters(PgSerializerOptions options, bool validateValues, CommandType commandType)
+    internal void ProcessParameters(EDBDataSource.ReloadableState reloadableState, bool validateValues, CommandType commandType)
     {
         HasOutputParameters = false;
         PlaceholderType = PlaceholderType.NoParameters;
@@ -765,8 +754,8 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
                 ThrowHelper.ThrowArgumentOutOfRangeException(nameof(PlaceholderType), $"Unknown {nameof(PlaceholderType)} value: {{0}}", PlaceholderType);
                 break;
             }
-			
-			switch (p.Direction)
+
+            switch (p.Direction)
             {
             case ParameterDirection.Input:
                 break;
@@ -801,7 +790,7 @@ public sealed class EDBParameterCollection : DbParameterCollection, IList<EDBPar
             // EnterpriseDB: add try/catch needed for output parameters in some cases
             try
             {
-                p.ResolveTypeInfo(options);
+                p.ResolveTypeInfo(reloadableState.SerializerOptions, reloadableState.DbTypeResolver);
             }
             catch (Exception e)
             {

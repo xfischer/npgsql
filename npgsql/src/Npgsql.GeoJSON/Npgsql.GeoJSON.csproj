@@ -3,7 +3,7 @@
     <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
     <Description>GeoJSON plugin for EDB Postgres Advanced Server, allowing mapping of PostGIS geometry types to GeoJSON types.</Description>
     <PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;postgis;geojson;spatial;ado;ado.net;database;sql</PackageTags>
-    <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
     <AssemblyName>EnterpriseDB.EDBClient.GeoJSON</AssemblyName>
     <NoWarn>$(NoWarn);NPG9001</NoWarn> <!-- Converter-related APIs are experimental -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>

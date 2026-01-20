@@ -81,6 +81,9 @@ public sealed class EDBParameter<T> : EDBParameter
 
     #endregion Constructors
 
+    private protected override void SetOutputValueCore(EDBDataReader reader, int ordinal)
+        => TypedValue = reader.GetFieldValue<T>(ordinal);
+
     private protected override PgConverterResolution ResolveConverter(PgTypeInfo typeInfo)
     {
         if (typeof(T) == typeof(object) || TypeInfo!.IsBoxing)
@@ -135,6 +138,7 @@ public sealed class EDBParameter<T> : EDBParameter
             _precision = _precision,
             _scale = _scale,
             _size = _size,
+            _dbType = _dbType,
             _npgsqlDbType = _npgsqlDbType,
             _dataTypeName = _dataTypeName,
             Direction = Direction,

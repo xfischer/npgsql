@@ -1,17 +1,14 @@
-#nullable enable
-
 using System.Collections;
 using System.Globalization;
 using System.Numerics;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 using Xunit.Sdk;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
-public class JsonTypesNpgsqlTest : JsonTypesRelationalTestBase
+public class JsonTypesNpgsqlTest(NonSharedFixture fixture) : JsonTypesRelationalTestBase(fixture)
 {
     #region Nested collections (unsupported)
 

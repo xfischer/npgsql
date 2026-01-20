@@ -14,7 +14,7 @@ namespace EnterpriseDB.EDBClient.Tests;
 [TestFixture(MultiplexingMode.Multiplexing, CommandBehavior.Default)]
 [TestFixture(MultiplexingMode.NonMultiplexing, CommandBehavior.SequentialAccess)]
 [TestFixture(MultiplexingMode.Multiplexing, CommandBehavior.SequentialAccess)]
-public class BatchTests : MultiplexingTestBase
+public class BatchTests : MultiplexingTestBase, IDisposable
 {
     #region Parameters
 
@@ -301,10 +301,10 @@ public class BatchTests : MultiplexingTestBase
     }
 
     [Test]
-    public void CanCreateParameter() => Assert.True(new EDBBatchCommand().CanCreateParameter);
+    public void CanCreateParameter() => Assert.That(new EDBBatchCommand().CanCreateParameter);
 
     [Test]
-    public void CreateParameter() => Assert.NotNull(new EDBBatchCommand().CreateParameter());
+    public void CreateParameter() => Assert.That(new EDBBatchCommand().CreateParameter(), Is.Not.Null);
 
     #endregion EDBBatchCommand
 
@@ -484,7 +484,7 @@ public class BatchTests : MultiplexingTestBase
     public async Task Batch_close_dispose_reader_with_multiple_errors([Values] bool withErrorBarriers, [Values] bool dispose)
     {
         // Create a temp pool since we dispose the reader (and check the state afterwards) and it can be reused by another connection
-        await using var dataSource = CreateDataSource();
+        await using var dataSource = CreateDataSource(x => x.IncludeFailedBatchedCommand = true);
         await using var conn = await dataSource.OpenConnectionAsync();
         var table = await CreateTempTable(conn, "id INT");
 
@@ -599,7 +599,7 @@ public class BatchTests : MultiplexingTestBase
         Assert.That(await conn.ExecuteScalarAsync($"SELECT id FROM {table} ORDER BY id"), Is.EqualTo(9));
     }
 
-    [Test, Timeout(1500)] // EnterpriseDB (timeout)
+    [Test, CancelAfter(1500)] // EnterpriseDB (timeout)
     public async Task AppendErrorBarrier_on_last_command([Values] bool enabled)
     {
         await using var conn = await OpenConnectionAsync();
@@ -676,12 +676,30 @@ public class BatchTests : MultiplexingTestBase
     }
 
     [Test]
-    public async Task Semicolon_is_not_allowed()
+    public async Task Semicolon_is_not_allowed_with_no_parameters()
     {
         await using var conn = await OpenConnectionAsync();
         await using var batch = new EDBBatch(conn)
         {
             BatchCommands = { new("SELECT 1; SELECT 2") }
+        };
+
+        Assert.That(() => batch.ExecuteReaderAsync(Behavior), Throws.Exception.TypeOf<PostgresException>());
+    }
+
+    [Test]
+    public async Task Semicolon_is_not_allowed_with_named_parameters()
+    {
+        await using var conn = await OpenConnectionAsync();
+        await using var batch = new EDBBatch(conn)
+        {
+            BatchCommands =
+            {
+                new("SELECT @p1; SELECT 2")
+                {
+                    Parameters = { new("p1", 1) }
+                }
+            }
         };
 
         Assert.That(() => batch.ExecuteReaderAsync(Behavior), Throws.Exception.TypeOf<NotSupportedException>());
@@ -709,7 +727,7 @@ LANGUAGE 'plpgsql'");
         // resources are referenced by the exception above, which is very likely to escape the using statement of the command.
         batch.Dispose();
         var cmd2 = conn.CreateBatch();
-        Assert.AreNotSame(cmd2, batch);
+        Assert.That(batch, Is.Not.SameAs(cmd2));
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/967")]
@@ -739,7 +757,7 @@ LANGUAGE 'plpgsql'");
         // resources are referenced by the exception above, which is very likely to escape the using statement of the command.
         batch.Dispose();
         var cmd2 = conn.CreateBatch();
-        Assert.AreNotSame(cmd2, batch);
+        Assert.That(batch, Is.Not.SameAs(cmd2));
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/4202")]
@@ -770,7 +788,7 @@ LANGUAGE 'plpgsql'");
         }
     }
 
-#if NET6_0_OR_GREATER // no batch reuse until 6.0
+#if NET8_0_OR_GREATER // no batch reuse until 6.0
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5239")]
     public async Task Batch_dispose_reuse()
     {
@@ -814,11 +832,16 @@ LANGUAGE 'plpgsql'");
     readonly CommandBehavior Behavior;
     // ReSharper restore InconsistentNaming
 
+    EDBDataSource? _dataSource;
+    protected override EDBDataSource DataSource => _dataSource ??= CreateDataSource(csb => csb.IncludeFailedBatchedCommand = true);
+
     public BatchTests(MultiplexingMode multiplexingMode, CommandBehavior behavior) : base(multiplexingMode)
     {
         Behavior = behavior;
         IsSequential = (Behavior & CommandBehavior.SequentialAccess) != 0;
     }
+
+    public void Dispose() => DataSource.Dispose();
 
     #endregion
 }

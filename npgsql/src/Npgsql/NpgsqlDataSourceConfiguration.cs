@@ -14,7 +14,7 @@ sealed record EDBDataSourceConfiguration(string? Name,
     EDBTypeLoadingOptions TypeLoading,
     TransportSecurityHandler TransportSecurityHandler,
     IntegratedSecurityHandler IntegratedSecurityHandler,
-#if NET7_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     Action<SslClientAuthenticationOptions>? SslClientAuthenticationOptionsCallback,
 #else
     RemoteCertificateValidationCallback? UserCertificateValidationCallback,
@@ -26,11 +26,11 @@ sealed record EDBDataSourceConfiguration(string? Name,
     TimeSpan PeriodicPasswordSuccessRefreshInterval,
     TimeSpan PeriodicPasswordFailureRefreshInterval,
     PgTypeInfoResolverChain ResolverChain,
-    List<HackyEnumTypeMapping> HackyEnumMappings,
+    IEnumerable<DbTypeResolverFactory> DbTypeResolverFactories,
     IEDBNameTranslator DefaultNameTranslator,
     Action<EDBConnection>? ConnectionInitializer,
     Func<EDBConnection, Task>? ConnectionInitializerAsync
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     ,Action<NegotiateAuthenticationClientOptions>? NegotiateOptionsCallback
 #endif
     );

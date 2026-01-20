@@ -29,6 +29,7 @@ public class EDBAS13Tests : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     [Test, EDBExplicit("EC-1339")]

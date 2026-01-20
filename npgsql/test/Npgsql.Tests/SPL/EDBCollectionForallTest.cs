@@ -47,6 +47,7 @@ internal class EDBCollectionForallTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -129,7 +130,7 @@ internal class EDBCollectionForallTest : EPASTestBase
         }
 
         var count = getEmpCount();
-        Assert.AreEqual(5, count);
+        Assert.That(count, Is.EqualTo(5));
     }
 
     [Test]
@@ -168,9 +169,9 @@ internal class EDBCollectionForallTest : EPASTestBase
             cstmt.ExecuteNonQuery();
         }
 
-        Assert.AreEqual(3350.00, getEmpSalary(9001), 0.01);
-        Assert.AreEqual(2000.00, getEmpSalary(9002), 0.01);
-        Assert.AreEqual(4100.00, getEmpSalary(9003), 0.01);
+        Assert.That(getEmpSalary(9001), Is.EqualTo(3350.00).Within(0.01));
+        Assert.That(getEmpSalary(9002), Is.EqualTo(2000.00).Within(0.01));
+        Assert.That(getEmpSalary(9003), Is.EqualTo(4100.00).Within(0.01));
     }
 
     [Test]
@@ -205,7 +206,7 @@ internal class EDBCollectionForallTest : EPASTestBase
         }
 
         var count = getEmpCount();
-        Assert.AreEqual(2, count);
+        Assert.That(count, Is.EqualTo(2));
     }
 }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.

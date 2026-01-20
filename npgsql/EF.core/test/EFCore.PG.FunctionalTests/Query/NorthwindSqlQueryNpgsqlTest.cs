@@ -1,6 +1,6 @@
 using System.Data.Common;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+namespace Microsoft.EntityFrameworkCore.Query;
 
 public class NorthwindSqlQueryNpgsqlTest : NorthwindSqlQueryTestBase<NorthwindQueryNpgsqlFixture<NoopModelCustomizer>>
 {

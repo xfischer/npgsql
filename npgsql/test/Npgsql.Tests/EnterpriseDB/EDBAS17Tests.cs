@@ -49,7 +49,7 @@ internal class EDBAS17Tests : EPASTestBase
             com.CommandText = query;
             var reader = await com.ExecuteReaderAsync();
 
-            Assert.IsTrue(reader.HasRows);
+            Assert.That(reader.HasRows);
 
             if (await reader.ReadAsync())
             {
@@ -74,15 +74,15 @@ internal class EDBAS17Tests : EPASTestBase
             com.CommandText = query;
             var reader = await com.ExecuteReaderAsync();
 
-            Assert.IsTrue(reader.HasRows);
+            Assert.That(reader.HasRows);
 
             var i = 0;
             while (await reader.ReadAsync())
             {
-                Assert.AreEqual(expected[i], reader.GetString(0));
+                Assert.That(reader.GetString(0), Is.EqualTo(expected[i]));
                 i++;
             }
-            Assert.AreEqual(expected.Length, i);
+            Assert.That(i, Is.EqualTo(expected.Length));
             await reader.CloseAsync();
         }
         catch (Exception ex)
@@ -149,18 +149,18 @@ internal class EDBAS17Tests : EPASTestBase
         //await ExecuteSimpleReader(conn, "SELECT edb_nls_cf_insert('xdanish', 'default')");
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT nls_upper('Gloße', 'NLS_SORT = xdanish');");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("GLOßE", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("GLOßE"));
 
         //await ExecuteSimpleReader(conn, "SELECT edb_nls_cf_insert('xdanish', '\"pg_catalog\".\"da-x-icu\"')");
 
         //var val2 = await ExecuteSimpleReader(conn, "SELECT nls_upper('Gloße', 'NLS_SORT = xdanish');");
-        //Assert.IsNotNull(val2);
-        //Assert.AreEqual("GLOSSE", val2.ToString());
+        //Assert.That(val2, Is.Not.Null);
+        //Assert.That(val2.ToString(), Is.EqualTo("GLOSSE"));
 
         var val3 = await ExecuteSimpleReader(conn, "SELECT nls_upper('abcDef', 'NLS_SORT = XGERMAN');");
-        Assert.IsNotNull(val3);
-        Assert.AreEqual("ABCDEF", val3!.ToString());
+        Assert.That(val3, Is.Not.Null);
+        Assert.That(val3!.ToString(), Is.EqualTo("ABCDEF"));
     }
 
     //--DB-2158 : Implement Oracle NLS_LOWER function in Advanced Server
@@ -179,17 +179,17 @@ internal class EDBAS17Tests : EPASTestBase
         //await ExecuteSimpleReader(conn, "SELECT edb_nls_cf_insert('xturkish', 'default')");
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT nls_lower('FASILƏ', 'NLS_SORT = XTURKISH');");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("fasilə", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("fasilə"));
 
 
         //var val2 = await ExecuteSimpleReader(conn, "SELECT nls_lower('FASILƏ', 'NLS_SORT = XTURKISH');");
-        //Assert.IsNotNull(val2);
-        //Assert.AreEqual("fasılə", val2.ToString());
+        //Assert.That(val2, Is.Not.Null);
+        //Assert.That(val2.ToString(), Is.EqualTo("fasılə"));
 
         var val3 = await ExecuteSimpleReader(conn, "SELECT nls_lower('AbcDeF pQr', 'NLS_SORT = XAZERBAIJANI');");
-        Assert.IsNotNull(val3);
-        Assert.AreEqual("abcdef pqr", val3!.ToString());
+        Assert.That(val3, Is.Not.Null);
+        Assert.That(val3!.ToString(), Is.EqualTo("abcdef pqr"));
     }
 
     //--DB-2159 : Implement Oracle NLS_INITCAP function in Advanced Server
@@ -208,18 +208,18 @@ internal class EDBAS17Tests : EPASTestBase
         //await ExecuteSimpleReader(conn, "SELECT edb_nls_cf_insert('xdutch', 'default')");
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT nls_initcap('ijsland', 'NLS_SORT = XDUTCH');");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("Ijsland", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("Ijsland"));
 
         //await ExecuteSimpleReader(conn, "SELECT edb_nls_cf_insert('xdutch', '\"pg_catalog\".\"nl-NL-x-icu\"')");
 
         //var val2 = await ExecuteSimpleReader(conn, "SELECT nls_initcap('ijsland', 'NLS_SORT = XDUTCH');");
-        //Assert.IsNotNull(val2);
-        //Assert.AreEqual("IJsland", val2.ToString());
+        //Assert.That(val2, Is.Not.Null);
+        //Assert.That(val2.ToString(), Is.EqualTo("IJsland"));
 
         var val3 = await ExecuteSimpleReader(conn, "SELECT nls_initcap('abcDef pQr', 'NLS_SORT = XTURKISH');");
-        Assert.IsNotNull(val3);
-        Assert.AreEqual("Abcdef Pqr", val3!.ToString());
+        Assert.That(val3, Is.Not.Null);
+        Assert.That(val3!.ToString(), Is.EqualTo("Abcdef Pqr"));
     }
 
     //--DB-1953 : nvl: consider making first argument be of type "any"
@@ -255,8 +255,8 @@ internal class EDBAS17Tests : EPASTestBase
 
         var procMsg = "date = 01-JAN-00 00:00:00";
         var message1 = await ExecuteProcNotice(conn, "core_pkg_nvl_date.test");
-        Assert.AreEqual(1, message1.Count);
-        Assert.AreEqual(procMsg, message1[0]);
+        Assert.That(message1.Count, Is.EqualTo(1));
+        Assert.That(message1[0], Is.EqualTo(procMsg));
     }
 
     private static async Task SetUpXMLType(EDBConnection conn)
@@ -441,10 +441,10 @@ internal class EDBAS17Tests : EPASTestBase
     ];
 
         var messages = await ExecuteProcNotice(conn, "xml_funcs_proc");
-        Assert.AreEqual(3, messages.Count);
-        Assert.AreEqual(values[0], messages[0]);
-        Assert.AreEqual(values[1], messages[1]);
-        Assert.AreEqual(values[2], messages[2]);
+        Assert.That(messages.Count, Is.EqualTo(3));
+        Assert.That(messages[0], Is.EqualTo(values[0]));
+        Assert.That(messages[1], Is.EqualTo(values[1]));
+        Assert.That(messages[2], Is.EqualTo(values[2]));
     }
 
     private static async Task SetUpXMLDOM(EDBConnection conn)
@@ -508,9 +508,9 @@ internal class EDBAS17Tests : EPASTestBase
     ];
 
         var messages = await ExecuteProcNotice(conn, "xml_dom_proc1");
-        Assert.AreEqual(2, messages.Count);
-        Assert.AreEqual(values[0], messages[0]);
-        Assert.AreEqual(values[1], messages[1]);
+        Assert.That(messages.Count, Is.EqualTo(2));
+        Assert.That(messages[0], Is.EqualTo(values[0]));
+        Assert.That(messages[1], Is.EqualTo(values[1]));
     }
 
     //--DB-2579 : Implementation of DBMS_XMLDOM package in EPAS
@@ -529,8 +529,8 @@ internal class EDBAS17Tests : EPASTestBase
     ];
 
         var messages = await ExecuteProcNotice(conn, "xml_dom_proc2");
-        Assert.AreEqual(1, messages.Count);
-        Assert.AreEqual(values[0], messages[0]);
+        Assert.That(messages.Count, Is.EqualTo(1));
+        Assert.That(messages[0], Is.EqualTo(values[0]));
     }
 
     private static async Task SetUpDbmsAssert(EDBConnection conn)
@@ -602,8 +602,8 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpDbmsAssert(conn);
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT 'test' || SYS.DBMS_ASSERT.ENQUOTE_NAME('  \"ObjectName\"  ') || 'test' FROM dual");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("test  \"ObjectName\"  test", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("test  \"ObjectName\"  test"));
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
@@ -619,8 +619,8 @@ internal class EDBAS17Tests : EPASTestBase
         //This query returns <DB>.sys so we get database from connection.
         var db = conn.Database;
         var val1 = await ExecuteSimpleReader(conn, "SELECT SYS.DBMS_ASSERT.SCHEMA_NAME(current_database() || '.sys') FROM DUAL");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual(db + ".sys", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo(db + ".sys"));
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
@@ -634,8 +634,8 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpDbmsAssert(conn);
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT SYS.DBMS_ASSERT.SQL_OBJECT_NAME('t1_dbassert') FROM DUAL");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("t1_dbassert", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("t1_dbassert"));
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
@@ -649,8 +649,8 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpDbmsAssert(conn);
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT SYS.DBMS_ASSERT.SQL_OBJECT_NAME('こんにちは') FROM DUAL");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("こんにちは", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("こんにちは"));
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
@@ -664,8 +664,8 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpDbmsAssert(conn);
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT SYS.DBMS_ASSERT.SIMPLE_SQL_NAME('ABCD789$#_zxcvbnm') FROM DUAL");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("ABCD789$#_zxcvbnm", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("ABCD789$#_zxcvbnm"));
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
@@ -679,8 +679,8 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpDbmsAssert(conn);
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT SYS.DBMS_ASSERT.QUALIFIED_SQL_NAME('aaa.bbb.ccc.\"aaaa\"\"aaa\"') FROM DUAL");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("aaa.bbb.ccc.\"aaaa\"\"aaa\"", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("aaa.bbb.ccc.\"aaaa\"\"aaa\""));
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
@@ -694,16 +694,16 @@ internal class EDBAS17Tests : EPASTestBase
         await SetUpDbmsAssert(conn);
 
         var val1 = await ExecuteSimpleReader(conn, "SELECT dbms_assert.enquote_literal('ENQUOTE LITERAL') FROM DUAL");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("\'ENQUOTE LITERAL\'", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("\'ENQUOTE LITERAL\'"));
 
         val1 = await ExecuteSimpleReader(conn, "SELECT dbms_assert.enquote_literal('ENQUOTE '''' LITERAL') FROM DUAL");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("\'ENQUOTE '' LITERAL\'", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("\'ENQUOTE '' LITERAL\'"));
 
         val1 = await ExecuteSimpleReader(conn, "SELECT dbms_assert.enquote_literal('''ENQUOTE LITERAL''') FROM DUAL");
-        Assert.IsNotNull(val1);
-        Assert.AreEqual("\'ENQUOTE LITERAL\'", val1!.ToString());
+        Assert.That(val1, Is.Not.Null);
+        Assert.That(val1!.ToString(), Is.EqualTo("\'ENQUOTE LITERAL\'"));
     }
 
     //--DB-1961 : Implement the Oracle DBMS_ASSERT package in Advanced Server
@@ -911,15 +911,15 @@ internal class EDBAS17Tests : EPASTestBase
         com.CommandText = "SELECT col1_2235, col2_2235 FROM table1_2235";
         var reader = await com.ExecuteReaderAsync();
 
-        Assert.IsTrue(reader.HasRows);
+        Assert.That(reader.HasRows);
 
-        Assert.IsTrue(await reader.ReadAsync());
-        Assert.AreEqual(10, reader.GetInt32(0));
-        Assert.AreEqual("tmp_2235,\"file1_2235.txt\"", reader.GetValue(1).ToString());
+        Assert.That(await reader.ReadAsync());
+        Assert.That(reader.GetInt32(0), Is.EqualTo(10));
+        Assert.That(reader.GetValue(1).ToString(), Is.EqualTo("tmp_2235,\"file1_2235.txt\""));
 
-        Assert.IsTrue(await reader.ReadAsync());
-        Assert.AreEqual(20, reader.GetInt32(0));
-        Assert.AreEqual("wrongdir,\"file2_2235.txt\"", reader.GetValue(1).ToString());
+        Assert.That(await reader.ReadAsync());
+        Assert.That(reader.GetInt32(0), Is.EqualTo(20));
+        Assert.That(reader.GetValue(1).ToString(), Is.EqualTo("wrongdir,\"file2_2235.txt\""));
 
         await reader.CloseAsync();
     }
@@ -941,8 +941,8 @@ internal class EDBAS17Tests : EPASTestBase
         await CreateTestFileAsync();
 
         var messages = await ExecuteProcNotice(conn, "displaybfile_proc");
-        Assert.AreEqual(1, messages.Count);
-        Assert.AreEqual(expected, messages[0]);
+        Assert.That(messages.Count, Is.EqualTo(1));
+        Assert.That(messages[0], Is.EqualTo(expected));
     }
 
     private static async Task CreateTestFileAsync()
@@ -973,8 +973,8 @@ internal class EDBAS17Tests : EPASTestBase
     ];
 
         var messages = await ExecuteProcNotice(conn, "substringbfile_proc");
-        Assert.AreEqual(2, messages.Count);
-        Assert.AreEqual(values[0], messages[0]);
-        Assert.AreEqual(values[1], messages[1]);
+        Assert.That(messages.Count, Is.EqualTo(2));
+        Assert.That(messages[0], Is.EqualTo(values[0]));
+        Assert.That(messages[1], Is.EqualTo(values[1]));
     }
 }

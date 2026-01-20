@@ -14,7 +14,7 @@ sealed class GuidUuidConverter : PgBufferedConverter<Guid>
     protected override Guid ReadCore(PgReader reader)
     {
 #if NET8_0_OR_GREATER
-        return new Guid(reader.ReadBytes(16).FirstSpan, bigEndian: true);
+        return new(reader.ReadBytes(16).FirstSpan, bigEndian: true);
 #else
         return new GuidRaw
         {

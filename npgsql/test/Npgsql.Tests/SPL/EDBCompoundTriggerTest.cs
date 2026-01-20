@@ -54,7 +54,12 @@ internal class EDBCompoundTriggerTest : EPASTestBase
     }
 
     [TearDown]
-    public void Dispose() => TestUtil.closeDB(conn);
+    public void Dispose()
+    {
+        TestUtil.closeDB(conn);
+
+        conn?.Dispose();
+    }
 
     private void Execute(string query)
     {
@@ -158,11 +163,11 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             Execute(insertSql);
 
             mre.WaitOne(5000);
-            Assert.AreEqual(FIRST_TRIGGER_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(FIRST_TRIGGER_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(FIRST_TRIGGER_RESULT[i]));
             }
         }
         finally
@@ -195,11 +200,11 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             Execute(updateSql);
 
             mre.WaitOne(5000);
-            Assert.AreEqual(FIRST_TRIGGER_RESULT.Length, notices.Count);
+            Assert.That(FIRST_TRIGGER_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice?.MessageText);
+                Assert.That(FIRST_TRIGGER_RESULT[i], Is.EqualTo(notice?.MessageText));
             }
         }
         finally
@@ -231,11 +236,11 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             Execute(deleteSql);
 
             mre.WaitOne(5000);
-            Assert.AreEqual(FIRST_TRIGGER_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(FIRST_TRIGGER_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(FIRST_TRIGGER_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(FIRST_TRIGGER_RESULT[i]));
             }
         }
         finally
@@ -268,11 +273,11 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             Execute(sql);
 
             mre.WaitOne(5000);
-            Assert.AreEqual(TRUNCATE_TRIGGER_RESULT.Length, notices.Count);
+            Assert.That(TRUNCATE_TRIGGER_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(TRUNCATE_TRIGGER_RESULT[i], notice?.MessageText);
+                Assert.That(TRUNCATE_TRIGGER_RESULT[i], Is.EqualTo(notice?.MessageText));
             }
         }
         finally
@@ -347,11 +352,11 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             Execute(insertSql);
 
             mre.WaitOne(5000);
-            Assert.AreEqual(CONDITIONAL_TRIGGER_INSERT_RESULT.Length, notices.Count);
+            Assert.That(CONDITIONAL_TRIGGER_INSERT_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CONDITIONAL_TRIGGER_INSERT_RESULT[i], notice?.MessageText);
+                Assert.That(CONDITIONAL_TRIGGER_INSERT_RESULT[i], Is.EqualTo(notice?.MessageText));
             }
         }
         finally
@@ -385,11 +390,11 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             Execute(updateSql);
 
             mre.WaitOne(5000);
-            Assert.AreEqual(CONDITIONAL_TRIGGER_UPDATE_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(CONDITIONAL_TRIGGER_UPDATE_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CONDITIONAL_TRIGGER_UPDATE_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(CONDITIONAL_TRIGGER_UPDATE_RESULT[i]));
             }
         }
         finally
@@ -422,11 +427,11 @@ internal class EDBCompoundTriggerTest : EPASTestBase
             Execute(deleteSql);
 
             mre.WaitOne(5000);
-            Assert.AreEqual(CONDITIONAL_TRIGGER_DELETE_RESULT.Length, notices.Count);
+            Assert.That(CONDITIONAL_TRIGGER_DELETE_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CONDITIONAL_TRIGGER_DELETE_RESULT[i], notice?.MessageText);
+                Assert.That(CONDITIONAL_TRIGGER_DELETE_RESULT[i], Is.EqualTo(notice?.MessageText));
             }
         }
         finally

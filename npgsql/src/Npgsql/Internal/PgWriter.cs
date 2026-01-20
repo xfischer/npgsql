@@ -259,7 +259,7 @@ public sealed class PgWriter
 
     public void WriteFloat(float value)
     {
-#if NET5_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         Ensure(sizeof(float));
         BinaryPrimitives.WriteSingleBigEndian(Span, value);
         Advance(sizeof(float));
@@ -270,7 +270,7 @@ public sealed class PgWriter
 
     public void WriteDouble(double value)
     {
-#if NET5_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         Ensure(sizeof(double));
         BinaryPrimitives.WriteDoubleBigEndian(Span, value);
         Advance(sizeof(double));
@@ -306,7 +306,7 @@ public sealed class PgWriter
                 if (ShouldFlush(minBufferSize))
                     Flush();
                 Ensure(minBufferSize);
-                encoder.Convert(data, Span, flush: data.Length <= Span.Length, out var charsUsed, out var bytesUsed, out completed);
+                encoder.Convert(data, Span, flush: true, out var charsUsed, out var bytesUsed, out completed);
                 data = data.Slice(charsUsed);
                 Advance(bytesUsed);
             } while (!completed);
@@ -342,7 +342,7 @@ public sealed class PgWriter
                 if (ShouldFlush(minBufferSize))
                     await FlushAsync(cancellationToken).ConfigureAwait(false);
                 Ensure(minBufferSize);
-                encoder.Convert(data.Span, Span, flush: data.Length <= Span.Length, out var charsUsed, out var bytesUsed, out completed);
+                encoder.Convert(data.Span, Span, flush: true, out var charsUsed, out var bytesUsed, out completed);
                 data = data.Slice(charsUsed);
                 Advance(bytesUsed);
             } while (!completed);
@@ -469,7 +469,7 @@ public sealed class PgWriter
             return Core(async, cancellationToken);
 
         return new(new NestedWriteScope());
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
         async ValueTask<NestedWriteScope> Core(bool async, CancellationToken cancellationToken)
@@ -511,7 +511,7 @@ public sealed class PgWriter
             if (count < 0)
                 throw new ArgumentNullException(nameof(count));
             if (buffer.Length - offset < count)
-                throw new ArgumentException("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
+                ThrowHelper.ThrowArgumentException("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
 
             if (async)
             {

@@ -3,7 +3,6 @@
   <Import Project="..\Directory.Build.props" />
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
     <IsPackable>false</IsPackable>
 	<SonarQubeTestProject>true</SonarQubeTestProject>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>

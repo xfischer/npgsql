@@ -162,7 +162,7 @@ partial class EDBConnector
 
         /*EDB should change to goto etc*/
         var databaseInfo = DatabaseInfo;
-        for (int i = 0; i < localParameters.Count; i++)
+        for (var i = 0; i < localParameters.Count; i++)
         {
             Postgres.Oid oid = 0;
             if (localParameters[i].DataTypeName != null)
@@ -180,7 +180,7 @@ partial class EDBConnector
 
         }
 
-        for (int i = 0; i < localParameters.Count; i++)
+        for (var i = 0; i < localParameters.Count; i++)
         {
             // PGUtil.WriteInt16(outputStream, Convert.ToInt16(EDBParameter.NetParamDirectionToEDBParamDirection(localParameters[i].Direction)));
             WriteBuffer.WriteInt16((short)EDBParameter.NetParamDirectionToEDBParamDirection(localParameters[i].Direction));
@@ -226,7 +226,7 @@ partial class EDBConnector
             {
                 param.Value = null;
             }
-            param.ResolveTypeInfo(SerializerOptions);
+            param.ResolveTypeInfo(SerializerOptions, DbTypeResolver);
             param.Bind(out _, out var size, allResultTypesAreUnknown ? DataFormat.Text : null);
 
             if (!param.IsOutReturnDirectionStrict)
@@ -554,7 +554,7 @@ partial class EDBConnector
     internal Task WriteClose(StatementOrPortal type, byte[] asciiName, bool async, CancellationToken cancellationToken = default)
     {
         var len = sizeof(byte) +               // Message code
-                  sizeof(int) +               // Length
+                  sizeof(int)  +               // Length
                   sizeof(byte) +               // Statement or portal
                   asciiName.Length + sizeof(byte);  // Statement or portal name plus null terminator
 
@@ -680,6 +680,19 @@ partial class EDBConnector
 
         WriteBuffer.WriteInt32(len);
         WriteBuffer.WriteInt32(80877103);
+    }
+
+    internal void WriteGSSEncryptRequest()
+    {
+        const int len = sizeof(int) +  // Length
+                        sizeof(int);   // GSSEnc request code
+
+        WriteBuffer.StartMessage(len);
+        if (WriteBuffer.WriteSpaceLeft < len)
+            Flush(false).GetAwaiter().GetResult();
+
+        WriteBuffer.WriteInt32(len);
+        WriteBuffer.WriteInt32(80877104);
     }
 
     internal void WriteStartup(Dictionary<string, string> parameters)

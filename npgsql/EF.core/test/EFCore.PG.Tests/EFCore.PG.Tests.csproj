@@ -3,6 +3,7 @@
   <PropertyGroup>
     <AssemblyName>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Tests</AssemblyName>
     <RootNamespace>EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL</RootNamespace>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,9 +20,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
 
-    <!-- Needed to override xunit dependencies from EFCore projects on versions which aren't available on nuget.org -->
-    <PackageReference Include="xunit.assert" />
-    <PackageReference Include="xunit.core" />
   </ItemGroup>
 
 </Project>

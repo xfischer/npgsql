@@ -1,7 +1,7 @@
 ﻿
 namespace System.Diagnostics.CodeAnalysis
 {
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
     /// <summary>
     /// Indicates that the specified method requires the ability to generate new code at runtime,
     /// for example through <see cref="System.Reflection"/>.
@@ -107,7 +107,7 @@ namespace System.Diagnostics.CodeAnalysis
     }
 #endif
 
-#if !NET5_0_OR_GREATER
+#if !NET8_0_OR_GREATER
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
     sealed class MemberNotNullAttribute : Attribute
     {
@@ -211,10 +211,10 @@ namespace System.Diagnostics.CodeAnalysis
 
 namespace System.Runtime.CompilerServices
 {
-#if !NET5_0_OR_GREATER
+#if !NET8_0_OR_GREATER
     static class IsExternalInit {}
 #endif
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
     sealed class RequiredMemberAttribute : Attribute
     { }

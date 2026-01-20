@@ -1,4 +1,4 @@
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+namespace Microsoft.EntityFrameworkCore.Query;
 
 public class TPCManyToManyQueryNpgsqlTest : TPCManyToManyQueryRelationalTestBase<TPCManyToManyQueryNpgsqlFixture>
 {

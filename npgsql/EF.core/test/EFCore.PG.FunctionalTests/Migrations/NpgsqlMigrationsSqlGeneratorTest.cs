@@ -3,9 +3,8 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations.Operations;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Migrations;
+namespace Microsoft.EntityFrameworkCore.Migrations;
 
 public class NpgsqlMigrationsSqlGeneratorTest() : MigrationsSqlGeneratorTestBase(
     NpgsqlTestHelpers.Instance,
@@ -615,7 +614,7 @@ INTERLEAVE IN PARENT my_schema.my_parent (col_a, col_b);
                             Schema = "dbo",
                             Columns = ["First Name"],
                             ColumnTypes = ["foo"],
-                            Values = new object[,] { { null } }
+                            Values = new object?[,] { { null } }
                         })).Message);
 
 #pragma warning restore 618

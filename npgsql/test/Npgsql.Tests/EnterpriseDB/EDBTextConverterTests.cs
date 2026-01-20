@@ -10,27 +10,27 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 public class EDBTextConverterTests
 {
     [Test]
-    [TestCaseSource("BackendDataCases")]
+    [TestCaseSource(nameof(BackendDataCases))]
     public void TestArrayParsing(string data, int numRows, int numTupleColumns)
     {
         var result = ArrayBackendToNativeTypeConverter.ToList(data, null, null);
 
-        Assert.IsNotNull(result);
-        Assert.AreEqual(numRows, result.Count);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Count, Is.EqualTo(numRows));
 
         if (numTupleColumns == 1)
         {
-            CollectionAssert.AllItemsAreInstancesOfType(result, typeof(string));
+            Assert.That(result, Is.All.InstanceOf<string>());
         }
         else
         {
-            CollectionAssert.AllItemsAreInstancesOfType(result, typeof(List<object>));
+            Assert.That(result, Is.All.InstanceOf<List<object>>());
             foreach (var subItem in result)
             {
                 var tupleArray = ((List<object>)subItem);
 
-                Assert.AreEqual(numTupleColumns, tupleArray.Count);
-                CollectionAssert.AllItemsAreInstancesOfType(tupleArray, typeof(string));
+                Assert.That(tupleArray.Count, Is.EqualTo(numTupleColumns));
+                Assert.That(tupleArray, Is.All.InstanceOf<string>());
             }
         }
 
@@ -42,7 +42,7 @@ public class EDBTextConverterTests
     {
         var result = BackendTextEnumerator.EnumerateTokens(data).ToList();
 
-        Assert.AreEqual(numRows * numTupleColumns, result.Count);
+        Assert.That(result.Count, Is.EqualTo(numRows * numTupleColumns));
 
     }
 
@@ -51,13 +51,13 @@ public class EDBTextConverterTests
     public void MoneyParsingTests(string data, decimal expected)
     {
         var value = StringToNativeConverter.ParseMoney(data);
-        Assert.AreEqual(expected, value);
+        Assert.That(value, Is.EqualTo(expected));
 
         foreach (var culture in CultureInfo.GetCultures(CultureTypes.AllCultures))
         {
             var localized = expected.ToString(culture);
             value = StringToNativeConverter.ParseMoney(localized);
-            Assert.AreEqual(expected, value);
+            Assert.That(value, Is.EqualTo(expected));
         }
 
         expected *= -1;
@@ -66,7 +66,7 @@ public class EDBTextConverterTests
         {
             var localized = expected.ToString(culture);
             value = StringToNativeConverter.ParseMoney(localized);
-            Assert.AreEqual(expected, value);
+            Assert.That(value, Is.EqualTo(expected));
         }
     }
 

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Internal;
+using InfiniteTimeout = System.Threading.Timeout;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
 #pragma warning disable 1591
@@ -28,7 +29,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
     EDBWriteBuffer _writeBuf;
 
     int _leftToReadInDataMsg;
-    bool _isDisposed, _isConsumed;
+    CopyStreamState _state = CopyStreamState.Uninitialized;
 
     bool _canRead;
     bool _canWrite;
@@ -42,12 +43,12 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
     public override int WriteTimeout
     {
         get => (int)_writeBuf.Timeout.TotalMilliseconds;
-        set => _writeBuf.Timeout = TimeSpan.FromMilliseconds(value);
+        set => _writeBuf.Timeout = value > 0 ? TimeSpan.FromMilliseconds(value) : InfiniteTimeout.InfiniteTimeSpan;
     }
     public override int ReadTimeout
     {
         get => (int) _readBuf.Timeout.TotalMilliseconds;
-        set => _readBuf.Timeout = TimeSpan.FromMilliseconds(value);
+        set => _readBuf.Timeout = value > 0 ? TimeSpan.FromMilliseconds(value) : InfiniteTimeout.InfiniteTimeSpan;
     }
 
     /// <summary>
@@ -60,6 +61,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
     ];
 
     readonly ILogger _copyLogger;
+    Activity? _activity;
 
     #endregion
 
@@ -73,34 +75,54 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
         _copyLogger = connector.LoggingConfiguration.CopyLogger;
     }
 
-    internal async Task Init(string copyCommand, bool async, CancellationToken cancellationToken = default)
+    internal async Task Init(string copyCommand, bool async, bool? forExport, CancellationToken cancellationToken = default)
     {
-        await _connector.WriteQuery(copyCommand, async, cancellationToken).ConfigureAwait(false);
-        await _connector.Flush(async, cancellationToken).ConfigureAwait(false);
-
-        using var registration = _connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
-
-        var msg = await _connector.ReadMessage(async).ConfigureAwait(false);
-        switch (msg.Code)
+        Debug.Assert(_activity is null);
+        _activity = _connector.TraceCopyStart(copyCommand, forExport switch
         {
-        case BackendMessageCode.CopyInResponse:
-            var copyInResponse = (CopyInResponseMessage)msg;
-            IsBinary = copyInResponse.IsBinary;
-            _canWrite = true;
-            _writeBuf.StartCopyMode();
-            break;
-        case BackendMessageCode.CopyOutResponse:
-            var copyOutResponse = (CopyOutResponseMessage)msg;
-            IsBinary = copyOutResponse.IsBinary;
-            _canRead = true;
-            break;
-        case BackendMessageCode.CommandComplete:
-            throw new InvalidOperationException(
-                "This API only supports import/export from the client, i.e. COPY commands containing TO/FROM STDIN. " +
-                "To import/export with files on your PostgreSQL machine, simply execute the command with ExecuteNonQuery. " +
-                "Note that your data has been successfully imported/exported.");
-        default:
-            throw _connector.UnexpectedMessageReceived(msg.Code);
+            true => "COPY TO",
+            false => "COPY FROM",
+            null => "COPY",
+        });
+
+        try
+        {
+            await _connector.WriteQuery(copyCommand, async, cancellationToken).ConfigureAwait(false);
+            await _connector.Flush(async, cancellationToken).ConfigureAwait(false);
+
+            using var registration = _connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
+
+            var msg = await _connector.ReadMessage(async).ConfigureAwait(false);
+            switch (msg.Code)
+            {
+            case BackendMessageCode.CopyInResponse:
+                _state = CopyStreamState.Ready;
+                var copyInResponse = (CopyInResponseMessage)msg;
+                IsBinary = copyInResponse.IsBinary;
+                _canWrite = true;
+                _writeBuf.StartCopyMode();
+                TraceSetImport();
+                break;
+            case BackendMessageCode.CopyOutResponse:
+                _state = CopyStreamState.Ready;
+                var copyOutResponse = (CopyOutResponseMessage)msg;
+                IsBinary = copyOutResponse.IsBinary;
+                _canRead = true;
+                TraceSetExport();
+                break;
+            case BackendMessageCode.CommandComplete:
+                throw new InvalidOperationException(
+                    "This API only supports import/export from the client, i.e. COPY commands containing TO/FROM STDIN. " +
+                    "To import/export with files on your PostgreSQL machine, simply execute the command with ExecuteNonQuery. " +
+                    "Note that your data has been successfully imported/exported.");
+            default:
+                throw _connector.UnexpectedMessageReceived(msg.Code);
+            }
+        }
+        catch (Exception e)
+        {
+            TraceSetException(e);
+            throw;
         }
     }
 
@@ -261,7 +283,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
 
     async ValueTask<int> ReadCore(int count, bool async, CancellationToken cancellationToken = default)
     {
-        if (_isConsumed)
+        if (_state == CopyStreamState.Consumed)
             return 0;
 
         using var registration = _connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
@@ -275,10 +297,13 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
                 // read the next message
                 msg = await _connector.ReadMessage(async).ConfigureAwait(false);
             }
-            catch
+            catch (Exception e)
             {
-                if (!_isDisposed)
+                if (_state != CopyStreamState.Disposed)
+                {
+                    TraceSetException(e);
                     Cleanup();
+                }
                 throw;
             }
 
@@ -290,7 +315,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
             case BackendMessageCode.CopyDone:
                 Expect<CommandCompleteMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
                 Expect<ReadyForQueryMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
-                _isConsumed = true;
+                _state = CopyStreamState.Consumed;
                 return 0;
             default:
                 throw _connector.UnexpectedMessageReceived(msg.Code);
@@ -347,10 +372,18 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
             }
             catch (PostgresException e)
             {
+                // TODO: EDBBinaryImporter doesn't cleanup on cancellation
+                // And instead relies on users disposing the object
+                // We probably should do the same here
                 Cleanup();
 
                 if (e.SqlState != PostgresErrorCodes.QueryCanceled)
+                {
+                    TraceSetException(e);
                     throw;
+                }
+
+                TraceStop();
             }
         }
         else
@@ -372,10 +405,9 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
 #endif
         => DisposeAsync(disposing: true, async: true);
 
-
     async ValueTask DisposeAsync(bool disposing, bool async)
     {
-        if (_isDisposed || !disposing)
+        if (_state == CopyStreamState.Disposed || !disposing)
             return;
 
         try
@@ -384,18 +416,27 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
 
             if (CanWrite)
             {
-                await FlushAsync(async).ConfigureAwait(false);
-                _writeBuf.EndCopyMode();
-                await _connector.WriteCopyDone(async).ConfigureAwait(false);
-                await _connector.Flush(async).ConfigureAwait(false);
-                Expect<CommandCompleteMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
-                Expect<ReadyForQueryMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
+                try
+                {
+                    await FlushAsync(async).ConfigureAwait(false);
+                    _writeBuf.EndCopyMode();
+                    await _connector.WriteCopyDone(async).ConfigureAwait(false);
+                    await _connector.Flush(async).ConfigureAwait(false);
+                    Expect<CommandCompleteMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
+                    Expect<ReadyForQueryMessage>(await _connector.ReadMessage(async).ConfigureAwait(false), _connector);
+                    TraceStop();
+                }
+                catch (Exception e)
+                {
+                    TraceSetException(e);
+                    throw;
+                }
             }
             else
             {
-                if (!_isConsumed)
+                try
                 {
-                    try
+                    if (_state != CopyStreamState.Consumed && _state != CopyStreamState.Uninitialized)
                     {
                         if (_leftToReadInDataMsg > 0)
                         {
@@ -403,14 +444,18 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
                         }
                         _connector.SkipUntil(BackendMessageCode.ReadyForQuery);
                     }
-                    catch (OperationCanceledException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.QueryCanceled })
-                    {
-                        LogMessages.CopyOperationCancelled(_copyLogger, _connector.Id);
-                    }
-                    catch (Exception e)
-                    {
-                        LogMessages.ExceptionWhenDisposingCopyOperation(_copyLogger, _connector.Id, e);
-                    }
+
+                    TraceStop();
+                }
+                catch (OperationCanceledException e) when (e.InnerException is PostgresException { SqlState: PostgresErrorCodes.QueryCanceled })
+                {
+                    LogMessages.CopyOperationCancelled(_copyLogger, _connector.Id);
+                    TraceStop();
+                }
+                catch (Exception e)
+                {
+                    LogMessages.ExceptionWhenDisposingCopyOperation(_copyLogger, _connector.Id, e);
+                    TraceSetException(e);
                 }
             }
         }
@@ -423,7 +468,7 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
 #pragma warning disable CS8625
     void Cleanup()
     {
-        Debug.Assert(!_isDisposed);
+        Debug.Assert(_state != CopyStreamState.Disposed);
         LogMessages.CopyOperationCompleted(_copyLogger, _connector.Id);
         _connector.EndUserAction();
         _connector.CurrentCopyOperation = null;
@@ -431,13 +476,13 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
         _connector = null;
         _readBuf = null;
         _writeBuf = null;
-        _isDisposed = true;
+        _state = CopyStreamState.Disposed;
     }
 #pragma warning restore CS8625
 
     void CheckDisposed()
     {
-        if (_isDisposed) {
+        if (_state == CopyStreamState.Disposed) {
             throw new ObjectDisposedException(nameof(EDBRawCopyStream), "The COPY operation has already ended.");
         }
     }
@@ -472,9 +517,59 @@ public sealed class EDBRawCopyStream : Stream, ICancelable
         if (count < 0)
             throw new ArgumentNullException(nameof(count));
         if (buffer.Length - offset < count)
-            throw new ArgumentException("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
+            ThrowHelper.ThrowArgumentException("Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
     }
     #endregion
+
+    #region Tracing
+
+    private void TraceSetImport()
+    {
+        if (_activity is not null)
+        {
+            EDBActivitySource.SetOperation(_activity, "COPY FROM");
+        }
+    }
+
+    private void TraceSetExport()
+    {
+        if (_activity is not null)
+        {
+            EDBActivitySource.SetOperation(_activity, "COPY TO");
+        }
+    }
+
+    private void TraceStop()
+    {
+        if (_activity is not null)
+        {
+            EDBActivitySource.CopyStop(_activity);
+            _activity = null;
+        }
+    }
+
+    private void TraceSetException(Exception e)
+    {
+        if (_activity is not null)
+        {
+            EDBActivitySource.SetException(_activity, e);
+            _activity = null;
+        }
+    }
+
+    #endregion
+
+    #region Enums
+
+    enum CopyStreamState
+    {
+        Uninitialized,
+        Ready,
+        Consumed,
+        Disposed
+    }
+
+    #endregion Enums
 }
 
 /// <summary>
@@ -489,6 +584,20 @@ public sealed class EDBCopyTextWriter : StreamWriter, ICancelable
     {
         if (underlying.IsBinary)
             throw connector.Break(new Exception("Can't use a binary copy stream for text writing"));
+    }
+
+    /// <summary>
+    /// Gets or sets a value, in milliseconds, that determines how long the text writer will attempt to write before timing out.
+    /// </summary>
+    public int Timeout
+    {
+        get => ((EDBRawCopyStream)BaseStream).WriteTimeout;
+        set
+        {
+            var stream = (EDBRawCopyStream)BaseStream;
+            stream.ReadTimeout = value;
+            stream.WriteTimeout = value;
+        }
     }
 
     /// <summary>
@@ -523,6 +632,20 @@ public sealed class EDBCopyTextReader : StreamReader, ICancelable
     {
         if (underlying.IsBinary)
             throw connector.Break(new Exception("Can't use a binary copy stream for text reading"));
+    }
+
+    /// <summary>
+    /// Gets or sets a value, in milliseconds, that determines how long the text reader will attempt to read before timing out.
+    /// </summary>
+    public int Timeout
+    {
+        get => ((EDBRawCopyStream)BaseStream).ReadTimeout;
+        set
+        {
+            var stream = (EDBRawCopyStream)BaseStream;
+            stream.ReadTimeout = value;
+            stream.WriteTimeout = value;
+        }
     }
 
     /// <summary>

@@ -400,7 +400,7 @@ internal class EDBPackageTest : EPASTestBase
         cstmt.ExecuteNonQuery();
 
         var dname = cstmt.Parameters[1].Value!.ToString();
-        Assert.AreEqual("RESEARCH", dname);
+        Assert.That(dname, Is.EqualTo("RESEARCH"));
     }
 
     [Test]
@@ -452,10 +452,10 @@ internal class EDBPackageTest : EPASTestBase
         var rs = selectCommand.ExecuteReader();
 
         var empList = GetResultSetData(rs);
-        Assert.AreEqual(EMP_RESULT.Length, empList.Count);
+        Assert.That(empList.Count, Is.EqualTo(EMP_RESULT.Length));
         for (var i = 0; i < empList.Count; i++)
         {
-            Assert.AreEqual(EMP_RESULT[i], empList[i]);
+            Assert.That(empList[i], Is.EqualTo(EMP_RESULT[i]));
         }
     }
 
@@ -482,7 +482,7 @@ internal class EDBPackageTest : EPASTestBase
 
         var selectCommand = new EDBCommand(getEmp, conn);
         var selectResult = selectCommand.ExecuteReader();
-        Assert.IsFalse(selectResult.Read());
+        Assert.That(selectResult.Read(), Is.False);
         selectResult.Close();
     }
 
@@ -518,7 +518,7 @@ internal class EDBPackageTest : EPASTestBase
 
         //check if salary updated
         var sal = GetEmpSalary(7369);
-        Assert.AreEqual(1800.00, sal, 0.01);
+        Assert.That(sal, Is.EqualTo(1800.00).Within(0.01));
     }
 
     [Test]
@@ -567,11 +567,11 @@ internal class EDBPackageTest : EPASTestBase
             }
 
             mre.WaitOne(5000);
-            Assert.AreEqual(DEPT_EMP_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DEPT_EMP_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(DEPT_EMP_RESULT[i], notice!.MessageText);
+                Assert.That(notice!.MessageText, Is.EqualTo(DEPT_EMP_RESULT[i]));
             }
         }
         finally
@@ -635,11 +635,11 @@ internal class EDBPackageTest : EPASTestBase
             }
 
             mre.WaitOne(5000);
-            Assert.AreEqual(DEPT_EMP_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DEPT_EMP_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(DEPT_EMP_RESULT[i], notice!.MessageText);
+                Assert.That(notice!.MessageText, Is.EqualTo(DEPT_EMP_RESULT[i]));
             }
         }
         finally
@@ -649,7 +649,7 @@ internal class EDBPackageTest : EPASTestBase
         mre.Close();
     }
 
-    [Test, Timeout(1500)]
+    [Test, CancelAfter(1500)]
     public void UsingPackagesWithUserDefinedTypesFunctionCallTest()
     {
         using var conn = OpenConnection();
@@ -680,11 +680,11 @@ internal class EDBPackageTest : EPASTestBase
 
         var list = GetResultSetData(rst);
 
-        Assert.IsNotNull(rst);
+        Assert.That(rst, Is.Not.Null);
 
         for (var i = 0; i < list.Count; i++)
         {
-            Assert.AreEqual(EMP_LIST_RESULT[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(EMP_LIST_RESULT[i]));
         }
         rst.Close();
         tran.Commit();

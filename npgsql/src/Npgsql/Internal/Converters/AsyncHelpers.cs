@@ -13,7 +13,7 @@ static class AsyncHelpers
         _ = Core(task, source, continuation);
 
         // Have our state machine be pooled, but don't return the task, source.Task should be used instead.
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
 #endif
         async ValueTask Core(Task task, CompletionSource source, CompletionSourceContinuation continuation)
@@ -39,9 +39,17 @@ static class AsyncHelpers
 
     public sealed class CompletionSource<T> : CompletionSource
     {
-        AsyncValueTaskMethodBuilder<T> _amb = AsyncValueTaskMethodBuilder<T>.Create();
+        AsyncValueTaskMethodBuilder<T> _amb;
 
-        public ValueTask<T> Task => _amb.Task;
+        public ValueTask<T> Task { get; }
+
+        public CompletionSource()
+        {
+            _amb = AsyncValueTaskMethodBuilder<T>.Create();
+            // AsyncValueTaskMethodBuilder's Task and SetResult aren't thread safe in regard to each other
+            // Which is why we access it prematurely
+            Task = _amb.Task;
+        }
 
         public void SetResult(T value)
             => _amb.SetResult(value);
@@ -53,11 +61,23 @@ static class AsyncHelpers
     public sealed class PoolingCompletionSource<T> : CompletionSource
     {
 #if NETSTANDARD || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
-        AsyncValueTaskMethodBuilder<T> _amb = AsyncValueTaskMethodBuilder<T>.Create();
+        AsyncValueTaskMethodBuilder<T> _amb;
 #else
-        PoolingAsyncValueTaskMethodBuilder<T> _amb = PoolingAsyncValueTaskMethodBuilder<T>.Create();
+		PoolingAsyncValueTaskMethodBuilder<T> _amb;
 #endif
-        public ValueTask<T> Task => _amb.Task;
+
+		public ValueTask<T> Task { get; }
+		public PoolingCompletionSource()
+        {
+#if NETSTANDARD || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+			_amb = AsyncValueTaskMethodBuilder<T>.Create();
+#else
+            _amb = PoolingAsyncValueTaskMethodBuilder<T>.Create();
+#endif
+            // PoolingAsyncValueTaskMethodBuilder's Task and SetResult aren't thread safe in regard to each other
+            // Which is why we access it prematurely
+            Task = _amb.Task;
+        }
 
         public void SetResult(T value)
             => _amb.SetResult(value);

@@ -14,13 +14,19 @@ public class DateTimeTests : TestBase
 {
     #region Date
 
+#if NET8_0_OR_GREATER
+    [Test, Ignore("Redwood dates are time stamp, fix test")]
+    public Task Date_as_DateOnly()
+        => AssertType(new DateOnly(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date);
+#endif
+
     [Test]
     public async Task Date_as_DateTime()
     {
         var con = await OpenConnectionAsync(); // EnterpriseDB
         TestUtil.EnsureNotEPASRedwood(con);
 
-        await AssertType(new DateTime(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForWriting: false);
+        await AssertType(new DateTime(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefault: false);
     }
 
     [Test]
@@ -32,6 +38,39 @@ public class DateTimeTests : TestBase
     public Task Date_as_int()
         => AssertType(7579, "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefault: false);
 
+
+#if NET8_0_OR_GREATER
+    [Test]
+    public async Task Daterange_as_EDBRange_of_DateOnly()
+    {
+        // EnterpriseDB : disable UnmappedTypes or test purposes
+        await using var dataSource = base.CreateDataSource(b => b.DisableLegacyDateAndTime());
+        await using var conn = await dataSource.OpenConnectionAsync();
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
+
+        await AssertType(
+            dataSource,
+            new EDBRange<DateOnly>(new(2002, 3, 4), true, new(2002, 3, 6), false),
+            "[2002-03-04,2002-03-06)",
+            "daterange",
+            EDBDbType.DateRange,
+            skipArrayCheck: true); // EDBRange<T>[] is mapped to multirange by default, not array; test separately
+    }
+			
+	[Test]
+    public Task Daterange_array_as_EDBRange_of_DateOnly_array()
+        => AssertType(
+            new[]
+            {
+                new EDBRange<DateOnly>(new(2002, 3, 4), true, new(2002, 3, 6), false),
+                new EDBRange<DateOnly>(new(2002, 3, 8), true, new(2002, 3, 9), false)
+            },
+            """{"[2002-03-04,2002-03-06)","[2002-03-08,2002-03-09)"}""",
+            "daterange[]",
+            EDBDbType.DateRange | EDBDbType.Array,
+            isDefaultForWriting: false);
+#endif
+
     [Test]
     public Task Daterange_as_EDBRange_of_DateTime()
         => AssertType(
@@ -39,7 +78,31 @@ public class DateTimeTests : TestBase
             "[2002-03-04,2002-03-06)",
             "daterange",
             EDBDbType.DateRange,
-            isDefaultForWriting: false);
+            isDefault: false);
+
+#if NET8_0_OR_GREATER
+[Test]
+    public async Task Datemultirange_as_array_of_EDBRange_of_DateOnly()
+    {
+        // EnterpriseDB : disable UnmappedTypes or test purposes
+        await using var dataSource = base.CreateDataSource(b => b.DisableUnmappedTypes().DisableRecordsAsTuples().DisableDynamicJson());
+        await using var conn = await dataSource.OpenConnectionAsync();
+		await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
+
+        MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
+
+        await AssertType(
+            dataSource, // EnterpriseDB force datasource without opt-ins
+            new[]
+            {
+                new EDBRange<DateOnly>(new(2002, 3, 4), true, new(2002, 3, 6), false),
+                new EDBRange<DateOnly>(new(2002, 3, 8), true, new(2002, 3, 11), false)
+            },
+            "{[04-MAR-02,06-MAR-02),[08-MAR-02,11-MAR-02)}", // EnterpriseDB redwood dates
+            "datemultirange",
+            EDBDbType.DateMultirange);
+    }
+#endif
 
     [Test]
     public async Task Datemultirange_as_array_of_EDBRange_of_DateTime()
@@ -61,64 +124,29 @@ public class DateTimeTests : TestBase
             "{[04-MAR-02,06-MAR-02),[08-MAR-02,11-MAR-02)}", // EnterpriseDB redwood dates
             "datemultirange",
             EDBDbType.DateMultirange,
-            isDefaultForWriting: false);
-    }
-
-#if NET6_0_OR_GREATER
-    [Test, Ignore("Redwood dates are time stamp, fix test")]
-    public Task Date_as_DateOnly()
-        => AssertType(new DateOnly(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForReading: false);
-
-    [Test]
-    public Task Daterange_as_EDBRange_of_DateOnly()
-        => AssertType(
-            new EDBRange<DateOnly>(new(2002, 3, 4), true, new(2002, 3, 6), false),
-            "[2002-03-04,2002-03-06)",
-            "daterange",
-            EDBDbType.DateRange,
-            isDefaultForReading: false,
-            skipArrayCheck: true); // EDBRange<T>[] is mapped to multirange by default, not array; test separately
-
-    [Test]
-    public Task Daterange_array_as_EDBRange_of_DateOnly_array()
-        => AssertType(
-            new[]
-            {
-                new EDBRange<DateOnly>(new(2002, 3, 4), true, new(2002, 3, 6), false),
-                new EDBRange<DateOnly>(new(2002, 3, 8), true, new(2002, 3, 9), false)
-            },
-            """{"[2002-03-04,2002-03-06)","[2002-03-08,2002-03-09)"}""",
-            "daterange[]",
-            EDBDbType.DateRange | EDBDbType.Array,
             isDefault: false);
-
-    [Test]
-    public async Task Datemultirange_as_array_of_EDBRange_of_DateOnly()
-    {
-        // EnterpriseDB : disable UnmappedTypes or test purposes
-        await using var dataSource = base.CreateDataSource(b => b.DisableUnmappedTypes().DisableRecordsAsTuples().DisableDynamicJson());
-        await using var conn = await dataSource.OpenConnectionAsync();
-		await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
-
-        MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
-
-        await AssertType(
-            dataSource, // EnterpriseDB force datasource without opt-ins
-            new[]
-            {
-                new EDBRange<DateOnly>(new(2002, 3, 4), true, new(2002, 3, 6), false),
-                new EDBRange<DateOnly>(new(2002, 3, 8), true, new(2002, 3, 11), false)
-            },
-            "{[04-MAR-02,06-MAR-02),[08-MAR-02,11-MAR-02)}", // EnterpriseDB redwood dates
-            "datemultirange",
-            EDBDbType.DateMultirange,
-            isDefaultForReading: false);
     }
-#endif
 
     #endregion
 
     #region Time
+
+#if NET8_0_OR_GREATER
+    [Test]
+    public async Task Time_as_TimeOnly()
+    {
+        // EnterpriseDB : disable UnmappedTypes or test purposes
+        await using var dataSource = base.CreateDataSource(b => b.DisableLegacyDateAndTime());
+        await using var conn = await dataSource.OpenConnectionAsync();
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
+        await AssertType(dataSource,
+        new TimeOnly(10, 45, 34, 500),
+        "10:45:34.5",
+        "time without time zone",
+        EDBDbType.Time,
+        DbType.Time);
+    }
+#endif
 
     [Test]
     public Task Time_as_TimeSpan()
@@ -128,19 +156,7 @@ public class DateTimeTests : TestBase
             "time without time zone",
             EDBDbType.Time,
             DbType.Time,
-            isDefaultForWriting: false);
-
-#if NET6_0_OR_GREATER
-    [Test]
-    public Task Time_as_TimeOnly()
-        => AssertType(
-            new TimeOnly(10, 45, 34, 500),
-            "10:45:34.5",
-            "time without time zone",
-            EDBDbType.Time,
-            DbType.Time,
-            isDefaultForReading: false);
-#endif
+            isDefault: false);
 
     #endregion
 
@@ -471,18 +487,18 @@ public class DateTimeTests : TestBase
     {
         var localtimestamp = new EDBParameter { Value = DateTime.Now };
         var unspecifiedtimestamp = new EDBParameter { Value = new DateTime() };
-        Assert.AreEqual(DbType.DateTime2, localtimestamp.DbType);
-        Assert.AreEqual(DbType.DateTime2, unspecifiedtimestamp.DbType);
+        Assert.That(localtimestamp.DbType, Is.EqualTo(DbType.DateTime2));
+        Assert.That(unspecifiedtimestamp.DbType, Is.EqualTo(DbType.DateTime2));
 
         // We don't support any DateTimeOffset other than offset 0 which maps to timestamptz,
         // we might add an exception for offset == DateTimeOffset.Now.Offset (local offset) mapping to timestamp at some point.
         // var dtotimestamp = new EDBParameter { Value = DateTimeOffset.Now };
-        // Assert.AreEqual(DbType.DateTime2, dtotimestamp.DbType);
+        // Assert.That(DbType.DateTime2, dtotimestamp.DbType);
 
         var timestamptz = new EDBParameter { Value = DateTime.UtcNow };
         var dtotimestamptz = new EDBParameter { Value = DateTimeOffset.UtcNow };
-        Assert.AreEqual(DbType.DateTime, timestamptz.DbType);
-        Assert.AreEqual(DbType.DateTime, dtotimestamptz.DbType);
+        Assert.That(timestamptz.DbType, Is.EqualTo(DbType.DateTime));
+        Assert.That(dtotimestamptz.DbType, Is.EqualTo(DbType.DateTime));
     }
 
     [Test]
@@ -490,13 +506,13 @@ public class DateTimeTests : TestBase
     {
         var localtimestamp = new EDBParameter { Value = DateTime.Now };
         var unspecifiedtimestamp = new EDBParameter { Value = new DateTime() };
-        Assert.AreEqual(EDBDbType.Timestamp, localtimestamp.EDBDbType);
-        Assert.AreEqual(EDBDbType.Timestamp, unspecifiedtimestamp.EDBDbType);
+        Assert.That(localtimestamp.EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
+        Assert.That(unspecifiedtimestamp.EDBDbType, Is.EqualTo(EDBDbType.Timestamp));
 
         var timestamptz = new EDBParameter { Value = DateTime.UtcNow };
         var dtotimestamptz = new EDBParameter { Value = DateTimeOffset.UtcNow };
-        Assert.AreEqual(EDBDbType.TimestampTz, timestamptz.EDBDbType);
-        Assert.AreEqual(EDBDbType.TimestampTz, dtotimestamptz.EDBDbType);
+        Assert.That(timestamptz.EDBDbType, Is.EqualTo(EDBDbType.TimestampTz));
+        Assert.That(dtotimestamptz.EDBDbType, Is.EqualTo(EDBDbType.TimestampTz));
     }
 
     [Test]

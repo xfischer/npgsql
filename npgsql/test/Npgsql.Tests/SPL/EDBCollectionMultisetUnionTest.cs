@@ -119,18 +119,18 @@ internal class EDBCollectionMultisetUnionTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
 
-        Assert.AreEqual(2, cstmt.Parameters.Count);
-        Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
-        Assert.AreEqual("mulunpkg.int_arr_typ", cstmt.Parameters[1].DataTypeName);
+        Assert.That(cstmt.Parameters.Count, Is.EqualTo(2));
+        Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("integer"));
+        Assert.That(cstmt.Parameters[1].DataTypeName, Is.EqualTo("mulunpkg.int_arr_typ"));
 
         var count = (int)cstmt.Parameters[0].Value!;
-        Assert.AreEqual(5, count);
+        Assert.That(count, Is.EqualTo(5));
         var arr = (List<object>)cstmt.Parameters[1].Value!;
-        Assert.AreEqual(5, arr.Count);
+        Assert.That(arr.Count, Is.EqualTo(5));
         for (var i = 0; i < arr.Count; i++)
         {
             var value = (decimal)arr[i];
-            Assert.AreEqual(MULTI_UNION_RESULT[i], (int)value);
+            Assert.That(value, Is.EqualTo(MULTI_UNION_RESULT[i]));
         }
 
         //The following code is from JDBC test and should be converted to .NET
@@ -215,18 +215,18 @@ internal class EDBCollectionMultisetUnionTest : EPASTestBase
         await cstmt.PrepareAsync();
         await cstmt.ExecuteNonQueryAsync();
 
-        Assert.AreEqual(2, cstmt.Parameters.Count);
-        Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
-        Assert.AreEqual("mulundispkg.int_arr_typ", cstmt.Parameters[1].DataTypeName);
+        Assert.That(cstmt.Parameters.Count, Is.EqualTo(2));
+        Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("integer"));
+        Assert.That(cstmt.Parameters[1].DataTypeName, Is.EqualTo("mulundispkg.int_arr_typ"));
 
         var count = (int)cstmt.Parameters[0].Value!;
-        Assert.AreEqual(4, count);
+        Assert.That(count, Is.EqualTo(4));
         var  arr = (List<object>)cstmt.Parameters[1].Value!;
-        Assert.AreEqual(4, arr.Count);
+        Assert.That(arr.Count, Is.EqualTo(4));
         for(var i = 0; i < arr.Count; i++)
         {
             var value = (decimal)arr[i];
-            Assert.AreEqual(MULTI_UNION_DISTINCT_RESULT[i], (int)value);
+            Assert.That(value, Is.EqualTo(MULTI_UNION_DISTINCT_RESULT[i]));
         }
 
         //The following code is from JDBC test and should be converted to .NET
@@ -311,18 +311,18 @@ internal class EDBCollectionMultisetUnionTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
 
-        Assert.AreEqual(2, cstmt.Parameters.Count);
-        Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
-        Assert.AreEqual("mulundispkg02.int_arr_typ", cstmt.Parameters[1].DataTypeName);
+        Assert.That(cstmt.Parameters.Count, Is.EqualTo(2));
+        Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("integer"));
+        Assert.That(cstmt.Parameters[1].DataTypeName, Is.EqualTo("mulundispkg02.int_arr_typ"));
 
         var count = (int)cstmt.Parameters[0].Value!;
-        Assert.AreEqual(5, count);
+        Assert.That(count, Is.EqualTo(5));
         var arr = (List<object>)cstmt.Parameters[1].Value!;
-        Assert.AreEqual(5, arr.Count);
+        Assert.That(arr.Count, Is.EqualTo(5));
         for (var i = 0; i < arr.Count; i++)
         {
             var value = (decimal)arr[i];
-            Assert.AreEqual(MULTI_UNION_DISTINCT_RESULT02[i], (int)value);
+            Assert.That(value, Is.EqualTo(MULTI_UNION_DISTINCT_RESULT02[i]));
         }
 
         //The following code is from JDBC test and should be converted to .NET

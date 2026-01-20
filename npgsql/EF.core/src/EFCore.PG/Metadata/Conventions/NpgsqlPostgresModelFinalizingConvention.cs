@@ -1,4 +1,6 @@
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 
@@ -8,24 +10,10 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Convent
 /// <remarks>
 ///     See <see href="https://aka.ms/efcore-docs-conventions">Model building conventions</see>.
 /// </remarks>
-public class NpgsqlPostgresModelFinalizingConvention : IModelFinalizingConvention
+public class NpgsqlPostgresModelFinalizingConvention(
+    NpgsqlTypeMappingSource typeMappingSource,
+    IReadOnlyList<EnumDefinition> enumDefinitions) : IModelFinalizingConvention
 {
-    private readonly IRelationalTypeMappingSource _typeMappingSource;
-    private readonly IReadOnlyList<EnumDefinition> _enumDefinitions;
-
-    /// <summary>
-    ///     Creates a new instance of <see cref="NpgsqlPostgresModelFinalizingConvention" />.
-    /// </summary>
-    /// <param name="typeMappingSource">The type mapping source to use.</param>
-    /// <param name="enumDefinitions"></param>
-    public NpgsqlPostgresModelFinalizingConvention(
-        IRelationalTypeMappingSource typeMappingSource,
-        IReadOnlyList<EnumDefinition> enumDefinitions)
-    {
-        _typeMappingSource = typeMappingSource;
-        _enumDefinitions = enumDefinitions;
-    }
-
     /// <inheritdoc />
     public virtual void ProcessModelFinalizing(IConventionModelBuilder modelBuilder, IConventionContext<IConventionModelBuilder> context)
     {
@@ -34,7 +22,7 @@ public class NpgsqlPostgresModelFinalizingConvention : IModelFinalizingConventio
             foreach (var property in entityType.GetDeclaredProperties())
             {
                 var typeMapping = (RelationalTypeMapping?)property.FindTypeMapping()
-                    ?? _typeMappingSource.FindMapping((IProperty)property);
+                    ?? typeMappingSource.FindMapping((IProperty)property);
 
                 if (typeMapping is not null)
                 {
@@ -52,7 +40,7 @@ public class NpgsqlPostgresModelFinalizingConvention : IModelFinalizingConventio
     /// </summary>
     protected virtual void SetupEnums(IConventionModelBuilder modelBuilder)
     {
-        foreach (var enumDefinition in _enumDefinitions)
+        foreach (var enumDefinition in enumDefinitions)
         {
             modelBuilder.HasPostgresEnum(
                 enumDefinition.StoreTypeSchema,
@@ -82,6 +70,9 @@ public class NpgsqlPostgresModelFinalizingConvention : IModelFinalizingConventio
             case "lquery":
             case "ltxtquery":
                 modelBuilder.HasPostgresExtension("ltree");
+                break;
+            case "cube":
+                modelBuilder.HasPostgresExtension("cube");
                 break;
         }
     }

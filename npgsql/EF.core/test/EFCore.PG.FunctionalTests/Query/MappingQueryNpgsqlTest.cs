@@ -1,6 +1,4 @@
-﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+﻿namespace Microsoft.EntityFrameworkCore.Query;
 
 // ReSharper disable once UnusedMember.Global
 public class MappingQueryNpgsqlTest : MappingQueryTestBase<MappingQueryNpgsqlTest.MappingQueryNpgsqlFixture>

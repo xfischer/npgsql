@@ -54,6 +54,8 @@ internal class EDBControlStructuresLoopTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -113,11 +115,11 @@ internal class EDBControlStructuresLoopTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EXIT_WHILE_FOR_RESULT.Length, notices.Count);
+            Assert.That(EXIT_WHILE_FOR_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EXIT_WHILE_FOR_RESULT[i], notice.MessageText);
+                Assert.That(EXIT_WHILE_FOR_RESULT[i], Is.EqualTo(notice.MessageText));
             }
         }
         finally
@@ -168,11 +170,11 @@ internal class EDBControlStructuresLoopTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(CONTINUE_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(CONTINUE_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CONTINUE_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(CONTINUE_RESULT[i]));
             }
         }
         finally
@@ -222,11 +224,11 @@ internal class EDBControlStructuresLoopTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EXIT_WHILE_FOR_RESULT.Length, notices.Count);
+            Assert.That(EXIT_WHILE_FOR_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EXIT_WHILE_FOR_RESULT[i], notice.MessageText);
+                Assert.That(EXIT_WHILE_FOR_RESULT[i], Is.EqualTo(notice.MessageText));
             }
         }
         finally
@@ -271,11 +273,11 @@ internal class EDBControlStructuresLoopTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EXIT_WHILE_FOR_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EXIT_WHILE_FOR_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EXIT_WHILE_FOR_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(EXIT_WHILE_FOR_RESULT[i]));
             }
         }
         finally

@@ -8,20 +8,24 @@ namespace EnterpriseDB.EDBClient.Internal;
 
 static class AdoSerializerHelpers
 {
-
     // EnterpriseDB: this PR https://github.com/npgsql/npgsql/pull/5768 assumes all text formats are unknown. This doesn't work with a mapped converter (ie TABLE OF types)
     // This method avoids raising an exception when called from RowDescriptionMessage.GetInfoSlow
+    // See test: UnknownResultTypeList
     public static bool TryGetTypeInfoForReading(Type type, PgTypeId pgTypeId, PgSerializerOptions options, out PgTypeInfo? typeInfo)
     {
-        typeInfo = null;
         try
         {
             typeInfo = options.GetTypeInfoInternal(type, pgTypeId);
+            if (typeInfo is { SupportsReading: false })
+                typeInfo = null;
         }
-        catch (Exception ex)
+        catch
         {
+            // EnterpriseDB: Exceptions are not happening in any tests, this is not meant to happen and is here for reliability
+            typeInfo = null;
             return false;
         }
+
         return typeInfo != null;
     }
 
@@ -32,7 +36,8 @@ static class AdoSerializerHelpers
         try
         {
             typeInfo = options.GetTypeInfoInternal(type, pgTypeId);
-			// EnterpriseDB: BEFORE MERGE typeInfo = type == typeof(object) ? options.GetObjectOrDefaultTypeInfoInternal(pgTypeId) : options.GetTypeInfoInternal(type, pgTypeId);
+            if (typeInfo is { SupportsReading: false })
+                typeInfo = null;
         }
         catch (Exception ex)
         {
@@ -60,6 +65,8 @@ static class AdoSerializerHelpers
         try
         {
             typeInfo = options.GetTypeInfoInternal(type, pgTypeId);
+            if (typeInfo is { SupportsWriting: false })
+                typeInfo = null;
         }
         catch (Exception ex)
         {

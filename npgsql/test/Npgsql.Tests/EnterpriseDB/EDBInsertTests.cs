@@ -80,7 +80,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select * from tabled where field_float8 = :a";
 
@@ -96,7 +96,7 @@ public class EDBInsertTests : EPASTestBase
         //command.ExecuteNonQuery();
 
 
-        Assert.AreEqual(7.4D, result);
+        Assert.That(result, Is.EqualTo(7.4D));
 
     }
 
@@ -113,7 +113,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select * from tabled where field_float8 = :a";
         
@@ -127,7 +127,7 @@ public class EDBInsertTests : EPASTestBase
         command.Parameters.Clear();
         //command.ExecuteNonQuery();
 
-        Assert.AreEqual(7.4D, result);
+        Assert.That(result, Is.EqualTo(7.4D));
 
     }
 
@@ -144,7 +144,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tablea where field_text is null";
         command.Parameters.Clear();
@@ -154,7 +154,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea) and field_serial != 4;";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(4, result);
+        Assert.That(result, Is.EqualTo(4));
 
 
 
@@ -173,7 +173,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tablea where field_text is null";
         command.Parameters.Clear();
@@ -183,7 +183,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea) and field_serial != 4;";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(4, result);
+        Assert.That(result, Is.EqualTo(4));
 
 
 
@@ -204,7 +204,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tableb where field_timestamp is null";
         command.Parameters.Clear();
@@ -214,7 +214,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(4, result);
+        Assert.That(result, Is.EqualTo(4));
 
 
 
@@ -234,7 +234,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tableb where field_timestamp is null";
         command.Parameters.Clear();
@@ -244,7 +244,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb) and field_serial != 3;";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(4, result);
+        Assert.That(result, Is.EqualTo(4));
 
 
 
@@ -266,7 +266,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tableb where field_int2 is null";
         command.Parameters.Clear();
@@ -276,7 +276,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(4, result);
+        Assert.That(result, Is.EqualTo(4));
 
 
     }
@@ -296,7 +296,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tableb where field_int2 is null";
         command.Parameters.Clear();
@@ -306,7 +306,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(4, result);
+        Assert.That(result, Is.EqualTo(4));
 
 
     }
@@ -326,7 +326,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tablea where field_int4 is null";
         command.Parameters.Clear();
@@ -336,7 +336,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(5, result);
+        Assert.That(result, Is.EqualTo(5));
 
     }
 
@@ -355,7 +355,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tableb where field_numeric is null";
         command.Parameters.Clear();
@@ -365,7 +365,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(3, result);
+        Assert.That(result, Is.EqualTo(3));
 
     }
 
@@ -383,7 +383,7 @@ public class EDBInsertTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select count(*) from tablea where field_bool is null";
         command.Parameters.Clear();
@@ -393,7 +393,7 @@ public class EDBInsertTests : EPASTestBase
         command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(5, result);
+        Assert.That(result, Is.EqualTo(5));
 
     }
 
@@ -412,7 +412,7 @@ public class EDBInsertTests : EPASTestBase
 
             var rowsAdded = command.ExecuteNonQuery();
 
-            Assert.AreEqual(1, rowsAdded);
+            Assert.That(rowsAdded, Is.EqualTo(1));
 
             command.CommandText = string.Format("select count(*) from tablea where field_text = '{0}'", command.Parameters[0].Value);
             command.Parameters.Clear();
@@ -422,7 +422,7 @@ public class EDBInsertTests : EPASTestBase
             command.CommandText = "delete from tablea where field_serial = (select max(field_serial) from tablea);";
             command.ExecuteNonQuery();
 
-            Assert.AreEqual(1, result);
+            Assert.That(result, Is.EqualTo(1));
         }
         catch (EDBException ex)
         {

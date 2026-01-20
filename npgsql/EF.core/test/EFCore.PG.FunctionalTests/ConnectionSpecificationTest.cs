@@ -1,8 +1,9 @@
 ﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
 // ReSharper disable StringLiteralTypo
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
+
+#nullable disable
 
 public class ConnectionSpecificationTest
 {

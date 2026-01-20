@@ -1,6 +1,4 @@
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public abstract class TransactionInterceptionNpgsqlTestBase(TransactionInterceptionNpgsqlTestBase.InterceptionNpgsqlFixtureBase fixture)
     : TransactionInterceptionTestBase(fixture)

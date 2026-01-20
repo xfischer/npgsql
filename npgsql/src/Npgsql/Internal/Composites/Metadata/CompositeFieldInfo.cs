@@ -79,7 +79,7 @@ abstract class CompositeFieldInfo
         else
             AddValue(builder, converter.ReadAsObject(reader));
         return new();
-#if NET6_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
 #endif
         async ValueTask Core(CompositeBuilder builder, ValueTask<object> task)
@@ -226,7 +226,7 @@ sealed class CompositeFieldInfo<T> : CompositeFieldInfo
             builder.AddValue(((PgConverter<T>)converter).Read(reader));
         return new();
 
-#if NET6_0_OR_GREATER  // EnterpriseDB
+#if NET8_0_OR_GREATER  // EnterpriseDB
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
 #endif
         async ValueTask Core(CompositeBuilder builder, ValueTask<T> task)

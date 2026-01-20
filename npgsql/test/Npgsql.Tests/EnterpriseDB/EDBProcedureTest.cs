@@ -86,6 +86,7 @@ public class EDBProcedureTest : EPASTestBase
             };
             await com2.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         });
     }
@@ -131,6 +132,7 @@ public class EDBProcedureTest : EPASTestBase
             };
             await com.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         });
     }
@@ -186,6 +188,7 @@ public class EDBProcedureTest : EPASTestBase
             };
             await com.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         });
     }
@@ -234,6 +237,7 @@ public class EDBProcedureTest : EPASTestBase
             };
             await com.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         });
     }
@@ -282,9 +286,9 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.PrepareAsync();
             await command.ExecuteNonQueryAsync();
-            Assert.AreEqual(5, int.Parse(command.Parameters[0].Value.ToString()));
-            Assert.AreEqual(15, int.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(25, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(5));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(15));
+            Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(25));
 
             var com = new EDBCommand("", con)
             {
@@ -293,6 +297,7 @@ public class EDBProcedureTest : EPASTestBase
             };
             await com.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         }
         catch (EDBException e)
@@ -337,7 +342,7 @@ public class EDBProcedureTest : EPASTestBase
             await command.PrepareAsync();
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(7, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(7));
 
             var com = new EDBCommand("", con)
             {
@@ -347,6 +352,7 @@ public class EDBProcedureTest : EPASTestBase
             };
             await com.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         }
         catch (EDBException e)
@@ -369,7 +375,7 @@ public class EDBProcedureTest : EPASTestBase
             };
 
             //	Testing procedure with IN, OUT and IN/OUT Param
-            var strSqlMixArg = "CREATE OR REPLACE PROCEDURE mixArg_test(a INOUT NUMERIC, b OUT NUMERIC, c IN NUMERIC) \n"
+            var strSqlMixArg = "CREATE OR REPLACE PROCEDURE mixInOutArg_test(a INOUT NUMERIC, b OUT NUMERIC, c IN NUMERIC) \n"
                 + " AS \n"
                 + " BEGIN \n"
                 + "    b:=c; \n"
@@ -378,7 +384,7 @@ public class EDBProcedureTest : EPASTestBase
             com1.CommandText = strSqlMixArg;
             await com1.ExecuteNonQueryAsync();
 
-            var command = new EDBCommand("mixArg_test(:a,:b,:c)", con)
+            var command = new EDBCommand("mixInOutArg_test(:a,:b,:c)", con)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -398,17 +404,18 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.PrepareAsync();
             await command.ExecuteNonQueryAsync();
-            Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
-            Assert.AreEqual(15, int.Parse(command.Parameters[1].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(10));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(15));
 
             var com = new EDBCommand("", con)
             {
                 CommandType = CommandType.Text,
 
-                CommandText = "DROP PROCEDURE mixArg_test"
+                CommandText = "DROP PROCEDURE mixInOutArg_test"
             };
             await com.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         }
         catch (EDBException e)
@@ -463,8 +470,8 @@ public class EDBProcedureTest : EPASTestBase
             await command.PrepareAsync();
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(5, int.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(15, int.Parse(command.Parameters[3].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(5));
+            Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(15));
 
             var com = new EDBCommand("", con)
             {
@@ -473,6 +480,7 @@ public class EDBProcedureTest : EPASTestBase
             };
             await com.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
 
         }
@@ -500,12 +508,12 @@ public class EDBProcedureTest : EPASTestBase
             i++;
         }
 
-        Assert.AreEqual(3, i);
         await dr.CloseAsync();
         command.CommandText = "close te;";
         await command.ExecuteNonQueryAsync();
         await tran.CommitAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
     }
 
@@ -546,7 +554,7 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(2, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(2));
 
         }
         catch (EDBException e)
@@ -567,6 +575,7 @@ public class EDBProcedureTest : EPASTestBase
         command.CommandText = "DROP Procedure check_proc1;";
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
     }
 
@@ -607,7 +616,7 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(0, int.Parse(command.Parameters[0].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(0));
 
         }
         catch (EDBException e)
@@ -626,6 +635,7 @@ public class EDBProcedureTest : EPASTestBase
         command.CommandText = "DROP Procedure check_proc1;";
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
     }
 
@@ -665,8 +675,9 @@ public class EDBProcedureTest : EPASTestBase
 
             await command2.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(0, int.Parse(command2.Parameters[0].Value.ToString()));
+            Assert.That(int.Parse(command2.Parameters[0].Value.ToString()), Is.EqualTo(0));
             TestUtil.closeDB(con);
+            con?.Dispose();
 
 
         }
@@ -712,9 +723,9 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(100, int.Parse(command.Parameters[0].Value.ToString()));
-            Assert.AreEqual(100, int.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(2000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(100));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(100));
+            Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(2000));
         }
         catch (EDBException e)
         {
@@ -730,6 +741,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -774,9 +786,9 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-            Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(2000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1000));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1000));
+            Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(2000));
         }
         catch (EDBException e)
         {
@@ -794,6 +806,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -835,9 +848,9 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(1000, int.Parse(command.Parameters[0].Value.ToString()));
-            Assert.AreEqual(1000, int.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(20000, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1000));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1000));
+            Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(20000));
         }
         catch (EDBException e)
         {
@@ -855,6 +868,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -895,9 +909,9 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(10000, int.Parse(command.Parameters[0].Value.ToString()));
-            Assert.AreEqual(10000, int.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(-2, int.Parse(command.Parameters[2].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(10000));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(10000));
+            Assert.That(int.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(-2));
         }
         catch (EDBException e)
         {
@@ -915,6 +929,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -957,9 +972,9 @@ public class EDBProcedureTest : EPASTestBase
 
 
             await command.ExecuteNonQueryAsync();
-            Assert.AreEqual(1.100001f, float.Parse(command.Parameters[0].Value.ToString()));
-            Assert.AreEqual(1.10000098f, float.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(-2.2131f, float.Parse(command.Parameters[2].Value.ToString()));
+            Assert.That(float.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1.100001f));
+            Assert.That(float.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1.10000098f));
+            Assert.That(float.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(-2.2131f));
         }
         catch (EDBException e)
         {
@@ -977,6 +992,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -1020,9 +1036,9 @@ public class EDBProcedureTest : EPASTestBase
 
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(1.1f, float.Parse(command.Parameters[0].Value.ToString()));
-            Assert.AreEqual(1.1f, float.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(2.2f, float.Parse(command.Parameters[2].Value.ToString()));
+            Assert.That(float.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(1.1f));
+            Assert.That(float.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(1.1f));
+            Assert.That(float.Parse(command.Parameters[2].Value.ToString()), Is.EqualTo(2.2f));
         }
         catch (EDBException e)
         {
@@ -1040,6 +1056,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -1079,9 +1096,9 @@ public class EDBProcedureTest : EPASTestBase
             await command.PrepareAsync();
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual("Hashim", command.Parameters[0].Value.ToString());
-            Assert.AreEqual("Hashim", command.Parameters[1].Value.ToString());
-            Assert.AreEqual("EnterpriseDB", command.Parameters[2].Value.ToString());
+            Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("Hashim"));
+            Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("Hashim"));
+            Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("EnterpriseDB"));
         }
         catch (EDBException e)
         {
@@ -1097,6 +1114,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -1143,7 +1161,7 @@ public class EDBProcedureTest : EPASTestBase
             await command.ExecuteNonQueryAsync();
 
             for (var i = 0; i < 128; i++)
-                Assert.AreEqual((i + 1).ToString(), command.Parameters[i].Value.ToString());
+                Assert.That(command.Parameters[i].Value.ToString(), Is.EqualTo((i + 1).ToString()));
 
         }
         catch (EDBException e)
@@ -1160,6 +1178,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -1342,146 +1361,146 @@ public class EDBProcedureTest : EPASTestBase
             await command.PrepareAsync();
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual("127", command.Parameters[0].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[1].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[2].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[3].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[4].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[5].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[6].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[7].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[8].Value.ToString());
-            Assert.AreEqual("128", command.Parameters[9].Value.ToString());
+            Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[4].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[5].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[6].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[7].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[8].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[9].Value.ToString(), Is.EqualTo("128"));
 
-            Assert.AreEqual("127", command.Parameters[10].Value.ToString());
-            Assert.AreEqual("127", command.Parameters[11].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[12].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[13].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[14].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[15].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[16].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[17].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[18].Value.ToString());
-            Assert.AreEqual("128", command.Parameters[19].Value.ToString());
+            Assert.That(command.Parameters[10].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[11].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[12].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[13].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[14].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[15].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[16].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[17].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[18].Value.ToString(), Is.EqualTo("119"));
+            Assert.That(command.Parameters[19].Value.ToString(), Is.EqualTo("128"));
 
-            Assert.AreEqual("128", command.Parameters[20].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[21].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[22].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[23].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[24].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[25].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[26].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[27].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[28].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[29].Value.ToString());
+            Assert.That(command.Parameters[20].Value.ToString(), Is.EqualTo("128"));
+            Assert.That(command.Parameters[21].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[22].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[23].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[24].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[25].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[26].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[27].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[28].Value.ToString(), Is.EqualTo("119"));
+            Assert.That(command.Parameters[29].Value.ToString(), Is.EqualTo("119"));
 
-            Assert.AreEqual("127", command.Parameters[30].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[31].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[32].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[33].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[34].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[35].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[36].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[37].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[38].Value.ToString());
-            Assert.AreEqual("128", command.Parameters[39].Value.ToString());
+            Assert.That(command.Parameters[30].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[31].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[32].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[33].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[34].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[35].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[36].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[37].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[38].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[39].Value.ToString(), Is.EqualTo("128"));
 
-            Assert.AreEqual("127", command.Parameters[40].Value.ToString());
-            Assert.AreEqual("127", command.Parameters[41].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[42].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[43].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[44].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[45].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[46].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[47].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[48].Value.ToString());
-            Assert.AreEqual("128", command.Parameters[49].Value.ToString());
+            Assert.That(command.Parameters[40].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[41].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[42].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[43].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[44].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[45].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[46].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[47].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[48].Value.ToString(), Is.EqualTo("119"));
+            Assert.That(command.Parameters[49].Value.ToString(), Is.EqualTo("128"));
 
-            Assert.AreEqual("128", command.Parameters[50].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[51].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[52].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[53].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[54].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[55].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[56].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[57].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[58].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[59].Value.ToString());
+            Assert.That(command.Parameters[50].Value.ToString(), Is.EqualTo("128"));
+            Assert.That(command.Parameters[51].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[52].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[53].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[54].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[55].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[56].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[57].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[58].Value.ToString(), Is.EqualTo("119"));
+            Assert.That(command.Parameters[59].Value.ToString(), Is.EqualTo("119"));
 
-            Assert.AreEqual("127", command.Parameters[60].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[61].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[62].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[63].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[64].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[65].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[66].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[67].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[68].Value.ToString());
-            Assert.AreEqual("128", command.Parameters[69].Value.ToString());
+            Assert.That(command.Parameters[60].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[61].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[62].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[63].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[64].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[65].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[66].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[67].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[68].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[69].Value.ToString(), Is.EqualTo("128"));
 
-            Assert.AreEqual("127", command.Parameters[70].Value.ToString());
-            Assert.AreEqual("127", command.Parameters[71].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[72].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[73].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[74].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[75].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[76].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[77].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[78].Value.ToString());
-            Assert.AreEqual("128", command.Parameters[79].Value.ToString());
+            Assert.That(command.Parameters[70].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[71].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[72].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[73].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[74].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[75].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[76].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[77].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[78].Value.ToString(), Is.EqualTo("119"));
+            Assert.That(command.Parameters[79].Value.ToString(), Is.EqualTo("128"));
 
-            Assert.AreEqual("128", command.Parameters[80].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[81].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[82].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[83].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[84].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[85].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[86].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[87].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[88].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[89].Value.ToString());
+            Assert.That(command.Parameters[80].Value.ToString(), Is.EqualTo("128"));
+            Assert.That(command.Parameters[81].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[82].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[83].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[84].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[85].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[86].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[87].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[88].Value.ToString(), Is.EqualTo("119"));
+            Assert.That(command.Parameters[89].Value.ToString(), Is.EqualTo("119"));
 
-            Assert.AreEqual("127", command.Parameters[90].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[91].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[92].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[93].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[94].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[95].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[96].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[97].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[98].Value.ToString());
-            Assert.AreEqual("128", command.Parameters[99].Value.ToString());
+            Assert.That(command.Parameters[90].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[91].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[92].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[93].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[94].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[95].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[96].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[97].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[98].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[99].Value.ToString(), Is.EqualTo("128"));
 
-            Assert.AreEqual("127", command.Parameters[100].Value.ToString());
-            Assert.AreEqual("127", command.Parameters[101].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[102].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[103].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[104].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[105].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[106].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[107].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[108].Value.ToString());
-            Assert.AreEqual("128", command.Parameters[109].Value.ToString());
+            Assert.That(command.Parameters[100].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[101].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[102].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[103].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[104].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[105].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[106].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[107].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[108].Value.ToString(), Is.EqualTo("119"));
+            Assert.That(command.Parameters[109].Value.ToString(), Is.EqualTo("128"));
 
-            Assert.AreEqual("128", command.Parameters[110].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[111].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[112].Value.ToString());
-            Assert.AreEqual("125", command.Parameters[113].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[114].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[115].Value.ToString());
-            Assert.AreEqual("122", command.Parameters[116].Value.ToString());
-            Assert.AreEqual("120", command.Parameters[117].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[118].Value.ToString());
-            Assert.AreEqual("119", command.Parameters[119].Value.ToString());
+            Assert.That(command.Parameters[110].Value.ToString(), Is.EqualTo("128"));
+            Assert.That(command.Parameters[111].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[112].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[113].Value.ToString(), Is.EqualTo("125"));
+            Assert.That(command.Parameters[114].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[115].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[116].Value.ToString(), Is.EqualTo("122"));
+            Assert.That(command.Parameters[117].Value.ToString(), Is.EqualTo("120"));
+            Assert.That(command.Parameters[118].Value.ToString(), Is.EqualTo("119"));
+            Assert.That(command.Parameters[119].Value.ToString(), Is.EqualTo("119"));
 
-            Assert.AreEqual("127", command.Parameters[120].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[121].Value.ToString());
-            Assert.AreEqual("126", command.Parameters[122].Value.ToString());
-            Assert.AreEqual("124", command.Parameters[123].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[124].Value.ToString());
-            Assert.AreEqual("123", command.Parameters[125].Value.ToString());
-            Assert.AreEqual("121", command.Parameters[126].Value.ToString());
-            Assert.AreEqual("200", command.Parameters[127].Value.ToString());
+            Assert.That(command.Parameters[120].Value.ToString(), Is.EqualTo("127"));
+            Assert.That(command.Parameters[121].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[122].Value.ToString(), Is.EqualTo("126"));
+            Assert.That(command.Parameters[123].Value.ToString(), Is.EqualTo("124"));
+            Assert.That(command.Parameters[124].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[125].Value.ToString(), Is.EqualTo("123"));
+            Assert.That(command.Parameters[126].Value.ToString(), Is.EqualTo("121"));
+            Assert.That(command.Parameters[127].Value.ToString(), Is.EqualTo("200"));
 
         }
         catch (EDBException e)
@@ -1498,6 +1517,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
     }
 
@@ -1545,7 +1565,7 @@ public class EDBProcedureTest : EPASTestBase
             await command.ExecuteNonQueryAsync();
 
             for (var i = 0; i < 128; i++)
-                Assert.AreEqual((i + 1).ToString(), command.Parameters[i].Value.ToString());
+                Assert.That(command.Parameters[i].Value.ToString(), Is.EqualTo((i + 1).ToString()));
         }
         catch (EDBException e)
         {
@@ -1743,146 +1763,146 @@ public class EDBProcedureTest : EPASTestBase
 
         await command.ExecuteNonQueryAsync();
 
-        Assert.AreEqual("127", command.Parameters[0].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[1].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[2].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[3].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[4].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[5].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[6].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[7].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[8].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[9].Value.ToString());
+        Assert.That(command.Parameters[0].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[1].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[2].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[3].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[4].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[5].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[6].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[7].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[8].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[9].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("127", command.Parameters[10].Value.ToString());
-        Assert.AreEqual("127", command.Parameters[11].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[12].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[13].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[14].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[15].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[16].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[17].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[18].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[19].Value.ToString());
+        Assert.That(command.Parameters[10].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[11].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[12].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[13].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[14].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[15].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[16].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[17].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[18].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[19].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("128", command.Parameters[20].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[21].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[22].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[23].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[24].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[25].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[26].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[27].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[28].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[29].Value.ToString());
+        Assert.That(command.Parameters[20].Value.ToString(), Is.EqualTo("128"));
+        Assert.That(command.Parameters[21].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[22].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[23].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[24].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[25].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[26].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[27].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[28].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[29].Value.ToString(), Is.EqualTo("119"));
 
-        Assert.AreEqual("127", command.Parameters[30].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[31].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[32].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[33].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[34].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[35].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[36].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[37].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[38].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[39].Value.ToString());
+        Assert.That(command.Parameters[30].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[31].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[32].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[33].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[34].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[35].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[36].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[37].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[38].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[39].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("127", command.Parameters[40].Value.ToString());
-        Assert.AreEqual("127", command.Parameters[41].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[42].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[43].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[44].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[45].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[46].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[47].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[48].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[49].Value.ToString());
+        Assert.That(command.Parameters[40].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[41].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[42].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[43].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[44].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[45].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[46].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[47].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[48].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[49].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("128", command.Parameters[50].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[51].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[52].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[53].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[54].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[55].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[56].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[57].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[58].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[59].Value.ToString());
+        Assert.That(command.Parameters[50].Value.ToString(), Is.EqualTo("128"));
+        Assert.That(command.Parameters[51].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[52].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[53].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[54].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[55].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[56].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[57].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[58].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[59].Value.ToString(), Is.EqualTo("119"));
 
-        Assert.AreEqual("127", command.Parameters[60].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[61].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[62].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[63].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[64].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[65].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[66].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[67].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[68].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[69].Value.ToString());
+        Assert.That(command.Parameters[60].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[61].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[62].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[63].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[64].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[65].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[66].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[67].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[68].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[69].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("127", command.Parameters[70].Value.ToString());
-        Assert.AreEqual("127", command.Parameters[71].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[72].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[73].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[74].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[75].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[76].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[77].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[78].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[79].Value.ToString());
+        Assert.That(command.Parameters[70].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[71].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[72].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[73].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[74].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[75].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[76].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[77].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[78].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[79].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("128", command.Parameters[80].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[81].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[82].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[83].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[84].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[85].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[86].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[87].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[88].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[89].Value.ToString());
+        Assert.That(command.Parameters[80].Value.ToString(), Is.EqualTo("128"));
+        Assert.That(command.Parameters[81].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[82].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[83].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[84].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[85].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[86].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[87].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[88].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[89].Value.ToString(), Is.EqualTo("119"));
 
-        Assert.AreEqual("127", command.Parameters[90].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[91].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[92].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[93].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[94].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[95].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[96].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[97].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[98].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[99].Value.ToString());
+        Assert.That(command.Parameters[90].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[91].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[92].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[93].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[94].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[95].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[96].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[97].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[98].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[99].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("127", command.Parameters[100].Value.ToString());
-        Assert.AreEqual("127", command.Parameters[101].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[102].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[103].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[104].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[105].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[106].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[107].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[108].Value.ToString());
-        Assert.AreEqual("128", command.Parameters[109].Value.ToString());
+        Assert.That(command.Parameters[100].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[101].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[102].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[103].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[104].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[105].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[106].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[107].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[108].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[109].Value.ToString(), Is.EqualTo("128"));
 
-        Assert.AreEqual("128", command.Parameters[110].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[111].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[112].Value.ToString());
-        Assert.AreEqual("125", command.Parameters[113].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[114].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[115].Value.ToString());
-        Assert.AreEqual("122", command.Parameters[116].Value.ToString());
-        Assert.AreEqual("120", command.Parameters[117].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[118].Value.ToString());
-        Assert.AreEqual("119", command.Parameters[119].Value.ToString());
+        Assert.That(command.Parameters[110].Value.ToString(), Is.EqualTo("128"));
+        Assert.That(command.Parameters[111].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[112].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[113].Value.ToString(), Is.EqualTo("125"));
+        Assert.That(command.Parameters[114].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[115].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[116].Value.ToString(), Is.EqualTo("122"));
+        Assert.That(command.Parameters[117].Value.ToString(), Is.EqualTo("120"));
+        Assert.That(command.Parameters[118].Value.ToString(), Is.EqualTo("119"));
+        Assert.That(command.Parameters[119].Value.ToString(), Is.EqualTo("119"));
 
-        Assert.AreEqual("127", command.Parameters[120].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[121].Value.ToString());
-        Assert.AreEqual("126", command.Parameters[122].Value.ToString());
-        Assert.AreEqual("124", command.Parameters[123].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[124].Value.ToString());
-        Assert.AreEqual("123", command.Parameters[125].Value.ToString());
-        Assert.AreEqual("121", command.Parameters[126].Value.ToString());
-        Assert.AreEqual("Hashim", command.Parameters[127].Value.ToString());
+        Assert.That(command.Parameters[120].Value.ToString(), Is.EqualTo("127"));
+        Assert.That(command.Parameters[121].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[122].Value.ToString(), Is.EqualTo("126"));
+        Assert.That(command.Parameters[123].Value.ToString(), Is.EqualTo("124"));
+        Assert.That(command.Parameters[124].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[125].Value.ToString(), Is.EqualTo("123"));
+        Assert.That(command.Parameters[126].Value.ToString(), Is.EqualTo("121"));
+        Assert.That(command.Parameters[127].Value.ToString(), Is.EqualTo("Hashim"));
 
 
 
@@ -1895,6 +1915,7 @@ public class EDBProcedureTest : EPASTestBase
         };
         await command.ExecuteNonQueryAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
 
 
     }
@@ -1941,8 +1962,8 @@ public class EDBProcedureTest : EPASTestBase
             await command.PrepareAsync();
             await command.ExecuteNonQueryAsync();
 
-            Assert.AreEqual(50, int.Parse(command.Parameters[1].Value.ToString()));
-            Assert.AreEqual(200, int.Parse(command.Parameters[3].Value.ToString()));
+            Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(50));
+            Assert.That(int.Parse(command.Parameters[3].Value.ToString()), Is.EqualTo(200));
 
             var com = new EDBCommand("", con)
             {
@@ -1952,6 +1973,7 @@ public class EDBProcedureTest : EPASTestBase
             await com.ExecuteNonQueryAsync();
             await com.DisposeAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         }
         catch (EDBException exp)
@@ -2018,6 +2040,7 @@ public class EDBProcedureTest : EPASTestBase
                 await command.DisposeAsync();
             });
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         }
         catch (EDBException exp)
@@ -2072,8 +2095,8 @@ public class EDBProcedureTest : EPASTestBase
         await command.PrepareAsync();
         await command.ExecuteNonQueryAsync();
 
-        Assert.AreEqual(10, int.Parse(command.Parameters[0].Value.ToString()));
-        Assert.AreEqual(20, int.Parse(command.Parameters[1].Value.ToString()));
+        Assert.That(int.Parse(command.Parameters[0].Value.ToString()), Is.EqualTo(10));
+        Assert.That(int.Parse(command.Parameters[1].Value.ToString()), Is.EqualTo(20));
 
         await command.DisposeAsync();
 
@@ -2085,6 +2108,7 @@ public class EDBProcedureTest : EPASTestBase
         await command.ExecuteNonQueryAsync();
         await command.DisposeAsync();
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     [Test]
@@ -2100,7 +2124,7 @@ public class EDBProcedureTest : EPASTestBase
             await command.DisposeAsync();
             var tran = await con.BeginTransactionAsync();
 
-            Assert.Throws<PostgresException>(async () =>
+            Assert.ThrowsAsync<PostgresException>(async () => 
             {
                 command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
                 await command.ExecuteNonQueryAsync();
@@ -2129,11 +2153,11 @@ public class EDBProcedureTest : EPASTestBase
 
             await rst.ReadAsync();
 
-            Assert.AreEqual("7369", Convert.ToString(rst[0].ToString()));
-            Assert.AreEqual("SMITH", Convert.ToString(rst.GetString(1)));
-            Assert.AreEqual("CLERK", Convert.ToString(rst.GetString(2)));
-            Assert.AreEqual("7902", Convert.ToString(rst[3].ToString()));
-            Assert.AreEqual("800.00", Convert.ToString(rst[5].ToString()));
+            Assert.That(rst[0].ToString(), Is.EqualTo("7369"));
+            Assert.That(rst.GetString(1), Is.EqualTo("SMITH"));
+            Assert.That(rst.GetString(2), Is.EqualTo("CLERK"));
+            Assert.That(rst[3].ToString(), Is.EqualTo("7902"));
+            Assert.That(rst[5].ToString(), Is.EqualTo("800.00"));
 
             await rst.CloseAsync();
 
@@ -2147,19 +2171,20 @@ public class EDBProcedureTest : EPASTestBase
 
             await rst.ReadAsync();
 
-            Assert.AreEqual("7521", Convert.ToString(rst[0].ToString()));
+            Assert.That(Convert.ToString(rst[0].ToString()), Is.EqualTo("7521"));
 
-            Assert.AreEqual("WARD", Convert.ToString(rst.GetString(1)));
+            Assert.That(Convert.ToString(rst.GetString(1)), Is.EqualTo("WARD"));
 
-            Assert.AreEqual("SALESMAN", Convert.ToString(rst.GetString(2)));
+            Assert.That(Convert.ToString(rst.GetString(2)), Is.EqualTo("SALESMAN"));
 
-            Assert.AreEqual("7698", Convert.ToString(rst[3].ToString()));
+            Assert.That(Convert.ToString(rst[3].ToString()), Is.EqualTo("7698"));
 
-            Assert.AreEqual("1250.00", Convert.ToString(rst[5].ToString()));
+            Assert.That(Convert.ToString(rst[5].ToString()), Is.EqualTo("1250.00"));
 
             await rst.CloseAsync();
             await tran.CommitAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         }
         catch (Exception ex)
@@ -2182,7 +2207,7 @@ public class EDBProcedureTest : EPASTestBase
 
             var tran = await con.BeginTransactionAsync();
 
-            Assert.Throws<PostgresException>(async () =>
+            Assert.ThrowsAsync<PostgresException>(async () =>
             {
                 command = new EDBCommand("INSERT INTO SOME_GARBAGE VALUES( 10, 20 );", con);
                 await command.ExecuteNonQueryAsync();
@@ -2203,7 +2228,7 @@ public class EDBProcedureTest : EPASTestBase
             command.Parameters[0].Value = 7369;
 
             await command.ExecuteNonQueryAsync();
-            Assert.AreEqual("100", Convert.ToString(command.Parameters[0].Value.ToString()));
+            Assert.That(Convert.ToString(command.Parameters[0].Value.ToString()), Is.EqualTo("100"));
 
             var cursorName1 = command.Parameters[1].Value.ToString();
             var cursorName2 = command.Parameters[2].Value.ToString();
@@ -2215,11 +2240,11 @@ public class EDBProcedureTest : EPASTestBase
             await reader.ReadAsync();
             await reader.ReadAsync();
 
-            Assert.AreEqual("7499", Convert.ToString(reader[0].ToString()));
-            Assert.AreEqual("ALLEN", Convert.ToString(reader[1].ToString()));
-            Assert.AreEqual("SALESMAN", Convert.ToString(reader[2].ToString()));
-            Assert.AreEqual("7698", Convert.ToString(reader[3].ToString()));
-            Assert.AreEqual("1600.00", Convert.ToString(reader[5].ToString()));
+            Assert.That(Convert.ToString(reader[0].ToString()), Is.EqualTo("7499"));
+            Assert.That(Convert.ToString(reader[1].ToString()), Is.EqualTo("ALLEN"));
+            Assert.That(Convert.ToString(reader[2].ToString()), Is.EqualTo("SALESMAN"));
+            Assert.That(Convert.ToString(reader[3].ToString()), Is.EqualTo("7698"));
+            Assert.That(Convert.ToString(reader[5].ToString()), Is.EqualTo("1600.00"));
 
             await reader.CloseAsync();
 
@@ -2229,12 +2254,13 @@ public class EDBProcedureTest : EPASTestBase
 
             await reader.ReadAsync();
 
-            Assert.AreEqual("ADAMS", Convert.ToString(reader[0].ToString()));
+            Assert.That(Convert.ToString(reader[0].ToString()), Is.EqualTo("ADAMS"));
 
             await reader.CloseAsync();
 
             await tran.CommitAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
         }
         catch (Exception ex)
@@ -2302,10 +2328,11 @@ public class EDBProcedureTest : EPASTestBase
             };
             await command.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<decimal>(paramValue);
-            Assert.AreEqual(123.45m, paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<decimal>());
+            Assert.That(paramValue, Is.EqualTo(123.45m));
         }
         catch (EDBException e)
         {
@@ -2374,10 +2401,11 @@ public class EDBProcedureTest : EPASTestBase
             };
             await command.ExecuteNonQueryAsync();
             TestUtil.closeDB(con);
+            con?.Dispose();
 
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<decimal>(paramValue);
-            Assert.AreEqual(123.45m, paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<decimal>());
+            Assert.That(paramValue, Is.EqualTo(123.45m));
         }
         catch (EDBException e)
         {

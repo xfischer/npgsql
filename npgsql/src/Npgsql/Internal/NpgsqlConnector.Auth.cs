@@ -18,6 +18,12 @@ partial class EDBConnector
 {
     async Task Authenticate(string username, EDBTimeout timeout, bool async, CancellationToken cancellationToken)
     {
+        var requiredAuthModes = Settings.RequireAuthModes;
+        if (requiredAuthModes == default)
+            requiredAuthModes = EDBConnectionStringBuilder.ParseAuthMode(PostgresEnvironment.RequireAuth);
+
+        var authenticated = false;
+
         while (true)
         {
             timeout.CheckAndApply(this);
@@ -25,24 +31,37 @@ partial class EDBConnector
             switch (msg.AuthRequestType)
             {
             case AuthenticationRequestType.Ok:
+                // If we didn't complete authentication, check whether it's allowed
+                if (!authenticated)
+                {
+                    // User requested GSS authentication, but server said that no auth is required
+                    // If and only if our connection is gss encrypted, we consider us already authenticated
+                    if (requiredAuthModes.HasFlag(RequireAuthMode.GSS) && IsGssEncrypted)
+                        return;
+                    ThrowIfNotAllowed(requiredAuthModes, RequireAuthMode.None);
+                }
                 return;
 
             case AuthenticationRequestType.CleartextPassword:
+                ThrowIfNotAllowed(requiredAuthModes, RequireAuthMode.Password);
                 await AuthenticateCleartext(username, async, cancellationToken).ConfigureAwait(false);
                 break;
 
             case AuthenticationRequestType.MD5Password:
+                ThrowIfNotAllowed(requiredAuthModes, RequireAuthMode.MD5);
                 await AuthenticateMD5(username, ((AuthenticationMD5PasswordMessage)msg).Salt, async, cancellationToken).ConfigureAwait(false);
                 break;
 
             case AuthenticationRequestType.SASL:
+                ThrowIfNotAllowed(requiredAuthModes, RequireAuthMode.ScramSHA256);
                 await AuthenticateSASL(((AuthenticationSASLMessage)msg).Mechanisms, username, async,
                     cancellationToken).ConfigureAwait(false);
                 break;
 
             case AuthenticationRequestType.GSS:
             case AuthenticationRequestType.SSPI:
-                await DataSource.IntegratedSecurityHandler.NegotiateAuthentication(async, this).ConfigureAwait(false);
+                ThrowIfNotAllowed(requiredAuthModes, msg.AuthRequestType == AuthenticationRequestType.GSS ? RequireAuthMode.GSS : RequireAuthMode.SSPI);
+                await DataSource.IntegratedSecurityHandler.NegotiateAuthentication(async, this, cancellationToken).ConfigureAwait(false);
                 return;
 
             case AuthenticationRequestType.GSSContinue:
@@ -51,6 +70,14 @@ partial class EDBConnector
             default:
                 throw new NotSupportedException($"Authentication method not supported (Received: {msg.AuthRequestType})");
             }
+
+            authenticated = true;
+        }
+
+        static void ThrowIfNotAllowed(RequireAuthMode requiredAuthModes, RequireAuthMode requestedAuthMode)
+        {
+            if (!requiredAuthModes.HasFlag(requestedAuthMode))
+                throw new EDBException($"\"{requestedAuthMode}\" authentication method is not allowed. Allowed methods: {requiredAuthModes}");
         }
     }
 
@@ -136,7 +163,7 @@ partial class EDBConnector
 
         var clientKey = HMAC(saltedPassword, "Client Key");
         byte[] storedKey;
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         storedKey = SHA256.HashData(clientKey);
 #else
         using (var sha256 = SHA256.Create())
@@ -193,7 +220,7 @@ partial class EDBConnector
         // try authenticate without channel binding even though both
         // the client and server supported it. The SCRAM exchange
         // checks for that, to prevent downgrade attacks.
-        if (!IsSecure)
+        if (!IsSslEncrypted)
             throw new EDBException("Server offered SCRAM-SHA-256-PLUS authentication over a non-SSL connection");
 
         var sslStream = (SslStream)_stream;
@@ -207,54 +234,52 @@ partial class EDBConnector
         // But to be on the safe side we'll just create a new instance of it
         using var remoteCertificate = new X509Certificate2(sslStream.RemoteCertificate);
         // Checking for hashing algorithms
-        HashAlgorithm? hashAlgorithm = null;
         var algorithmName = remoteCertificate.SignatureAlgorithm.FriendlyName;
-        if (algorithmName is null)
+
+        HashAlgorithm? hashAlgorithm = algorithmName switch
         {
-            ConnectionLogger.LogWarning("Signature algorithm was null, falling back to SCRAM-SHA-256");
-        }
-        else if (algorithmName.StartsWith("sha1", StringComparison.OrdinalIgnoreCase) ||
-                 algorithmName.StartsWith("md5", StringComparison.OrdinalIgnoreCase) ||
-                 algorithmName.StartsWith("sha256", StringComparison.OrdinalIgnoreCase))
-        {
-            hashAlgorithm = SHA256.Create();
-        }
-        else if (algorithmName.StartsWith("sha384", StringComparison.OrdinalIgnoreCase))
-        {
-            hashAlgorithm = SHA384.Create();
-        }
-        else if (algorithmName.StartsWith("sha512", StringComparison.OrdinalIgnoreCase))
-        {
-            hashAlgorithm = SHA512.Create();
-        }
-        else
+            not null when algorithmName.StartsWith("sha1", StringComparison.OrdinalIgnoreCase) => SHA256.Create(),
+            not null when algorithmName.StartsWith("md5", StringComparison.OrdinalIgnoreCase) => SHA256.Create(),
+            not null when algorithmName.StartsWith("sha256", StringComparison.OrdinalIgnoreCase) => SHA256.Create(),
+            not null when algorithmName.StartsWith("sha384", StringComparison.OrdinalIgnoreCase) => SHA384.Create(),
+            not null when algorithmName.StartsWith("sha512", StringComparison.OrdinalIgnoreCase) => SHA512.Create(),
+#if NET8_0_OR_GREATER
+            not null when algorithmName.StartsWith("sha3-256", StringComparison.OrdinalIgnoreCase) => SHA3_256.Create(),
+            not null when algorithmName.StartsWith("sha3-384", StringComparison.OrdinalIgnoreCase) => SHA3_384.Create(),
+            not null when algorithmName.StartsWith("sha3-512", StringComparison.OrdinalIgnoreCase) => SHA3_512.Create(),
+#endif
+
+            _ => null
+        };
+
+        if (hashAlgorithm is null)
         {
             ConnectionLogger.LogWarning(
-                $"Support for signature algorithm {algorithmName} is not yet implemented, falling back to SCRAM-SHA-256");
+                algorithmName is null
+                    ? "Signature algorithm was null, falling back to SCRAM-SHA-256"
+                    : $"Support for signature algorithm {algorithmName} is not yet implemented, falling back to SCRAM-SHA-256");
+            return;
         }
 
-        if (hashAlgorithm != null)
-        {
-            using var _ = hashAlgorithm;
+        using var _ = hashAlgorithm;
 
-            // RFC 5929
-            mechanism = "SCRAM-SHA-256-PLUS";
-            // PostgreSQL only supports tls-server-end-point binding
-            cbindFlag = "p=tls-server-end-point";
-            // SCRAM-SHA-256-PLUS depends on using ssl stream, so it's fine
-            var cbindFlagBytes = Encoding.UTF8.GetBytes($"{cbindFlag},,");
+        // RFC 5929
+        mechanism = "SCRAM-SHA-256-PLUS";
+        // PostgreSQL only supports tls-server-end-point binding
+        cbindFlag = "p=tls-server-end-point";
+        // SCRAM-SHA-256-PLUS depends on using ssl stream, so it's fine
+        var cbindFlagBytes = Encoding.UTF8.GetBytes($"{cbindFlag},,");
 
-            var certificateHash = hashAlgorithm.ComputeHash(remoteCertificate.GetRawCertData());
-            var cbindBytes = new byte[cbindFlagBytes.Length + certificateHash.Length];
-            cbindFlagBytes.CopyTo(cbindBytes, 0);
-            certificateHash.CopyTo(cbindBytes, cbindFlagBytes.Length);
-            cbind = Convert.ToBase64String(cbindBytes);
-            successfulBind = true;
-            IsScramPlus = true;
-        }
+        var certificateHash = hashAlgorithm.ComputeHash(remoteCertificate.GetRawCertData());
+        var cbindBytes = new byte[cbindFlagBytes.Length + certificateHash.Length];
+        cbindFlagBytes.CopyTo(cbindBytes, 0);
+        certificateHash.CopyTo(cbindBytes, cbindFlagBytes.Length);
+        cbind = Convert.ToBase64String(cbindBytes);
+        successfulBind = true;
+        IsScramPlus = true;
     }
 
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
     static byte[] Hi(string str, byte[] salt, int count)
         => Rfc2898DeriveBytes.Pbkdf2(str, salt, count, HashAlgorithmName.SHA256, 256 / 8);
 #endif
@@ -268,12 +293,11 @@ partial class EDBConnector
 
     static byte[] HMAC(byte[] key, string data)
     {
-        var dataBytes = Encoding.UTF8.GetBytes(data);
-#if NET7_0_OR_GREATER
-        return HMACSHA256.HashData(key, dataBytes);
+#if NET8_0_OR_GREATER
+        return HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(data));
 #else
         using var ih = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, key);
-        ih.AppendData(dataBytes);
+        ih.AppendData(Encoding.UTF8.GetBytes(data));
         return ih.GetHashAndReset();
 #endif
     }
@@ -285,7 +309,7 @@ partial class EDBConnector
             throw new EDBException("No password has been provided but the backend requires one (in MD5)");
 
         byte[] result;
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
         using (var md5 = MD5.Create())
 #endif
         {
@@ -297,7 +321,7 @@ partial class EDBConnector
             usernameBytes.CopyTo(cryptBuf, passwordBytes.Length);
 
             var sb = new StringBuilder();
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             var hashResult = MD5.HashData(cryptBuf);
 #else
             var hashResult = md5.ComputeHash(cryptBuf);
@@ -316,7 +340,7 @@ partial class EDBConnector
             prehashbytes.CopyTo(cryptBuf, 0);
 
             sb = new StringBuilder("md5");
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             hashResult = MD5.HashData(cryptBuf);
 #else
             hashResult = md5.ComputeHash(cryptBuf);
@@ -334,8 +358,8 @@ partial class EDBConnector
         await Flush(async, cancellationToken).ConfigureAwait(false);
     }
 
-#if NET7_0_OR_GREATER
-    internal async Task AuthenticateGSS(bool async)
+#if NET8_0_OR_GREATER
+    internal async ValueTask AuthenticateGSS(bool async, CancellationToken cancellationToken)
     {
         var targetName = $"{KerberosServiceName}/{Host}";
 
@@ -344,9 +368,13 @@ partial class EDBConnector
 
         using var authContext = new NegotiateAuthentication(clientOptions);
         var data = authContext.GetOutgoingBlob(ReadOnlySpan<byte>.Empty, out var statusCode)!;
-        Debug.Assert(statusCode == NegotiateAuthenticationStatusCode.ContinueNeeded);
-        await WritePassword(data, 0, data.Length, async, UserCancellationToken).ConfigureAwait(false);
-        await Flush(async, UserCancellationToken).ConfigureAwait(false);
+        if (statusCode != NegotiateAuthenticationStatusCode.ContinueNeeded)
+        {
+            // Unable to retrieve credentials or some other issue
+            throw new EDBException($"Unable to authenticate with GSS: received {statusCode} instead of the expected ContinueNeeded");
+        }
+        await WritePassword(data, 0, data.Length, async, cancellationToken).ConfigureAwait(false);
+        await Flush(async, cancellationToken).ConfigureAwait(false);
         while (true)
         {
             var response = ExpectAny<AuthenticationRequestMessage>(await ReadMessage(async).ConfigureAwait(false), this);
@@ -354,15 +382,15 @@ partial class EDBConnector
                 break;
             if (response is not AuthenticationGSSContinueMessage gssMsg)
                 throw new EDBException($"Received unexpected authentication request message {response.AuthRequestType}");
-            data = authContext.GetOutgoingBlob(gssMsg.AuthenticationData.AsSpan(), out statusCode)!;
+            data = authContext.GetOutgoingBlob(gssMsg.AuthenticationData.AsSpan(), out statusCode);
             if (statusCode is not NegotiateAuthenticationStatusCode.Completed and not NegotiateAuthenticationStatusCode.ContinueNeeded)
                 throw new EDBException($"Error while authenticating GSS/SSPI: {statusCode}");
             // We might get NegotiateAuthenticationStatusCode.Completed but the data will not be null
             // This can happen if it's the first cycle, in which case we have to send that data to complete handshake (#4888)
             if (data is null)
                 continue;
-            await WritePassword(data, 0, data.Length, async, UserCancellationToken).ConfigureAwait(false);
-            await Flush(async, UserCancellationToken).ConfigureAwait(false);
+            await WritePassword(data, 0, data.Length, async, cancellationToken).ConfigureAwait(false);
+            await Flush(async, cancellationToken).ConfigureAwait(false);
         }
     }
 #endif

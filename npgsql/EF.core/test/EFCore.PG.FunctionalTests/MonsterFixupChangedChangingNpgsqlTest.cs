@@ -1,6 +1,4 @@
-﻿using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+﻿namespace Microsoft.EntityFrameworkCore;
 
 public class MonsterFixupChangedChangingNpgsqlTest(MonsterFixupChangedChangingNpgsqlTest.MonsterFixupChangedChangingNpgsqlFixture fixture)
     : MonsterFixupTestBase<MonsterFixupChangedChangingNpgsqlTest.MonsterFixupChangedChangingNpgsqlFixture>(fixture)

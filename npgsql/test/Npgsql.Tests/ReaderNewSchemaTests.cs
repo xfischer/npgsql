@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using NUnit.Framework;
@@ -451,6 +454,19 @@ CREATE UNIQUE INDEX idx_{table} ON {table} (non_id_second, non_id_third)");
     }
 
     [Test]
+    public async Task DataType_with_array()
+    {
+        using var conn = await OpenConnectionAsync();
+        var table = await CreateTempTable(conn, "foo INTEGER[]");
+
+        using var cmd = new EDBCommand($"SELECT foo, ARRAY[1::INTEGER, 2::INTEGER] FROM {table}", conn);
+        using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SchemaOnly);
+        var columns = await GetColumnSchema(reader);
+        Assert.That(columns[0].DataType, Is.SameAs(typeof(Array)));
+        Assert.That(columns[1].DataType, Is.SameAs(typeof(Array)));
+    }
+
+    [Test]
     public async Task UdtAssemblyQualifiedName()
     {
         // Also see DataTypeWithComposite
@@ -673,6 +689,8 @@ CREATE TABLE {table2} (foo INTEGER)");
         var pgType = domainSchema.PostgresType;
         Assert.That(pgType, Is.InstanceOf<PostgresDomainType>());
         Assert.That(((PostgresDomainType)pgType).BaseType.Name, Is.EqualTo("character varying"));
+        // For domains we should return the underlying type
+        Assert.That(domainSchema.EDBDbType, Is.EqualTo(EDBTypes.EDBDbType.Varchar));
     }
 
     [Test]
@@ -757,9 +775,9 @@ CREATE TABLE {table2} (foo INTEGER)");
 
         var iface = (IDbColumnSchemaGenerator)reader;
         var schema = iface.GetColumnSchema();
-        Assert.NotNull(schema);
-        Assert.AreEqual(1, schema.Count);
-        Assert.NotNull(schema[0]);
+        Assert.That(schema, Is.Not.Null);
+        Assert.That(schema.Count, Is.EqualTo(1));
+        Assert.That(schema[0], Is.Not.Null);
     }
 
     #region Not supported
@@ -793,6 +811,6 @@ CREATE TABLE {table2} (foo INTEGER)");
         public int Foo { get; set; }
     }
 
-    async Task<ReadOnlyCollection<Schema.EDBDbColumn>> GetColumnSchema(EDBDataReader reader)
-        => IsAsync ? await reader.GetColumnSchemaAsync() : reader.GetColumnSchema();
+    async Task<IReadOnlyList<Schema.EDBDbColumn>> GetColumnSchema(EDBDataReader reader)
+        => IsAsync ? (await reader.GetColumnSchemaAsync(CancellationToken.None)).Cast<Schema.EDBDbColumn>().ToArray() : reader.GetColumnSchema();
 }

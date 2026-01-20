@@ -595,14 +595,14 @@ public class PgReader
 
         if (_pooledArray is not null)
         {
-                    ArrayPool.Return(_pooledArray);
-                    _pooledArray = null;
-                }
+            ArrayPool.Return(_pooledArray);
+            _pooledArray = null;
+        }
 
-                if (_charsReadReader is not null)
-                {
-                    _charsReadReader.Dispose();
-                    _charsReadReader = null;
+        if (_charsReadReader is not null)
+        {
+            _charsReadReader.Dispose();
+            _charsReadReader = null;
             _charsRead = default;
         }
 
@@ -744,10 +744,10 @@ public class PgReader
         => ShouldBuffer(GetBufferRequirementByteCount(bufferRequirement));
     public bool ShouldBuffer(int byteCount)
     {
-        return _buffer.ReadBytesLeft < byteCount && ShouldBufferSlow();
+        return _buffer.ReadBytesLeft < byteCount && ShouldBufferSlow(byteCount);
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        bool ShouldBufferSlow()
+        bool ShouldBufferSlow(int byteCount)
         {
             if (byteCount > _buffer.Size)
                 ThrowHelper.ThrowArgumentOutOfRangeException(nameof(byteCount),

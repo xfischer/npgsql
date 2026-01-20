@@ -61,5 +61,6 @@ public class EDBDMLTest : EPASTestBase
         TestUtil.dropTable(con, "dml_TestTable1");
         TestUtil.dropTable(con, "dml_TestTable2");
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 }

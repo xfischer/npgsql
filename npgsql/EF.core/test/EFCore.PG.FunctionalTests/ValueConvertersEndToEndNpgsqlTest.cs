@@ -1,6 +1,4 @@
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public class ValueConvertersEndToEndNpgsqlTest(ValueConvertersEndToEndNpgsqlTest.ValueConvertersEndToEndNpgsqlFixture fixture)
     : ValueConvertersEndToEndTestBase<ValueConvertersEndToEndNpgsqlTest.ValueConvertersEndToEndNpgsqlFixture>(fixture)
@@ -199,7 +197,6 @@ public class ValueConvertersEndToEndNpgsqlTest(ValueConvertersEndToEndNpgsqlTest
         private class IntWrapperConverter() : ValueConverter<IntWrapper, int>(iw => iw.Value, i => new IntWrapper(i));
     }
 
-#nullable enable
     public class ValueConvertedArrayEntity
     {
         public int Id { get; set; }

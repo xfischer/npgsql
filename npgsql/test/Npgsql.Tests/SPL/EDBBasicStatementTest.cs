@@ -369,17 +369,17 @@ public class EDBBasicStatementTest : EPASTestBase
         var baseAnnual = cstmt.Parameters[5].Value as decimal?;
 
         var today = DateTime.Now;
-        Assert.AreEqual(today.ToShortDateString(), date?.ToShortDateString());
+        Assert.That(date?.ToShortDateString(), Is.EqualTo(today.ToShortDateString()));
 
-        Assert.IsTrue(title.StartsWith("Report For Department # 1001"));
+        Assert.That(title.StartsWith("Report For Department # 1001"));
 
-        Assert.AreEqual(35525, baseSal);
+        Assert.That(baseSal, Is.EqualTo(35525));
 
-        Assert.NotNull(comRate);
-        Assert.AreEqual(1.33, (double)comRate!.Value, 0.01);
+        Assert.That(comRate, Is.Not.Null);
+        Assert.That((double)comRate!.Value, Is.EqualTo(1.33).Within(0.01));
 
-        Assert.NotNull(baseAnnual);
-        Assert.AreEqual(47248.25, (double)baseAnnual!.Value, 0.01);
+        Assert.That(baseAnnual, Is.Not.Null);
+        Assert.That((double)baseAnnual!.Value, Is.EqualTo(47248.25).Within(0.01));
     }
 
     [Test]
@@ -387,7 +387,7 @@ public class EDBBasicStatementTest : EPASTestBase
     {
         using var conn = OpenConnection();
         //Use delete statement to delete a employee from database
-        Assert.IsTrue(CheckEmployeeExists(1001));
+        Assert.That(CheckEmployeeExists(1001));
         var deleteExist = "emp_delete(:param1,:param2)";
 
         var cstmt = new EDBCommand(deleteExist, conn)
@@ -403,9 +403,9 @@ public class EDBBasicStatementTest : EPASTestBase
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
-        Assert.IsFalse(CheckEmployeeExists(1001));
+        Assert.That(CheckEmployeeExists(1001), Is.False);
         var existMsg = cstmt.Parameters[1].Value.ToString();
-        Assert.AreEqual("Deleted Employee # : 1001", existMsg);
+        Assert.That(existMsg, Is.EqualTo("Deleted Employee # : 1001"));
     }
 
     [Test]
@@ -413,7 +413,7 @@ public class EDBBasicStatementTest : EPASTestBase
     {
         using var conn = OpenConnection();
         // Delete non exist employee will return not found message
-        Assert.IsFalse(CheckEmployeeExists(1002));
+        Assert.That(CheckEmployeeExists(1002), Is.False);
         var deleteNotExist = "emp_delete(:param1,:param2)";
 
         var cstmt = new EDBCommand(deleteNotExist, conn)
@@ -430,7 +430,7 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
         var notExistMsg = cstmt.Parameters[1].Value.ToString();
-        Assert.AreEqual("Employee # 1002 not found", notExistMsg);
+        Assert.That(notExistMsg, Is.EqualTo("Employee # 1002 not found"));
     }
 
     [Test]
@@ -438,7 +438,7 @@ public class EDBBasicStatementTest : EPASTestBase
     {
         using var conn = OpenConnection();
         //User insert statement to insert a employee into database
-        Assert.IsFalse(CheckEmployeeExists(2001));
+        Assert.That(CheckEmployeeExists(2001), Is.False);
         var commandText = "emp_insert(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8)";
 
         var cstmt = new EDBCommand(commandText, conn)
@@ -474,7 +474,7 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
 
-        Assert.IsTrue(CheckEmployeeExists(2001));
+        Assert.That(CheckEmployeeExists(2001));
     }
 
     [Test]
@@ -502,7 +502,7 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.ExecuteNonQuery();
         var number = double.Parse(cstmt.Parameters[2].Value.ToString());
 
-        Assert.AreEqual(4, number, 0.1);
+        Assert.That(number, Is.EqualTo(4).Within(0.1));
     }
 
     [Test]
@@ -528,7 +528,7 @@ public class EDBBasicStatementTest : EPASTestBase
 
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
-        Assert.AreEqual(string.Empty, cstmt.Parameters[2].Value.ToString());
+        Assert.That(cstmt.Parameters[2].Value.ToString(), Is.EqualTo(string.Empty));
     }
 
     [Test]
@@ -536,7 +536,7 @@ public class EDBBasicStatementTest : EPASTestBase
     {
         using var conn = OpenConnection();
         //Update employee and use returing into statement to get employee information
-        Assert.IsTrue(CheckEmployeeExists(3001));
+        Assert.That(CheckEmployeeExists(3001));
         var commandText = "return_into(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10)";
 
         var cstmt = new EDBCommand(commandText, conn)
@@ -584,13 +584,13 @@ public class EDBBasicStatementTest : EPASTestBase
         var deptnoExists = int.Parse(cstmt.Parameters[8].Value.ToString());
         var msgExists = cstmt.Parameters[9].Value.ToString();
 
-        Assert.AreEqual(3001, empnoExists);
-        Assert.AreEqual("WARD", enameExists);
-        Assert.AreEqual("Sales", jobExists);
-        Assert.AreEqual(150000, salExists, 0.01);
-        Assert.AreEqual(110000, commExists, 0.01);
-        Assert.AreEqual(31, deptnoExists);
-        Assert.AreEqual("Updated Employee # : 3001", msgExists);
+        Assert.That(empnoExists, Is.EqualTo(3001));
+        Assert.That(enameExists, Is.EqualTo("WARD"));
+        Assert.That(jobExists, Is.EqualTo("Sales"));
+        Assert.That(salExists, Is.EqualTo(150000));
+        Assert.That(commExists, Is.EqualTo(110000));
+        Assert.That(deptnoExists, Is.EqualTo(31));
+        Assert.That(msgExists, Is.EqualTo("Updated Employee # : 3001"));
     }
 
     [Test]
@@ -598,7 +598,7 @@ public class EDBBasicStatementTest : EPASTestBase
     {
         using var conn = OpenConnection();
         //Update not existing employee get not found message
-        Assert.IsFalse(CheckEmployeeExists(3002));
+        Assert.That(CheckEmployeeExists(3002), Is.False);
         var commandText = "return_into(:param1,:param2,:param3,:param4,:param5,:param6,:param7,:param8,:param9,:param10)";
 
         var cstmt = new EDBCommand(commandText, conn)
@@ -641,8 +641,8 @@ public class EDBBasicStatementTest : EPASTestBase
         var enameNotExists = cstmt.Parameters[4].Value.ToString();
         var msgNotExists = cstmt.Parameters[9].Value.ToString();
 
-        Assert.AreEqual(string.Empty, enameNotExists);
-        Assert.AreEqual("Employee # 3002 not found", msgNotExists);
+        Assert.That(enameNotExists, Is.EqualTo(string.Empty));
+        Assert.That(msgNotExists, Is.EqualTo("Employee # 3002 not found"));
     }
 
     [Test]
@@ -655,7 +655,7 @@ public class EDBBasicStatementTest : EPASTestBase
         using var conn = ds.OpenConnection();
 
         //Delete a employee and use return into statement to get information
-        Assert.IsTrue(CheckEmployeeExists(5001));
+        Assert.That(CheckEmployeeExists(5001));
 
         var commandText = "return_into_from_delete";
 
@@ -674,17 +674,17 @@ public class EDBBasicStatementTest : EPASTestBase
         var emp = cstmt.Parameters[1].Value as Employee;
         var msg = cstmt.Parameters[2].Value.ToString();
 
-        Assert.IsNotNull(emp);
+        Assert.That(emp, Is.Not.Null);
 
-        Assert.AreEqual("BLAKE", emp.ename);
-        Assert.AreEqual("Sales", emp.job);
-        Assert.AreEqual(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified), emp.hiredate);
-        Assert.AreEqual(120000, emp.sal);
-        Assert.AreEqual(0, emp.comm);
-        Assert.AreEqual(51, emp.deptno);
+        Assert.That(emp.ename, Is.EqualTo("BLAKE"));
+        Assert.That(emp.job, Is.EqualTo("Sales"));
+        Assert.That(emp.hiredate, Is.EqualTo(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(emp.sal, Is.EqualTo(120000));
+        Assert.That(emp.comm, Is.EqualTo(0));
+        Assert.That(emp.deptno, Is.EqualTo(51));
 
-        Assert.AreEqual("Deleted Employee # : 5001", msg);
-        Assert.IsFalse(CheckEmployeeExists(5001));
+        Assert.That(msg, Is.EqualTo("Deleted Employee # : 5001"));
+        Assert.That(CheckEmployeeExists(5001), Is.False);
     }
 
     [Test]
@@ -696,7 +696,7 @@ public class EDBBasicStatementTest : EPASTestBase
             .Build();
         using var conn = ds.OpenConnection();
         //Delete non existing employee return not found message
-        Assert.IsFalse(CheckEmployeeExists(5002));
+        Assert.That(CheckEmployeeExists(5002), Is.False);
 
         var commandText = "return_into_from_delete";
 
@@ -715,7 +715,7 @@ public class EDBBasicStatementTest : EPASTestBase
         var emp = cstmt.Parameters[1].Value as Employee;
         var msgNotExists = cstmt.Parameters[2].Value.ToString();
 
-        Assert.AreEqual("Employee # 5002 not found", msgNotExists);
+        Assert.That(msgNotExists, Is.EqualTo("Employee # 5002 not found"));
     }
 
     [Test]
@@ -728,7 +728,7 @@ public class EDBBasicStatementTest : EPASTestBase
         using var conn = ds.OpenConnection();
 
         //Update employee and use select into statement to get employee information
-        Assert.IsTrue(CheckEmployeeExists(4001));
+        Assert.That(CheckEmployeeExists(4001));
 
         var commandText = "select_into_query";
 
@@ -746,21 +746,21 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.ExecuteNonQuery();
 
 
-        Assert.IsNotNull(empParam.Value);
+        Assert.That(empParam.Value, Is.Not.Null);
         var emp = empParam.Value as Employee;
 
-        Assert.AreEqual("JONES", emp.ename);
-        Assert.AreEqual("Sales", emp.job);
-        Assert.AreEqual(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified), emp.hiredate);
-        Assert.AreEqual(120000, emp.sal);
-        Assert.AreEqual(0, emp.comm);
-        Assert.AreEqual(41, emp.deptno);
+        Assert.That(emp.ename, Is.EqualTo("JONES"));
+        Assert.That(emp.job, Is.EqualTo("Sales"));
+        Assert.That(emp.hiredate, Is.EqualTo(new DateTime(2007, 11, 1, 0, 0, 0, DateTimeKind.Unspecified)));
+        Assert.That(emp.sal, Is.EqualTo(120000));
+        Assert.That(emp.comm, Is.EqualTo(0));
+        Assert.That(emp.deptno, Is.EqualTo(41));
 
-        Assert.IsNotNull(avgsal);
-        Assert.IsNotNull(avgsal!.Value);
-        Assert.AreEqual(110000, (double)(decimal)avgsal!.Value!, 0.01);
+        Assert.That(avgsal, Is.Not.Null);
+        Assert.That(avgsal!.Value, Is.Not.Null);
+        Assert.That((double)(decimal)avgsal!.Value!, Is.EqualTo(110000));
 
-        Assert.IsTrue(string.IsNullOrEmpty(msg.Value!.ToString()));
+        Assert.That(string.IsNullOrEmpty(msg.Value!.ToString()));
 
     }
 
@@ -774,7 +774,7 @@ public class EDBBasicStatementTest : EPASTestBase
         using var conn = ds.OpenConnection();
 
         //Update non existing employee get not found message
-        Assert.IsFalse(CheckEmployeeExists(4003));
+        Assert.That(CheckEmployeeExists(4003), Is.False);
 
         var commandText = "select_into_query";
 
@@ -791,7 +791,7 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
 
-        Assert.AreEqual("Employee # 4003 not found", msg.Value.ToString());
+        Assert.That(msg.Value.ToString(), Is.EqualTo("Employee # 4003 not found"));
     }
 
     [Test]
@@ -819,8 +819,8 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.ExecuteNonQuery();
         var name = cstmt.Parameters[1].Value.ToString();
         var msg = cstmt.Parameters[2].Value.ToString();
-        Assert.AreEqual("WARD", name);
-        Assert.AreEqual(string.Empty, msg);
+        Assert.That(name, Is.EqualTo("WARD"));
+        Assert.That(msg, Is.EqualTo(string.Empty));
     }
 
     [Test]
@@ -848,8 +848,8 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.ExecuteNonQuery();
         var name = cstmt.Parameters[1].Value.ToString();
         var msg = cstmt.Parameters[2].Value.ToString();
-        Assert.AreEqual("JONES", name);
-        Assert.AreEqual("More than one employee found", msg);
+        Assert.That(name, Is.EqualTo("JONES"));
+        Assert.That(msg, Is.EqualTo("More than one employee found"));
     }
 
     [Test]
@@ -857,7 +857,7 @@ public class EDBBasicStatementTest : EPASTestBase
     {
         using var conn = OpenConnection();
         //Update employee and get employee information
-        Assert.IsTrue(CheckEmployeeExists(3001));
+        Assert.That(CheckEmployeeExists(3001));
         var commandText = "emp_comp_update(:param1,:param2,:param3, :param4)";
 
         var cstmt = new EDBCommand(commandText, conn)
@@ -880,7 +880,7 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
         var msgExists = cstmt.Parameters[3].Value.ToString();
-        Assert.AreEqual("Updated Employee # : 3001", msgExists);
+        Assert.That(msgExists, Is.EqualTo("Updated Employee # : 3001"));
 
         var command = "SELECT sal, comm FROM emp1 where  empno = 3001";
         var selectCommand = new EDBCommand(command, conn);
@@ -888,8 +888,8 @@ public class EDBBasicStatementTest : EPASTestBase
         selectResult.Read();
         var sal = selectResult.GetDouble(0);
         var comm = selectResult.GetDouble(1);
-        Assert.AreEqual(250000, sal, 0.01);
-        Assert.AreEqual(210000, comm, 0.01);
+        Assert.That(sal, Is.EqualTo(250000).Within(0.01));
+        Assert.That(comm, Is.EqualTo(210000).Within(0.01));
 
         selectResult.Close();
     }
@@ -899,7 +899,7 @@ public class EDBBasicStatementTest : EPASTestBase
     {
         using var conn = OpenConnection();
         //Update not existing employee get not found message
-        Assert.IsFalse(CheckEmployeeExists(3002));
+        Assert.That(CheckEmployeeExists(3002), Is.False);
 
         var commandText = "emp_comp_update(:param1,:param2,:param3, :param4)";
 
@@ -923,7 +923,7 @@ public class EDBBasicStatementTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
         var msgNotExists = cstmt.Parameters[3].Value.ToString();
-        Assert.AreEqual("Employee # 3002 not found", msgNotExists);
+        Assert.That(msgNotExists, Is.EqualTo("Employee # 3002 not found"));
     }
 
     [Test]
@@ -957,9 +957,9 @@ public class EDBBasicStatementTest : EPASTestBase
         var msgFound = cstmt.Parameters[2].Value.ToString();
         var msgNotFound = cstmt.Parameters[3].Value.ToString();
 
-        Assert.AreEqual(2, count);
-        Assert.AreEqual("# rows updated: 2", msgFound);
-        Assert.AreEqual(string.Empty, msgNotFound);
+        Assert.That(count, Is.EqualTo(2));
+        Assert.That(msgFound, Is.EqualTo("# rows updated: 2"));
+        Assert.That(msgNotFound, Is.EqualTo(string.Empty));
     }
 
     [Test]
@@ -993,9 +993,9 @@ public class EDBBasicStatementTest : EPASTestBase
         var msgFound = cstmt.Parameters[2].Value.ToString();
         var msgNotFound = cstmt.Parameters[3].Value.ToString();
 
-        Assert.AreEqual(0, count);
-        Assert.AreEqual(string.Empty, msgFound);
-        Assert.AreEqual("No rows were updated", msgNotFound);
+        Assert.That(count, Is.EqualTo(0));
+        Assert.That(msgFound, Is.EqualTo(string.Empty));
+        Assert.That(msgNotFound, Is.EqualTo("No rows were updated"));
     }
 }
 

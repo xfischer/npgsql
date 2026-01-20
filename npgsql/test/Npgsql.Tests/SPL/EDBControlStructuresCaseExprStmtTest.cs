@@ -90,6 +90,7 @@ internal class EDBControlStructuresCaseExprStmtTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -163,11 +164,11 @@ internal class EDBControlStructuresCaseExprStmtTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(CASE_EXPR_RESULT.Length, notices.Count);
+            Assert.That(CASE_EXPR_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CASE_EXPR_RESULT[i], notice.MessageText);
+                Assert.That(CASE_EXPR_RESULT[i], Is.EqualTo(notice.MessageText));
             }
         }
         finally
@@ -231,11 +232,11 @@ internal class EDBControlStructuresCaseExprStmtTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(CASE_EXPR_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(CASE_EXPR_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CASE_EXPR_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(CASE_EXPR_RESULT[i]));
             }
         }
         finally
@@ -304,11 +305,11 @@ internal class EDBControlStructuresCaseExprStmtTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(CASE_STMT_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(CASE_STMT_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CASE_STMT_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(CASE_STMT_RESULT[i]));
             }
         }
         finally
@@ -378,11 +379,11 @@ internal class EDBControlStructuresCaseExprStmtTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(CASE_STMT_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(CASE_STMT_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CASE_STMT_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(CASE_STMT_RESULT[i]));
             }
         }
         finally

@@ -59,7 +59,8 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
             new FullTextSearchTypeInfoResolverFactory(),
             new NetworkTypeInfoResolverFactory(),
             new GeometricTypeInfoResolverFactory(),
-            new LTreeTypeInfoResolverFactory()
+            new LTreeTypeInfoResolverFactory(),
+            new CubeTypeInfoResolverFactory()
         ], static () =>
         {
             var builder = new PgTypeInfoResolverChainBuilder();
@@ -88,6 +89,7 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
             instance.AppendResolverFactory(new NetworkTypeInfoResolverFactory());
             instance.AppendResolverFactory(new GeometricTypeInfoResolverFactory());
             instance.AppendResolverFactory(new LTreeTypeInfoResolverFactory());
+            instance.AppendResolverFactory(new CubeTypeInfoResolverFactory());
         };
         _internalBuilder.ConfigureResolverChain = static chain => chain.Add(UnsupportedTypeInfoResolver);
         _internalBuilder.EnableTransportSecurity();
@@ -105,8 +107,14 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
         _internalBuilder.AddTypeInfoResolverFactory(new EDBTableOfResolverFactory());
 
         // EnterpriseDB : add EDB Advanced Queue support
+        _internalBuilder.AddTypeInfoResolverFactory(new EDBAQConverterFactory());
         _internalBuilder.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
         _internalBuilder.MapComposite<EDBAQDequeueOptions>("dbms_aq.dequeue_options_t");
+
+        // EnterpriseDB: Revert breaking change in v10 with date/time mapped by DateOnly/TimeOnly
+        // Issue: https://github.com/npgsql/npgsql/issues/6349
+        // See: https://www.npgsql.org/doc/release-notes/10.0.html#date-and-time-are-now-mapped-to-dateonly-and-timeonly
+        _internalBuilder.AddTypeInfoResolverFactory(new LegacyDateAndTimeResolverFactory());
     }
 
     /// <summary>
@@ -164,6 +172,17 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     }
 
     /// <summary>
+    /// The PostgreSQL date and time types are now read as .NET DateOnly and TimeOnly, instead of DateTime and TimeSpan by default, respectively.
+    /// This allows to revert this behavior and use the legacy mappings.
+    /// </summary>
+    /// <see  href="https://www.npgsql.org/doc/release-notes/10.0.html#date-and-time-are-now-mapped-to-dateonly-and-timeonly"/>
+    public EDBDataSourceBuilder EnableLegacyDateAndTime()
+    {
+        _internalBuilder.EnableLegacyDateAndTime();
+        return this;
+    }
+
+    /// <summary>
     /// Sets up dynamic System.Text.Json mappings. This allows mapping arbitrary .NET types to PostgreSQL <c>json</c> and <c>jsonb</c>
     /// types, as well as <see cref="JsonNode" /> and its derived types.
     /// </summary>
@@ -194,6 +213,12 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     public EDBDataSourceBuilder DisableDynamicJson()
     {
         _internalBuilder.DisableDynamicJson();
+        return this;
+    }
+
+    public EDBDataSourceBuilder DisableLegacyDateAndTime()
+    {
+        _internalBuilder.DisableLegacyDateAndTime();
         return this;
     }
 
@@ -258,7 +283,7 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     /// </para>
     /// </remarks>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
-#if NET7_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
 #endif
     public EDBDataSourceBuilder UseUserCertificateValidationCallback(RemoteCertificateValidationCallback userCertificateValidationCallback)
@@ -272,7 +297,7 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     /// <param name="clientCertificate">The client certificate to be sent to PostgreSQL when opening a connection.</param>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
-#if NET7_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
 #endif
     public EDBDataSourceBuilder UseClientCertificate(X509Certificate? clientCertificate)
@@ -286,7 +311,7 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     /// <param name="clientCertificates">The client certificate collection to be sent to PostgreSQL when opening a connection.</param>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
-#if NET7_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
 #endif
     public EDBDataSourceBuilder UseClientCertificates(X509CertificateCollection? clientCertificates)
@@ -295,7 +320,7 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
-#if NET7_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     /// <summary>
     /// When using SSL/TLS, this is a callback that allows customizing SslStream's authentication options.
     /// </summary>
@@ -330,7 +355,7 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     /// </para>
     /// </remarks>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
-#if NET7_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
 #endif
     public EDBDataSourceBuilder UseClientCertificatesCallback(Action<X509CertificateCollection>? clientCertificatesCallback)
@@ -351,6 +376,17 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     }
 
     /// <summary>
+    /// Sets the <see cref="X509Certificate2Collection" /> that will be used validate SSL certificate, received from the server.
+    /// </summary>
+    /// <param name="rootCertificates">The CA certificates.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBDataSourceBuilder UseRootCertificates(X509Certificate2Collection? rootCertificates)
+    {
+        _internalBuilder.UseRootCertificates(rootCertificates);
+        return this;
+    }
+
+    /// <summary>
     /// Specifies a callback that will be used to validate SSL certificate, received from the server.
     /// </summary>
     /// <param name="rootCertificateCallback">The callback to get CA certificate.</param>
@@ -363,6 +399,23 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     public EDBDataSourceBuilder UseRootCertificateCallback(Func<X509Certificate2>? rootCertificateCallback)
     {
         _internalBuilder.UseRootCertificateCallback(rootCertificateCallback);
+        return this;
+    }
+
+    /// <summary>
+    /// Specifies a callback that will be used to validate SSL certificate, received from the server.
+    /// </summary>
+    /// <param name="rootCertificateCallback">The callback to get CA certificates.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    /// <remarks>
+    /// This overload, which accepts a callback, is suitable for scenarios where the certificate rotates
+    /// and might change during the lifetime of the application.
+    /// When that's not the case, use the overload which directly accepts the certificate.
+    /// </remarks>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBDataSourceBuilder UseRootCertificatesCallback(Func<X509Certificate2Collection>? rootCertificateCallback)
+    {
+        _internalBuilder.UseRootCertificatesCallback(rootCertificateCallback);
         return this;
     }
 
@@ -419,7 +472,7 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     /// <summary>
     /// When using Kerberos, this is a callback that allows customizing default settings for Kerberos authentication.
     /// </summary>
@@ -442,6 +495,11 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
     #region Type mapping
 
     /// <inheritdoc />
+    void IEDBTypeMapper.AddDbTypeResolverFactory(DbTypeResolverFactory factory)
+        => ((IEDBTypeMapper)_internalBuilder).AddDbTypeResolverFactory(factory);
+
+    /// <inheritdoc />
+    [Experimental(EDBDiagnostics.ConvertersExperimental)]
     public void AddTypeInfoResolverFactory(PgTypeInfoResolverFactory factory)
         => _internalBuilder.AddTypeInfoResolverFactory(factory);
 

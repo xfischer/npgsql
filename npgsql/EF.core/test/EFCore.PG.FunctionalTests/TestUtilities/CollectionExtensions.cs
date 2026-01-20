@@ -1,4 +1,4 @@
-﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+﻿namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
 public static class CollectionExtensions
 {

@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore.TestModels.Operators;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+namespace Microsoft.EntityFrameworkCore.Query;
 
-public class OperatorsQueryNpgsqlTest : OperatorsQueryTestBase
+public class OperatorsQueryNpgsqlTest(NonSharedFixture fixture) : OperatorsQueryTestBase(fixture)
 {
     protected override ITestStoreFactory TestStoreFactory
         => NpgsqlTestStoreFactory.Instance;

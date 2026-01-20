@@ -36,11 +36,11 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     TransportSecurityHandler _transportSecurityHandler = new();
     RemoteCertificateValidationCallback? _userCertificateValidationCallback;
     Action<X509CertificateCollection>? _clientCertificatesCallback;
-#if NET7_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
     Action<SslClientAuthenticationOptions>? _sslClientAuthenticationOptionsCallback;
 #endif
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     Action<NegotiateAuthenticationClientOptions>? _negotiateOptionsCallback;
 #endif
 
@@ -52,6 +52,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     Func<EDBConnectionStringBuilder, CancellationToken, ValueTask<string>>? _periodicPasswordProvider;
     TimeSpan _periodicPasswordSuccessRefreshInterval, _periodicPasswordFailureRefreshInterval;
 
+    List<DbTypeResolverFactory>? _dbTypeResolverFactories;
     PgTypeInfoResolverChainBuilder _resolverChainBuilder = new(); // mutable struct, don't make readonly.
 
     readonly UserTypeMapper _userTypeMapper;
@@ -127,7 +128,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     public EDBSlimDataSourceBuilder ConfigureTypeLoading(Action<EDBTypeLoadingOptionsBuilder> configureAction)
     {
-#if NET6_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
         ArgumentNullException.ThrowIfNull(configureAction);
 #else
         if (configureAction is null)
@@ -145,7 +146,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
     public EDBSlimDataSourceBuilder ConfigureTracing(Action<EDBTracingOptionsBuilder> configureAction)
     {
-#if NET6_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
         ArgumentNullException.ThrowIfNull(configureAction);
 #else
         if (configureAction is null)
@@ -164,7 +165,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
     public EDBSlimDataSourceBuilder ConfigureJsonOptions(JsonSerializerOptions serializerOptions)
     {
-#if NET6_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
         ArgumentNullException.ThrowIfNull(serializerOptions);
 #else
         if (serializerOptions is null)
@@ -192,7 +193,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </para>
     /// </remarks>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
-#if NET7_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
 #endif
     public EDBSlimDataSourceBuilder UseUserCertificateValidationCallback(
@@ -208,7 +209,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     /// <param name="clientCertificate">The client certificate to be sent to PostgreSQL when opening a connection.</param>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
-#if NET7_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
 #endif
     public EDBSlimDataSourceBuilder UseClientCertificate(X509Certificate? clientCertificate)
@@ -225,14 +226,14 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </summary>
     /// <param name="clientCertificates">The client certificate collection to be sent to PostgreSQL when opening a connection.</param>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
-#if NET7_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
 #endif
     public EDBSlimDataSourceBuilder UseClientCertificates(X509CertificateCollection? clientCertificates)
         => UseClientCertificatesCallback(clientCertificates is null ? null : certs => certs.AddRange(clientCertificates));
 
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     /// <summary>
     /// When using SSL/TLS, this is a callback that allows customizing SslStream's authentication options.
     /// </summary>
@@ -268,7 +269,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// </para>
     /// </remarks>
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
-#if NET7_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
 #endif
     public EDBSlimDataSourceBuilder UseClientCertificatesCallback(Action<X509CertificateCollection>? clientCertificatesCallback)
@@ -285,8 +286,18 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
     public EDBSlimDataSourceBuilder UseRootCertificate(X509Certificate2? rootCertificate)
         => rootCertificate is null
-            ? UseRootCertificateCallback(null)
+            ? UseRootCertificatesCallback((Func<X509Certificate2Collection>?)null)
             : UseRootCertificateCallback(() => rootCertificate);
+
+    /// <summary>
+    /// Sets the <see cref="X509Certificate2Collection" /> that will be used validate SSL certificate, received from the server.
+    /// </summary>
+    /// <param name="rootCertificates">The CA certificates.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder UseRootCertificates(X509Certificate2Collection? rootCertificates)
+        => rootCertificates is null
+            ? UseRootCertificatesCallback((Func<X509Certificate2Collection>?)null)
+            : UseRootCertificatesCallback(() => rootCertificates);
 
     /// <summary>
     /// Specifies a callback that will be used to validate SSL certificate, received from the server.
@@ -301,7 +312,27 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     /// <returns>The same builder instance so that multiple calls can be chained.</returns>
     public EDBSlimDataSourceBuilder UseRootCertificateCallback(Func<X509Certificate2>? rootCertificateCallback)
     {
-        _transportSecurityHandler.RootCertificateCallback = rootCertificateCallback;
+        _transportSecurityHandler.RootCertificatesCallback = () => rootCertificateCallback is not null
+            ? new X509Certificate2Collection(rootCertificateCallback())
+            : null;
+
+        return this;
+    }
+
+    /// <summary>
+    /// Specifies a callback that will be used to validate SSL certificate, received from the server.
+    /// </summary>
+    /// <param name="rootCertificateCallback">The callback to get CA certificates.</param>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    /// <remarks>
+    /// This overload, which accepts a callback, is suitable for scenarios where the certificate rotates
+    /// and might change during the lifetime of the application.
+    /// When that's not the case, use the overload which directly accepts the certificate.
+    /// </remarks>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder UseRootCertificatesCallback(Func<X509Certificate2Collection>? rootCertificateCallback)
+    {
+        _transportSecurityHandler.RootCertificatesCallback = rootCertificateCallback;
 
         return this;
     }
@@ -374,7 +405,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     /// <summary>
     /// When using Kerberos, this is a callback that allows customizing default settings for Kerberos authentication.
     /// </summary>
@@ -536,9 +567,14 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         Type clrType, string? pgName = null, IEDBNameTranslator? nameTranslator = null)
         => _userTypeMapper.UnmapComposite(clrType, pgName, nameTranslator);
 
+    /// <inheritdoc />
+    void IEDBTypeMapper.AddDbTypeResolverFactory(DbTypeResolverFactory factory)
+        => (_dbTypeResolverFactories ??= new()).Add(factory);
 
     /// <inheritdoc />
-    public void AddTypeInfoResolverFactory(PgTypeInfoResolverFactory factory) => _resolverChainBuilder.PrependResolverFactory(factory);
+    [Experimental(EDBDiagnostics.ConvertersExperimental)]
+    public void AddTypeInfoResolverFactory(PgTypeInfoResolverFactory factory)
+        => _resolverChainBuilder.PrependResolverFactory(factory);
 
     /// <inheritdoc />
     void IEDBTypeMapper.Reset() => _resolverChainBuilder.Clear();
@@ -621,6 +657,16 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     public EDBSlimDataSourceBuilder EnableLTree()
     {
         AddTypeInfoResolverFactory(new LTreeTypeInfoResolverFactory());
+        return this;
+    }
+
+    /// <summary>
+    /// Sets up mappings for the PostgreSQL <c>cube</c> extension type.
+    /// </summary>
+    /// <returns>The same builder instance so that multiple calls can be chained.</returns>
+    public EDBSlimDataSourceBuilder EnableCube()
+    {
+        AddTypeInfoResolverFactory(new CubeTypeInfoResolverFactory());
         return this;
     }
 
@@ -727,11 +773,24 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
-
     // EnterpriseDB : remove optins (see EC-3060)
     internal EDBSlimDataSourceBuilder DisableUnmappedTypes()
     {
         _resolverChainBuilder.RemoveResolverFactory(typeof(UnmappedTypeInfoResolverFactory));
+        return this;
+    }
+
+    // EnterpriseDB : Allow support for new DateOnly/TimeOnly mappings (this call allows the new DateOnly/TimeOnly mappings to be used)
+    internal EDBSlimDataSourceBuilder DisableLegacyDateAndTime()
+    {
+        _resolverChainBuilder.RemoveResolverFactory(typeof(LegacyDateAndTimeResolverFactory));
+        return this;
+    }
+
+    // EnterpriseDB : Allow support for new DateOnly/TimeOnly mappings (this call allows the new DateOnly/TimeOnly mappings to be used)
+    internal EDBSlimDataSourceBuilder EnableLegacyDateAndTime()
+    {
+        AddTypeInfoResolverFactory(new LegacyDateAndTimeResolverFactory());
         return this;
     }
 
@@ -833,7 +892,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         ConnectionStringBuilder.PostProcessAndValidate();
         var connectionStringBuilder = ConnectionStringBuilder.Clone();
 
-#if NET7_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
         var sslClientAuthenticationOptionsCallback = _sslClientAuthenticationOptionsCallback;
         var hasCertificateCallbacks = _userCertificateValidationCallback is not null || _clientCertificatesCallback is not null;
         if (sslClientAuthenticationOptionsCallback is not null && hasCertificateCallbacks)
@@ -905,7 +964,7 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
             typeLoadingOptions,
             _transportSecurityHandler,
             _integratedSecurityHandler,
-#if NET7_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
             sslClientAuthenticationOptionsCallback,
 #else
             _userCertificateValidationCallback,
@@ -917,35 +976,18 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
             _periodicPasswordSuccessRefreshInterval,
             _periodicPasswordFailureRefreshInterval,
             _resolverChainBuilder.Build(ConfigureResolverChain),
-            HackyEnumMappings(),
+            _dbTypeResolverFactories ?? [],
             DefaultNameTranslator,
             _connectionInitializer,
             _connectionInitializerAsync
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
             ,_negotiateOptionsCallback
 #endif
             ));
-
-        List<HackyEnumTypeMapping> HackyEnumMappings()
-        {
-            var mappings = new List<HackyEnumTypeMapping>();
-
-            if (_userTypeMapper.Items.Count > 0)
-                foreach (var userTypeMapping in _userTypeMapper.Items)
-                    if (userTypeMapping is UserTypeMapper.EnumMapping enumMapping)
-                        mappings.Add(new(enumMapping.ClrType, enumMapping.PgTypeName, enumMapping.NameTranslator));
-
-            if (GlobalTypeMapper.Instance.HackyEnumTypeMappings.Count > 0)
-                mappings.AddRange(GlobalTypeMapper.Instance.HackyEnumTypeMappings);
-
-            return mappings;
-        }
     }
 
     void ValidateMultiHost()
     {
-        if (ConnectionStringBuilder.TargetSessionAttributes is not null)
-            throw new InvalidOperationException(EDBStrings.CannotSpecifyTargetSessionAttributes);
         if (ConnectionStringBuilder.Multiplexing)
             throw new NotSupportedException("Multiplexing is not supported with multiple hosts");
         if (ConnectionStringBuilder.ReplicationMode != ReplicationMode.Off)
@@ -981,7 +1023,11 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
         _userTypeMapper.MapEnum<TEnum>(pgName, nameTranslator);
         return this;
     }
-    IEDBTypeMapper IEDBTypeMapper.MapEnum(Type clrType, string pgName, IEDBNameTranslator nameTranslator)
+
+    /// <inheritdoc />
+    [RequiresDynamicCode("Calling MapEnum with a Type can require creating new generic types or methods. This may not work when AOT compiling.")]
+    IEDBTypeMapper IEDBTypeMapper.MapEnum([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)]
+        Type clrType, string? pgName, IEDBNameTranslator? nameTranslator)
     {
         _userTypeMapper.MapEnum(clrType, pgName, nameTranslator);
         return this;
@@ -991,13 +1037,20 @@ public sealed class EDBSlimDataSourceBuilder : IEDBTypeMapper
     IEDBTypeMapper IEDBTypeMapper.DisableDynamicJson() => DisableDynamicJson();
     IEDBTypeMapper IEDBTypeMapper.DisableUnmappedTypes() => DisableUnmappedTypes();
     IEDBTypeMapper IEDBTypeMapper.DisableRecordsAsTuples() => DisableRecordsAsTuples();
-    IEDBTypeMapper IEDBTypeMapper.MapComposite<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] T>(string? pgName, IEDBNameTranslator? nameTranslator)
+	
+	/// <inheritdoc />
+    [RequiresDynamicCode("Mapping composite types involves serializing arbitrary types which can require creating new generic types or methods. This is currently unsupported with NativeAOT, vote on issue #5303 if this is important to you.")]
+    IEDBTypeMapper IEDBTypeMapper.MapComposite<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] T>(
+		string? pgName, IEDBNameTranslator? nameTranslator)
     {
         _userTypeMapper.MapComposite(typeof(T), pgName, nameTranslator);
         return this;
     }
 
-    IEDBTypeMapper IEDBTypeMapper.MapComposite(Type clrType, string pgName, IEDBNameTranslator nameTranslator)
+    /// <inheritdoc />
+    [RequiresDynamicCode("Mapping composite types involves serializing arbitrary types which can require creating new generic types or methods. This is currently unsupported with NativeAOT, vote on issue #5303 if this is important to you.")]
+    IEDBTypeMapper IEDBTypeMapper.MapComposite([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+		Type clrType, string? pgName, IEDBNameTranslator? nameTranslator)
     {
         _userTypeMapper.MapComposite(clrType, pgName, nameTranslator);
         return this;

@@ -54,7 +54,7 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
 
     internal List<EDBBatchCommand> InternalBatchCommands { get; }
 
-    Activity? CurrentActivity;
+    internal Activity? CurrentActivity { get; private set; }
 
     /// <summary>
     /// Returns details about each statement that this command has executed.
@@ -186,8 +186,18 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
         {
             Debug.Assert(WrappingBatch is null);
 
-            if (State != CommandState.Idle)
-                ThrowHelper.ThrowInvalidOperationException("An open data reader exists for this command.");
+            switch (State)
+            {
+                case CommandState.Idle:
+                    break;
+                case CommandState.Disposed:
+                    ThrowHelper.ThrowObjectDisposedException(typeof(EDBCommand).FullName);
+                    break;
+                case CommandState.InProgress:
+                default:
+                    ThrowHelper.ThrowInvalidOperationException("An open data reader exists for this command.");
+                    break;
+            }
 
             _commandText = value ?? string.Empty;
 
@@ -257,9 +267,12 @@ public class EDBCommand : DbCommand, ICloneable, IComponent
             if (InternalConnection == value)
                 return;
 
-            InternalConnection = State == CommandState.Idle
-                ? (EDBConnection?)value
-                : throw new InvalidOperationException("An open data reader exists for this command.");
+            InternalConnection = State switch
+            {
+                CommandState.Idle => (EDBConnection?)value,
+                CommandState.Disposed => throw new ObjectDisposedException(typeof(EDBCommand).FullName),
+                _ => throw new InvalidOperationException("An open data reader exists for this command."),
+            };
 
             Transaction = null;
         }
@@ -513,7 +526,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     void DeriveParametersForFunction()
     {
         // EnterpriseDB : proargdeclaresmodes added in redwood (EC-3203)
-        using var c = InternalConnection!.EDBDataSource.DatabaseInfo.SupportsRedwoodDialect ?
+        using var c = InternalConnection!.Connector!.DatabaseInfo.SupportsRedwoodDialect ?
                         new EDBCommand(DeriveParametersForFunctionQuery_Redwood, InternalConnection)
                         : new EDBCommand(DeriveParametersForFunctionQuery, InternalConnection);
         c.Parameters.Add(new EDBParameter("proname", EDBDbType.Text));
@@ -711,8 +724,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         {
             foreach (var batchCommand in InternalBatchCommands)
             {
-                batchCommand._parameters?.ProcessParameters(connector.SerializerOptions, validateValues: false, batchCommand.CommandType);
-                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect); //EnterpriseDB Team (additional param)
+                batchCommand._parameters?.ProcessParameters(connector.ReloadableState, validateValues: false, batchCommand.CommandType);
+                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DatabaseInfo.SupportsRedwoodDialect); //EnterpriseDB Team (additional param)
 
                 needToPrepare = batchCommand.ExplicitPrepare(connector) || needToPrepare;
                 batchCommand.ConnectorPreparedOn = connector;
@@ -729,8 +742,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
         }
         else
         {
-            _parameters?.ProcessParameters(connector.SerializerOptions, validateValues: false, CommandType);
-            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect); //EnterpriseDB Team (additional param)
+            _parameters?.ProcessParameters(connector.ReloadableState, validateValues: false, CommandType);
+            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, connector.DatabaseInfo.SupportsRedwoodDialect); //EnterpriseDB Team (additional param)
 
             foreach (var batchCommand in InternalBatchCommands)
                 needToPrepare = batchCommand.ExplicitPrepare(connector) || needToPrepare;
@@ -953,6 +966,11 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 break;
 
             case PlaceholderType.NoParameters:
+                if (batchCommand is not null)
+                {
+                    batchCommand.FinalCommandText = batchCommand.CommandText;
+                    break;
+                }
                 // Unless the EnableSqlRewriting AppContext switch is explicitly disabled, queries with no parameters are parsed just
                 // like queries with named parameters, since they may contain a semicolon (legacy batching).
                 if (EnableSqlRewriting)
@@ -1017,10 +1035,13 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     {
                         var parameter = parameters[i];
 
-                        // With functions, output parameters are never present when calling the function (they only define the schema of the
-                        // returned table). With stored procedures they must be specified in the CALL argument list (see below).
-                        if (EnableStoredProcedureCompatMode && parameter.Direction == ParameterDirection.Output)
-                            continue;
+	                    // With functions, output parameters are never present when calling the function (they only define the schema of the
+	                    // returned table). With stored procedures they must be specified in the CALL argument list (see below).
+	                    if (EnableStoredProcedureCompatMode && parameter.Direction == ParameterDirection.Output)
+	                        continue;
+
+	                    if (parameter.Direction == ParameterDirection.ReturnValue)
+	                        continue;
 
                         if (isFirstParam)
                             isFirstParam = false;
@@ -1104,7 +1125,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         parseCommand += "( )";
                 }
 
-                parseCommand = "CALL " + parseCommand; // This syntax i s only available in 7.3+ as well SupportsPrepare.
+                parseCommand = "CALL " + parseCommand;
                 sb.Append(parseCommand);
 
                 batchCommand ??= TruncateStatementsToOne();
@@ -1161,9 +1182,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     #endregion
 
     #region Message Creation / Population
-
-    void BeginSend(EDBConnector connector)
-        => connector.WriteBuffer.Timeout = TimeSpan.FromSeconds(CommandTimeout);
 
     internal Task Write(EDBConnector connector, bool async, bool flush, CancellationToken cancellationToken = default)
     {
@@ -1262,7 +1280,10 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     await connector.WriteSync(async, cancellationToken).ConfigureAwait(false);
 
                 if (pStatement != null)
+				{
+					pStatement?.RefreshLastUsed();
                     connector.PreparedStatementManager.SetLastUsed(pStatement, DateTime.UtcNow.Ticks); //EnterpriseDB Team
+				}
             }
 
             if (batchCommand is null || !(batchCommand.AppendErrorBarrier ?? EnableErrorBarriers))
@@ -1284,11 +1305,24 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     await new TaskSchedulerAwaitable(ConstrainedConcurrencyScheduler);
 
                 var batchCommand = InternalBatchCommands[i];
+                var pStatement = batchCommand.PreparedStatement;
 
-                if (batchCommand.PreparedStatement?.State == PreparedState.Prepared)
-                    continue;   // Prepared, we already have the RowDescription
+                pStatement?.RefreshLastUsed();
 
-                await connector.WriteParse(batchCommand.FinalCommandText!, batchCommand.StatementName,
+                Debug.Assert(batchCommand.FinalCommandText is not null);
+
+                if (pStatement != null && !batchCommand.IsPreparing)
+                {
+                    // Prepared, we already have the RowDescription
+                    Debug.Assert(pStatement.IsPrepared);
+                    continue;
+                }
+
+                // We may have a prepared statement that replaces an existing statement - close the latter first.
+                if (pStatement?.StatementBeingReplaced != null)
+                    await connector.WriteClose(StatementOrPortal.Statement, pStatement.StatementBeingReplaced.Name!, async, cancellationToken).ConfigureAwait(false);
+
+                await connector.WriteParse(batchCommand.FinalCommandText, batchCommand.StatementName,
                     batchCommand.CurrentParametersReadOnly,
                     async, cancellationToken).ConfigureAwait(false);
                 await connector.WriteDescribe(StatementOrPortal.Statement, batchCommand.StatementName, async, cancellationToken).ConfigureAwait(false);
@@ -1306,8 +1340,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     async Task SendDeriveParameters(EDBConnector connector, bool async, CancellationToken cancellationToken = default)
     {
-        BeginSend(connector);
-
         var syncCaller = !async;
         for (var i = 0; i < InternalBatchCommands.Count; i++)
         {
@@ -1326,8 +1358,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     async Task SendPrepare(EDBConnector connector, bool async, CancellationToken cancellationToken = default)
     {
-        BeginSend(connector);
-
         var syncCaller = !async;
         for (var i = 0; i < InternalBatchCommands.Count; i++)
         {
@@ -1381,8 +1411,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     async Task SendClose(EDBConnector connector, bool async, CancellationToken cancellationToken = default)
     {
-        BeginSend(connector);
-
         foreach (var batchCommand in InternalBatchCommands)
         {
             if (!batchCommand.IsPrepared)
@@ -1565,6 +1593,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
             if (connector is not null)
             {
                 var logger = connector.CommandLogger;
+                var reloadableState = connector.ReloadableState;
 
                 cancellationToken.ThrowIfCancellationRequested();
                 // We cannot pass a token here, as we'll cancel a non-send query
@@ -1579,6 +1608,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 try
                 {
+                    var fullyPrepared = false;
+
                     switch (IsExplicitlyPrepared)
                     {
                     case true:
@@ -1595,7 +1626,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                     goto case false;
                                 }
 
-                                batchCommand._parameters?.ProcessParameters(connector.SerializerOptions, validateParameterValues, batchCommand.CommandType);
+                                batchCommand._parameters?.ProcessParameters(reloadableState, validateParameterValues, batchCommand.CommandType);
                             }
                         }
                         else
@@ -1608,11 +1639,12 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                                 ResetPreparation();
                                 goto case false;
                             }
-                            _parameters?.ProcessParameters(connector.SerializerOptions, validateParameterValues, CommandType);
+                            _parameters?.ProcessParameters(reloadableState, validateParameterValues, CommandType);
                         }
 
                         EDBEventSource.Log.CommandStartPrepared();
                         connector.DataSource.MetricsReporter.CommandStartPrepared();
+                        fullyPrepared = true;
                         break;
 
                     case false:
@@ -1624,8 +1656,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                             {
                                 var batchCommand = InternalBatchCommands[i];
 
-                                batchCommand._parameters?.ProcessParameters(connector.SerializerOptions, validateParameterValues, batchCommand.CommandType);
-                                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect);   // EnterpriseDB (additional param)
+                                batchCommand._parameters?.ProcessParameters(reloadableState, validateParameterValues, batchCommand.CommandType);
+                                ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand, connector.DatabaseInfo.SupportsRedwoodDialect);   // EnterpriseDB (additional param)
 
                                 if (connector.Settings.MaxAutoPrepare > 0 && batchCommand.TryAutoPrepare(connector))
                                 {
@@ -1636,8 +1668,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                         }
                         else
                         {
-                            _parameters?.ProcessParameters(connector.SerializerOptions, validateParameterValues, CommandType);
-                            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, connector.DataSource.DatabaseInfo.SupportsRedwoodDialect);   // EnterpriseDB (additional param)
+                            _parameters?.ProcessParameters(reloadableState, validateParameterValues, CommandType);
+                            ProcessRawQuery(connector.SqlQueryParser, connector.UseConformingStrings, batchCommand: null, connector.DatabaseInfo.SupportsRedwoodDialect);   // EnterpriseDB (additional param)
 
                             if (connector.Settings.MaxAutoPrepare > 0)
                                 for (var i = 0; i < InternalBatchCommands.Count; i++)
@@ -1652,6 +1684,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                             {
                                 EDBEventSource.Log.CommandStartPrepared();
                                 connector.DataSource.MetricsReporter.CommandStartPrepared();
+                                fullyPrepared = true;
                             }
                         }
 
@@ -1674,7 +1707,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                     EDBEventSource.Log.CommandStart(CommandText);
                     startTimestamp = connector.DataSource.MetricsReporter.ReportCommandStart();
-                    TraceCommandStart(connector.Settings, connector.DataSource.Configuration.TracingOptions);
+                    TraceCommandStart(connector.DataSource.Configuration.TracingOptions, fullyPrepared);
                     TraceCommandEnrich(connector);
 
                     // We do not wait for the entire send to complete before proceeding to reading -
@@ -1685,7 +1718,6 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                     // Instead, all sends for non-first statements are performed asynchronously (even if the user requested sync),
                     // in a special synchronization context to prevents a dependency on the thread pool (which would also trigger
                     // deadlocks).
-                    BeginSend(connector);
                     sendTask = Write(connector, async, flush: true, CancellationToken.None);
 
                     // The following is a hack. It raises an exception if one was thrown in the first phases
@@ -1726,9 +1758,10 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 // The connection isn't bound to a connector - it's multiplexing time.
                 var dataSource = (MultiplexingDataSource)conn.EDBDataSource;
+				var reloadableState = dataSource.CurrentReloadableState;
 
                 // EnterpriseDB Team
-                var isRedwood = dataSource.DatabaseInfo.SupportsRedwoodDialect;
+                var isRedwood = reloadableState.DatabaseInfo.SupportsRedwoodDialect;
 
                 if (!async)
                 {
@@ -1741,19 +1774,20 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 {
                     foreach (var batchCommand in InternalBatchCommands)
                     {
-                        batchCommand._parameters?.ProcessParameters(dataSource.SerializerOptions, validateValues: true, batchCommand.CommandType);
+                        batchCommand._parameters?.ProcessParameters(reloadableState, validateValues: true, batchCommand.CommandType);
                         ProcessRawQuery(null, standardConformingStrings: true, batchCommand, isRedwood);  // EnterpriseDB (additional param)
                     }
                 }
                 else
                 {
-                    _parameters?.ProcessParameters(dataSource.SerializerOptions, validateValues: true, CommandType);
+                    _parameters?.ProcessParameters(reloadableState, validateValues: true, CommandType);
                     ProcessRawQuery(null, standardConformingStrings: true, batchCommand: null, isRedwood);  // EnterpriseDB (additional param)
                 }
 
                 State = CommandState.InProgress;
 
-                TraceCommandStart(conn.Settings, conn.EDBDataSource.Configuration.TracingOptions);
+                // In multiplexing, we don't yet know whether the command will execute as prepared or not; that will be determined later.
+                TraceCommandStart(conn.EDBDataSource.Configuration.TracingOptions, prepared: null);
 
                 // TODO: Experiment: do we want to wait on *writing* here, or on *reading*?
                 // Previous behavior was to wait on reading, which throw the exception from ExecuteReader (and not from
@@ -1778,6 +1812,8 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 reader.Init(this, behavior, InternalBatchCommands);
                 connector.CurrentReader = reader;
                 await reader.NextResultAsync(cancellationToken).ConfigureAwait(false);
+
+                TraceReceivedFirstResponse(connector.DataSource.Configuration.TracingOptions);
 
                 return reader;
             }
@@ -1815,7 +1851,13 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     protected override DbTransaction? DbTransaction
     {
         get => _transaction;
-        set => _transaction = (EDBTransaction?)value;
+        set
+        {
+            var tx = (EDBTransaction?)value;
+            if (tx is { IsCompleted: true })
+                throw new InvalidOperationException("Transaction is already completed");
+            _transaction = tx;
+        }
     }
 
     /// <summary>
@@ -1890,7 +1932,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
     #region Tracing
 
-    internal void TraceCommandStart(EDBConnectionStringBuilder settings, EDBTracingOptions tracingOptions)
+    internal void TraceCommandStart(EDBTracingOptions tracingOptions, bool? prepared)
     {
         Debug.Assert(CurrentActivity is null);
 		
@@ -1900,16 +1942,16 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
                 ? tracingOptions.BatchFilter?.Invoke(WrappingBatch) ?? true
                 : tracingOptions.CommandFilter?.Invoke(this) ?? true;
 
-            var spanName = WrappingBatch is not null
-                ? tracingOptions.BatchSpanNameProvider?.Invoke(WrappingBatch)
-                : tracingOptions.CommandSpanNameProvider?.Invoke(this);
-
             if (enableTracing)
             {
+	            var spanName = WrappingBatch is not null
+	                ? tracingOptions.BatchSpanNameProvider?.Invoke(WrappingBatch)
+	                : tracingOptions.CommandSpanNameProvider?.Invoke(this);
+
                 CurrentActivity = EDBActivitySource.CommandStart(
-                    settings,
                     WrappingBatch is not null ? GetBatchFullCommandText() : CommandText,
                     CommandType,
+                    prepared,
                     spanName);
             }
         }
@@ -1938,7 +1980,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     {
         if (CurrentActivity is not null)
         {
-            EDBActivitySource.CommandStop(CurrentActivity);
+            CurrentActivity.Dispose();
             CurrentActivity = null;
         }
     }
@@ -2137,7 +2179,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
     EDBConnection? CheckAndGetConnection()
     {
         if (State is CommandState.Disposed)
-            ThrowHelper.ThrowObjectDisposedException(GetType().FullName);
+            throw new ObjectDisposedException(nameof(State));
 
         var conn = InternalConnection;
         if (conn is null)

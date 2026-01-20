@@ -255,11 +255,11 @@ internal class EDBObjectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_DISPLAY_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_DISPLAY_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EMP_DISPLAY_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(EMP_DISPLAY_RESULT[i]));
             }
         }
         finally
@@ -322,11 +322,11 @@ internal class EDBObjectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(DEPT_DISPLAY_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DEPT_DISPLAY_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(DEPT_DISPLAY_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(DEPT_DISPLAY_RESULT[i]));
             }
         }
         finally
@@ -373,11 +373,11 @@ internal class EDBObjectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(CONSTUCTOR_METHOD_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(CONSTUCTOR_METHOD_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CONSTUCTOR_METHOD_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(CONSTUCTOR_METHOD_RESULT[i]));
             }
         }
         finally
@@ -427,11 +427,11 @@ internal class EDBObjectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_DISPLAY_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_DISPLAY_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EMP_DISPLAY_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(EMP_DISPLAY_RESULT[i]));
             }
         }
         finally
@@ -479,11 +479,11 @@ internal class EDBObjectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_DISPLAY_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_DISPLAY_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EMP_DISPLAY_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(EMP_DISPLAY_RESULT[i]));
             }
         }
         finally
@@ -529,11 +529,11 @@ internal class EDBObjectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(DEPT_DISPLAY_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DEPT_DISPLAY_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(DEPT_DISPLAY_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(DEPT_DISPLAY_RESULT[i]));
             }
         }
         finally
@@ -577,11 +577,11 @@ internal class EDBObjectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(GET_DNAME_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(GET_DNAME_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(GET_DNAME_RESULT[i], notice?.MessageText);
+                Assert.That(notice?.MessageText, Is.EqualTo(GET_DNAME_RESULT[i]));
             }
         }
         finally

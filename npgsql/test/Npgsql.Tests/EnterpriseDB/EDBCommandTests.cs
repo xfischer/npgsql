@@ -79,7 +79,7 @@ public class EDBCommandTests : EPASTestBase
         var command = new EDBCommand("select * from funcB()", con);
 
         var reader = command.ExecuteReader();
-        Assert.IsNotNull(reader);
+        Assert.That(reader, Is.Not.Null);
 
     }
 
@@ -92,7 +92,7 @@ public class EDBCommandTests : EPASTestBase
 
         var result = command.ExecuteScalar();
 
-        Assert.AreEqual(5, result);
+        Assert.That(result, Is.EqualTo(5));
 
     }
 
@@ -110,7 +110,7 @@ public class EDBCommandTests : EPASTestBase
 
         object? result = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, result);
+        Assert.That(result, Is.EqualTo(1));
 
 
         var command2 = new EDBCommand("select field_text from tablea where field_serial = (select max(field_serial) from tablea)", con);
@@ -122,7 +122,7 @@ public class EDBCommandTests : EPASTestBase
 
         new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea)", con).ExecuteNonQuery();
 
-        Assert.AreEqual(@"\test", result);
+        Assert.That(result, Is.EqualTo(@"\test"));
 
 
 
@@ -142,12 +142,12 @@ public class EDBCommandTests : EPASTestBase
     //            command.Parameters.Add(new EDBParameter("p0","test"));
     //            
     //            
-    //            Assert.AreEqual(command.Parameters[0].EDBDbType, EDBDbType.Varchar2);
-    //            Assert.AreEqual(command.Parameters[0].DbType, DbType.String);
+    //            Assert.That(EDBDbType.Varchar2, Is.EqualTo(command.Parameters[0].EDBDbType));
+    //            Assert.That(DbType.String, Is.EqualTo(command.Parameters[0].DbType));
     //            
     //            Object result = command.ExecuteNonQuery();
     //			
-    //            Assert.AreEqual(1, result);
+    //            Assert.That(result, Is.EqualTo(1));
     //            
     //            
     //            EDBCommand command2 = new EDBCommand("select field_text from tablea where field_serial = (select max(field_serial) from tablea)", _conn);
@@ -159,7 +159,7 @@ public class EDBCommandTests : EPASTestBase
     //            
     //            new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea)", _conn).ExecuteNonQuery();            
     //			
-    //            Assert.AreEqual("test", result);
+    //            Assert.That(result, Is.EqualTo("test"));
     //
     //        }
 
@@ -172,12 +172,12 @@ public class EDBCommandTests : EPASTestBase
 
         command.Parameters.Add(new EDBParameter("p0", 5));
 
-        Assert.AreEqual(EDBDbType.Integer, command.Parameters[0].EDBDbType);
-        Assert.AreEqual(DbType.Int32, command.Parameters[0].DbType);
+        Assert.That(command.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Integer));
+        Assert.That(command.Parameters[0].DbType, Is.EqualTo(DbType.Int32));
 
         object? result = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, result);
+        Assert.That(result, Is.EqualTo(1));
 
         var command2 = new EDBCommand("select field_int4 from tablea where field_serial = (select max(field_serial) from tablea)", con);
 
@@ -185,7 +185,7 @@ public class EDBCommandTests : EPASTestBase
 
         new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea)", con).ExecuteNonQuery();
 
-        Assert.AreEqual(5, result);
+        Assert.That(result, Is.EqualTo(5));
 
     }
 
@@ -199,12 +199,12 @@ public class EDBCommandTests : EPASTestBase
 
         command.Parameters.Add(new EDBParameter("p0", (short)5));
 
-        Assert.AreEqual(EDBDbType.Smallint, command.Parameters[0].EDBDbType);
-        Assert.AreEqual(DbType.Int16, command.Parameters[0].DbType);
+        Assert.That(command.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Smallint));
+        Assert.That(command.Parameters[0].DbType, Is.EqualTo(DbType.Int16));
 
         object? result = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, result);
+        Assert.That(result, Is.EqualTo(1));
 
 
         var command2 = new EDBCommand("select field_int4 from tablea where field_serial = (select max(field_serial) from tablea)", con);
@@ -215,7 +215,7 @@ public class EDBCommandTests : EPASTestBase
 
         new EDBCommand("delete from tablea where field_serial = (select max(field_serial) from tablea)", con).ExecuteNonQuery();
 
-        Assert.AreEqual(5, result);
+        Assert.That(result, Is.EqualTo(5));
 
 
 
@@ -240,9 +240,9 @@ public class EDBCommandTests : EPASTestBase
 
         var result = command.ExecuteReader();
 
-        Assert.True(result.Read());
-        Assert.AreEqual(1, result.FieldCount);
-        Assert.AreEqual(5, result.GetInt32(0));
+        Assert.That(result.Read());
+        Assert.That(result.FieldCount, Is.EqualTo(1));
+        Assert.That(result.GetInt32(0), Is.EqualTo(5));
     }
 
 
@@ -258,7 +258,7 @@ public class EDBCommandTests : EPASTestBase
 
         var result = command.ExecuteScalar();
 
-        Assert.AreEqual(5, result);
+        Assert.That(result, Is.EqualTo(5));
 
     }
 
@@ -281,7 +281,7 @@ public class EDBCommandTests : EPASTestBase
 
         var result = (long)command.ExecuteScalar()!;
 
-        Assert.AreEqual(1, result);
+        Assert.That(result, Is.EqualTo(1));
 
     }
 
@@ -301,7 +301,7 @@ public class EDBCommandTests : EPASTestBase
 
         var result = (long)command.ExecuteScalar()!;
 
-        Assert.AreEqual(1, result);
+        Assert.That(result, Is.EqualTo(1));
 
     }
 
@@ -316,12 +316,12 @@ public class EDBCommandTests : EPASTestBase
         };
 
         var dr = command.ExecuteReader();
-        Assert.AreEqual(5, dr.FieldCount);
+        Assert.That(dr.FieldCount, Is.EqualTo(5));
         for (var i = 0; i < 5; i++)
         {
-            Assert.True(dr.Read());
+            Assert.That(dr.Read());
         }
-        Assert.False(dr.Read());
+        Assert.That(dr.Read(), Is.False);
 
     }
 
@@ -394,9 +394,9 @@ public class EDBCommandTests : EPASTestBase
         command.Parameters.Add(new EDBParameter("a", DbType.Int32));
         command.Parameters.Add(new EDBParameter("b", DbType.Int64));
 
-        Assert.AreEqual(2, command.Parameters.Count);
+        Assert.That(command.Parameters.Count, Is.EqualTo(2));
 
-        Assert.AreEqual(DbType.Int32, command.Parameters[0].DbType);
+        Assert.That(command.Parameters[0].DbType, Is.EqualTo(DbType.Int32));
 
         command.Prepare();
 
@@ -417,9 +417,9 @@ public class EDBCommandTests : EPASTestBase
         command.Parameters.Add(new EDBParameter("a", EDBDbType.Integer));
         command.Parameters.Add(new EDBParameter("b", EDBDbType.Bigint));
 
-        Assert.AreEqual(2, command.Parameters.Count);
+        Assert.That(command.Parameters.Count, Is.EqualTo(2));
 
-        Assert.AreEqual(DbType.Int32, command.Parameters[0].DbType);
+        Assert.That(command.Parameters[0].DbType, Is.EqualTo(DbType.Int32));
 
         command.Prepare();
 
@@ -444,7 +444,7 @@ public class EDBCommandTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.Parameters.Clear();
         command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
@@ -469,7 +469,7 @@ public class EDBCommandTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.Parameters.Clear();
         command.CommandText = "delete from tableb where field_serial = (select max(field_serial) from tableb);";
@@ -483,7 +483,7 @@ public class EDBCommandTests : EPASTestBase
 
         var command = new EDBCommand("select field_timestamp from tableb where field_serial = 2;", con);
         var d = (DateTime)command.ExecuteScalar()!;
-        Assert.AreEqual("2002-02-02 09:00:23Z", d.ToString("u"));
+        Assert.That(d.ToString("u"), Is.EqualTo("2002-02-02 09:00:23Z"));
 
         var culture = new DateTimeFormatInfo
         {
@@ -510,7 +510,7 @@ public class EDBCommandTests : EPASTestBase
         var d = (DateTime)command.ExecuteScalar()!;
 
 
-        Assert.AreEqual("2002-02-02 09:00:23Z", d.ToString("u"));
+        Assert.That(d.ToString("u"), Is.EqualTo("2002-02-02 09:00:23Z"));
 
         var culture = new DateTimeFormatInfo
         {
@@ -536,7 +536,7 @@ public class EDBCommandTests : EPASTestBase
         var d = (DateTime)command.ExecuteScalar()!;
 
 
-        Assert.AreEqual("2002-03-04", d.ToString("yyyy-MM-dd"));
+        Assert.That(d.ToString("yyyy-MM-dd"), Is.EqualTo("2002-03-04"));
 
     }
 
@@ -553,7 +553,7 @@ public class EDBCommandTests : EPASTestBase
         Console.WriteLine(tm.ToString());
 
 
-        Assert.AreEqual("10:03:45.3450000", tm.ToString());
+        Assert.That(tm.ToString(), Is.EqualTo("10:03:45.3450000"));
 
     }
 
@@ -570,7 +570,7 @@ public class EDBCommandTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select * from tableb where field_numeric = :a";
 
@@ -585,7 +585,7 @@ public class EDBCommandTests : EPASTestBase
         command.Parameters.Clear();
         command.ExecuteNonQuery();
 
-        Assert.AreEqual(7.4000000M, result);
+        Assert.That(result, Is.EqualTo(7.4000000M));
 
     }
 
@@ -602,7 +602,7 @@ public class EDBCommandTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select * from tableb where field_numeric = :a";
 
@@ -618,7 +618,7 @@ public class EDBCommandTests : EPASTestBase
         command.ExecuteNonQuery();
 
 
-        Assert.AreEqual(7.4000000M, result);
+        Assert.That(result, Is.EqualTo(7.4000000M));
 
 
 
@@ -639,7 +639,7 @@ public class EDBCommandTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select * from tabled where field_float4 = :a";
 
@@ -655,7 +655,7 @@ public class EDBCommandTests : EPASTestBase
         command.ExecuteNonQuery();
 
 
-        Assert.AreEqual(7.4F, result);
+        Assert.That(result, Is.EqualTo(7.4F));
 
     }
 
@@ -673,7 +673,7 @@ public class EDBCommandTests : EPASTestBase
 
         var rowsAdded = command.ExecuteNonQuery();
 
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command.CommandText = "select * from tabled where field_float4 = :a";
 
@@ -689,7 +689,7 @@ public class EDBCommandTests : EPASTestBase
         command.ExecuteNonQuery();
 
 
-        Assert.AreEqual(7.4F, result);
+        Assert.That(result, Is.EqualTo(7.4F));
 
     }
 
@@ -707,7 +707,7 @@ public class EDBCommandTests : EPASTestBase
 
         var result = dr.GetDecimal(3);
 
-        Assert.AreEqual(-4.3000000M, result);
+        Assert.That(result, Is.EqualTo(-4.3000000M));
 
     }
 
@@ -726,9 +726,9 @@ public class EDBCommandTests : EPASTestBase
 
         var result = dr.GetDecimal(3);
 
-        Assert.AreEqual(-4.3000000M, result);
-        //Assert.AreEqual(11, result.Precision);
-        //Assert.AreEqual(7, result.Scale);
+        Assert.That(result, Is.EqualTo(-4.3000000M));
+        //Assert.That(result.Precision, Is.EqualTo(11));
+        //Assert.That(result.Scale, Is.EqualTo(7));
 
     }
 
@@ -749,7 +749,7 @@ public class EDBCommandTests : EPASTestBase
         command.ExecuteScalar();
 
 
-        Assert.AreEqual(6, result);
+        Assert.That(result, Is.EqualTo(6));
 
 
     }
@@ -847,8 +847,8 @@ public class EDBCommandTests : EPASTestBase
 
         var p = (EDBPoint)command.ExecuteScalar()!;
 
-        Assert.AreEqual(4, p.X);
-        Assert.AreEqual(3, p.Y);
+        Assert.That(p.X, Is.EqualTo(4));
+        Assert.That(p.Y, Is.EqualTo(3));
     }
 
 
@@ -862,10 +862,10 @@ public class EDBCommandTests : EPASTestBase
 
         var box = (EDBBox)command.ExecuteScalar()!;
 
-        Assert.AreEqual(5, box.UpperRight.X);
-        Assert.AreEqual(4, box.UpperRight.Y);
-        Assert.AreEqual(4, box.LowerLeft.X);
-        Assert.AreEqual(3, box.LowerLeft.Y);
+        Assert.That(box.UpperRight.X, Is.EqualTo(5));
+        Assert.That(box.UpperRight.Y, Is.EqualTo(4));
+        Assert.That(box.LowerLeft.X, Is.EqualTo(4));
+        Assert.That(box.LowerLeft.Y, Is.EqualTo(3));
 
 
     }
@@ -880,10 +880,10 @@ public class EDBCommandTests : EPASTestBase
 
         var lseg = (EDBLSeg)command.ExecuteScalar()!;
 
-        Assert.AreEqual(4, lseg.Start.X);
-        Assert.AreEqual(3, lseg.Start.Y);
-        Assert.AreEqual(5, lseg.End.X);
-        Assert.AreEqual(4, lseg.End.Y);
+        Assert.That(lseg.Start.X, Is.EqualTo(4));
+        Assert.That(lseg.Start.Y, Is.EqualTo(3));
+        Assert.That(lseg.End.X, Is.EqualTo(5));
+        Assert.That(lseg.End.Y, Is.EqualTo(4));
 
 
     }
@@ -898,12 +898,12 @@ public class EDBCommandTests : EPASTestBase
 
         var path = (EDBPath)command.ExecuteScalar()!;
 
-        Assert.IsFalse(path.Open);
-        Assert.AreEqual(2, path.Count);
-        Assert.AreEqual(4, path[0].X);
-        Assert.AreEqual(3, path[0].Y);
-        Assert.AreEqual(5, path[1].X);
-        Assert.AreEqual(4, path[1].Y);
+        Assert.That(path.Open, Is.False);
+        Assert.That(path.Count, Is.EqualTo(2));
+        Assert.That(path[0].X, Is.EqualTo(4));
+        Assert.That(path[0].Y, Is.EqualTo(3));
+        Assert.That(path[1].X, Is.EqualTo(5));
+        Assert.That(path[1].Y, Is.EqualTo(4));
 
 
     }
@@ -918,12 +918,12 @@ public class EDBCommandTests : EPASTestBase
 
         var path = (EDBPath)command.ExecuteScalar()!;
 
-        Assert.IsTrue(path.Open);
-        Assert.AreEqual(2, path.Count);
-        Assert.AreEqual(4, path[0].X);
-        Assert.AreEqual(3, path[0].Y);
-        Assert.AreEqual(5, path[1].X);
-        Assert.AreEqual(4, path[1].Y);
+        Assert.That(path.Open);
+        Assert.That(path.Count, Is.EqualTo(2));
+        Assert.That(path[0].X, Is.EqualTo(4));
+        Assert.That(path[0].Y, Is.EqualTo(3));
+        Assert.That(path[1].X, Is.EqualTo(5));
+        Assert.That(path[1].Y, Is.EqualTo(4));
 
 
     }
@@ -940,11 +940,11 @@ public class EDBCommandTests : EPASTestBase
 
         var polygon = (EDBPolygon)command.ExecuteScalar()!;
 
-        Assert.AreEqual(2, polygon.Count);
-        Assert.AreEqual(4, polygon[0].X);
-        Assert.AreEqual(3, polygon[0].Y);
-        Assert.AreEqual(5, polygon[1].X);
-        Assert.AreEqual(4, polygon[1].Y);
+        Assert.That(polygon.Count, Is.EqualTo(2));
+        Assert.That(polygon[0].X, Is.EqualTo(4));
+        Assert.That(polygon[0].Y, Is.EqualTo(3));
+        Assert.That(polygon[1].X, Is.EqualTo(5));
+        Assert.That(polygon[1].Y, Is.EqualTo(4));
 
 
     }
@@ -960,9 +960,9 @@ public class EDBCommandTests : EPASTestBase
 
         var circle = (EDBCircle)command.ExecuteScalar()!;
 
-        Assert.AreEqual(4, circle.Center.X);
-        Assert.AreEqual(3, circle.Center.Y);
-        Assert.AreEqual(5, circle.Radius);
+        Assert.That(circle.Center.X, Is.EqualTo(4));
+        Assert.That(circle.Center.Y, Is.EqualTo(3));
+        Assert.That(circle.Radius, Is.EqualTo(5));
 
 
 
@@ -994,9 +994,9 @@ public class EDBCommandTests : EPASTestBase
             throw new Exception(exp.ToString());
         }
 
-        Assert.AreEqual("10.90.1.226", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.90.1.226"));
         Reader.Read();
-        Assert.AreEqual("254.168.1.226", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("254.168.1.226"));
         Reader.Close();
 
         command.CommandText = "DROP TABLE INET_TBL";
@@ -1032,9 +1032,9 @@ public class EDBCommandTests : EPASTestBase
             throw new Exception(exp.ToString());
         }
 
-        Assert.AreEqual("192.168.1.0/24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("192.168.1.0/24"));
         Reader.Read();
-        Assert.AreEqual("182.90.6.0/26", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("182.90.6.0/26"));
         Reader.Close();
 
         command.CommandText = "DROP TABLE CIDR_TBL";
@@ -1079,13 +1079,13 @@ public class EDBCommandTests : EPASTestBase
             throw new Exception(exp.ToString());
         }
 
-        Assert.AreEqual("192.168.1.0/24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("192.168.1.0/24"));
         Reader.Read();
-        Assert.AreEqual("10.1.2.3/32", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.1.2.3/32"));
         Reader.Read();
-        Assert.AreEqual("10.0.0.0/8", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.0.0.0/8"));
         Reader.Read();
-        Assert.AreEqual("10.0.0.0/32", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.0.0.0/32"));
 
         Reader.Close();
 
@@ -1125,9 +1125,9 @@ public class EDBCommandTests : EPASTestBase
         }
 
         //Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("192.168.1.226", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("192.168.1.226"));
         Reader.Read();
-        Assert.AreEqual("192.168.1.226", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("192.168.1.226"));
         //Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Close();
 
@@ -1167,9 +1167,9 @@ public class EDBCommandTests : EPASTestBase
         }
 
         //Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("4", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("4"));
         Reader.Read();
-        Assert.AreEqual("4", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("4"));
         //Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Close();
 
@@ -1210,9 +1210,9 @@ public class EDBCommandTests : EPASTestBase
         }
 
         //Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("10.90.1.145", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.90.1.145"));
         Reader.Read();
-        Assert.AreEqual("20.255.255.255/8", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("20.255.255.255/8"));
         //Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Close();
 
@@ -1257,16 +1257,16 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("24"));
         Reader.Read();
-        Assert.AreEqual("32", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("32"));
         Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("8", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("8"));
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("32", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("32"));
 
         Reader.Close();
 
@@ -1311,16 +1311,16 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("192.168.1.0/24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("192.168.1.0/24"));
         Reader.Read();
-        Assert.AreEqual("10.1.2.3/32", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.1.2.3/32"));
         Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("10.0.0.0/8", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.0.0.0/8"));
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("10.0.0.0/32", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.0.0.0/32"));
 
         Reader.Close();
 
@@ -1365,16 +1365,16 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("192.168.1.255/24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("192.168.1.255/24"));
         Reader.Read();
-        Assert.AreEqual("10.1.2.3/24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.1.2.3/24"));
         Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("10.1.2.3/24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.1.2.3/24"));
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("10.1.2.3/24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.1.2.3/24"));
 
         Reader.Close();
 
@@ -1419,17 +1419,17 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("192.168.1.0/24", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("192.168.1.0/24"));
         Reader.Read();
-        Assert.AreEqual("10.1.2.3/32", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.1.2.3/32"));
         Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("10.0.0.0/8", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.0.0.0/8"));
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
 
-        Assert.AreEqual("10.0.0.0/32", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10.0.0.0/32"));
 
         Reader.Close();
 
@@ -1467,9 +1467,9 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("10:23::8000/113", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("10:23::8000/113"));
         Reader.Read();
-        Assert.AreEqual("::ffff:1.2.3.4/128", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("::ffff:1.2.3.4/128"));
         Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Close();
 
@@ -1506,7 +1506,7 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("08002B010203", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("08002B010203"));
 
         Reader.Close();
 
@@ -1546,10 +1546,10 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("08002B010203", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("08002B010203"));
         Reader.Read();
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("06201A230221", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("06201A230221"));
         Reader.Close();
 
         command.CommandText = "DROP TABLE tbl_macadd;";
@@ -1586,7 +1586,7 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual(a, (EDBInet[])Reader.GetValue(0));
+        Assert.That((EDBInet[])Reader.GetValue(0), Is.EqualTo(a));
 
         Reader.Close();
 
@@ -1623,7 +1623,7 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("{192.168.1.0/26,10.1.2.3/32,20.2.3.164/32}", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("{192.168.1.0/26,10.1.2.3/32,20.2.3.164/32}"));
 
         Reader.Close();
 
@@ -1662,7 +1662,7 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("text", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("text"));
 
         Reader.Close();
 
@@ -1708,7 +1708,7 @@ public class EDBCommandTests : EPASTestBase
         }
 
         Console.WriteLine(Reader.GetValue(0).ToString());
-        Assert.AreEqual("56789", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("56789"));
 
         Reader.Close();
 
@@ -1762,8 +1762,8 @@ public class EDBCommandTests : EPASTestBase
         Console.WriteLine(Reader.GetValue(0).ToString());
         Console.WriteLine(Reader.GetValue(1).ToString());
 
-        Assert.AreEqual("1", Reader.GetValue(0).ToString());
-        Assert.AreEqual("101", Reader.GetValue(1).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("1"));
+        Assert.That(Reader.GetValue(1).ToString(), Is.EqualTo("101"));
         Reader.Close();
 
         command.CommandText = "DROP TABLE foo;";
@@ -1812,8 +1812,8 @@ public class EDBCommandTests : EPASTestBase
         Console.WriteLine(Reader.GetValue(0).ToString());
         //Console.WriteLine(Reader.GetValue(1).ToString());
 
-        Assert.AreEqual("(abc)", Reader.GetValue(0).ToString());
-        /*Assert.AreEqual("101",Reader.GetValue(1).ToString());*/
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("(abc)"));
+        /*Assert.That("101",Reader.GetValue(1).ToString());*/
         Reader.Close();
 
         command.CommandText = "DROP TABLE derived;";
@@ -1877,7 +1877,7 @@ public class EDBCommandTests : EPASTestBase
 
 
         Console.WriteLine(Reader[0].ToString());
-        Assert.AreEqual("(\"fuzzy dice\",42,1.99)", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("(\"fuzzy dice\",42,1.99)"));
 
         Reader.Close();
 
@@ -1926,7 +1926,7 @@ public class EDBCommandTests : EPASTestBase
 
 
 
-        Assert.AreEqual("fuzzy dice", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("fuzzy dice"));
 
         Reader.Close();
 
@@ -1983,7 +1983,7 @@ public class EDBCommandTests : EPASTestBase
 
 
 
-        Assert.AreEqual("fuzzy dice", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("fuzzy dice"));
         Console.WriteLine(Reader.GetValue(0).ToString());
         Reader.Close();
 
@@ -2040,7 +2040,7 @@ public class EDBCommandTests : EPASTestBase
 
 
 
-        Assert.AreEqual("New Name", Reader.GetValue(0).ToString());
+        Assert.That(Reader.GetValue(0).ToString(), Is.EqualTo("New Name"));
 
         Reader.Close();
 
@@ -2079,7 +2079,7 @@ public class EDBCommandTests : EPASTestBase
         var Reader = command.ExecuteReader();
 
 
-        Assert.IsFalse(Reader.HasRows);
+        Assert.That(Reader.HasRows, Is.False);
         Reader.Close();
 
 

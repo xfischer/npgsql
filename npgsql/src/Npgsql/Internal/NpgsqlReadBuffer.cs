@@ -36,25 +36,16 @@ sealed partial class EDBReadBuffer : IDisposable
     internal ResettableCancellationTokenSource Cts { get; }
     readonly MetricsReporter? _metricsReporter;
 
-    TimeSpan _preTranslatedTimeout = TimeSpan.Zero;
-
     /// <summary>
     /// Timeout for sync and async reads
     /// </summary>
     internal TimeSpan Timeout
     {
-        get => _preTranslatedTimeout;
+        get => Cts.Timeout;
         set
         {
-            if (_preTranslatedTimeout != value)
+            if (Cts.Timeout != value)
             {
-                _preTranslatedTimeout = value;
-
-                if (value == TimeSpan.Zero)
-                    value = InfiniteTimeSpan;
-                else if (value < TimeSpan.Zero)
-                    value = TimeSpan.Zero;
-
                 Debug.Assert(_underlyingSocket != null);
 
                 _underlyingSocket.ReceiveTimeout = (int)value.TotalMilliseconds;
@@ -160,27 +151,21 @@ sealed partial class EDBReadBuffer : IDisposable
             catch (Exception ex)
             {
                 var connector = Connector;
-                switch (ex)
-                {
-                // Note that mono throws SocketException with the wrong error (see #1330)
-                case IOException e when (e.InnerException as SocketException)?.SocketErrorCode ==
-                                        (Type.GetType("Mono.Runtime") == null ? SocketError.TimedOut : SocketError.WouldBlock):
+                if (ex is IOException { InnerException: SocketException { SocketErrorCode: SocketError.TimedOut } })
                 {
                     var isStreamBroken = false;
 #if NETSTANDARD2_0 || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
                     // SslStream on .NET Framework treats any IOException (including timeouts) as fatal and may
                     // return garbage if reused. To prevent this, we flow down and break the connection immediately.
                     // See #4305.
-                    isStreamBroken = connector.IsSecure && ex is IOException;
+                    isStreamBroken = connector.IsSslEncrypted && ex is IOException;
 #endif
-
                     // If we should attempt PostgreSQL cancellation, do it the first time we get a timeout.
                     // TODO: As an optimization, we can still attempt to send a cancellation request, but after
                     // that immediately break the connection
-                    if (connector.AttemptPostgresCancellation &&
-                        !connector.PostgresCancellationPerformed &&
-                        connector.PerformPostgresCancellation() &&
-                        !isStreamBroken)
+                    if (connector is { AttemptPostgresCancellation: true, PostgresCancellationPerformed: false }
+                        && connector.PerformPostgresCancellation() 
+						&& !isStreamBroken)
                     {
                         // Note that if the cancellation timeout is negative, we flow down and break the
                         // connection immediately.
@@ -198,16 +183,15 @@ sealed partial class EDBReadBuffer : IDisposable
                     // Break the connection, bubbling up the correct exception type (cancellation or timeout)
                     throw connector.Break(CreateCancelException(connector));
                 }
-                default:
-                    throw connector.Break(new EDBException("Exception while reading from stream", ex));
-                }
+
+                throw connector.Break(new EDBException("Exception while reading from stream", ex));
             }
         }
     }
 
     async ValueTask<int> ReadWithTimeoutAsync(Memory<byte> buffer, CancellationToken cancellationToken)
     {
-        var finalCt = Timeout != TimeSpan.Zero
+        var finalCt = Timeout != InfiniteTimeSpan
             ? Cts.Start(cancellationToken)
             : Cts.Reset();
 
@@ -239,13 +223,12 @@ sealed partial class EDBReadBuffer : IDisposable
                     // SslStream on .NET Framework treats any IOException (including timeouts) as fatal and may
                     // return garbage if reused. To prevent this, we flow down and break the connection immediately.
                     // See #4305.
-                    isStreamBroken = connector.IsSecure && ex is IOException;
+                    isStreamBroken = connector.IsSslEncrypted && ex is IOException;
 #endif
                     // If we should attempt PostgreSQL cancellation, do it the first time we get a timeout.
                     // TODO: As an optimization, we can still attempt to send a cancellation request, but after
                     // that immediately break the connection
-                    if (connector.AttemptPostgresCancellation &&
-                        !connector.PostgresCancellationPerformed &&
+                    if (connector is { AttemptPostgresCancellation: true, PostgresCancellationPerformed: false } &&
                         connector.PerformPostgresCancellation() &&
                         !isStreamBroken)
                     {
@@ -292,7 +275,7 @@ sealed partial class EDBReadBuffer : IDisposable
     {
         return count <= ReadBytesLeft ? new() : EnsureLong(this, count, async, readingNotifications, checkDataAvailable); // EnterpriseDB (additionnal param)
 
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
 #endif
         static async ValueTask EnsureLong(
@@ -318,7 +301,7 @@ sealed partial class EDBReadBuffer : IDisposable
                 buffer.ReadPosition = 0;
             }
 
-            var finalCt = async && buffer.Timeout != TimeSpan.Zero
+            var finalCt = async && buffer.Timeout != InfiniteTimeSpan
                 ? buffer.Cts.Start()
                 : buffer.Cts.Reset();
 
@@ -327,41 +310,6 @@ sealed partial class EDBReadBuffer : IDisposable
             {
                 try
                 {
-#if EDB_SKIP //NET472 // EnterpriseDB (additionnal param, see EC-3214)
-                    if (buffer.Connector is not null) LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure readingNotifications:{readingNotifications}, checkDataAvailable:{checkDataAvailable} (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
-
-                    // In .Net Framework 4.7.2 NetworkStream.ReadAsync doesn't throw if CancelationToken is requested
-                    // When there is no data to read, it hangs. The workaround is not wait for available data and check the token
-                    if (readingNotifications || checkDataAvailable || (buffer.Connector?.PostgresCancellationPerformed ?? false))
-                    {
-                        if (buffer.Underlying is NetworkStream networkStream)
-                        {
-                            var numLoops = 0;
-                            var delaysMs = new double[] { 0.1d, 0.2d, 0.5d, 1d, 2d, 5d, 100d }; // Wait a bit more at each iteration
-                            while (!networkStream.DataAvailable && numLoops < delaysMs.Length)
-                            {
-                                var delay = delaysMs[numLoops++];
-
-                                LogMessages.TryEDBTrace(buffer?.Connector?.ConnectionLogger, $"Readbuffer ensure wait data before read ({numLoops}/{delaysMs.Length}), delay = {delay:N2}ms [Connected: {buffer._underlyingSocket?.Connected}].");
-
-                                if (async)
-                                {
-                                    await Task.Delay(TimeSpan.FromMilliseconds(delay), finalCt).ConfigureAwait(false);
-                                }
-                                else
-                                {
-                                    Thread.Sleep(TimeSpan.FromMilliseconds(delay));
-                                }
-
-                                finalCt.ThrowIfCancellationRequested();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (buffer.Connector is not null) LogMessages.TryEDBTrace(buffer.Connector.ConnectionLogger, $"Readbuffer ensure [direct read]. (AttemptPgCancel={buffer.Connector.AttemptPostgresCancellation}, PgCanceled={buffer.Connector.PostgresCancellationPerformed})");
-                    }
-#endif
                     var toRead = buffer.Size - buffer.FilledBytes;
                     var read = 0;
                     try
@@ -375,7 +323,6 @@ sealed partial class EDBReadBuffer : IDisposable
                         LogMessages.TryEDBTrace(buffer?.Connector?.ConnectionLogger!, $"Readbuffer {ex.GetType().Name} exception. {ex.Message}");
                         throw;
                     }
-
 
                     if (read == 0)
                         throw new EndOfStreamException();
@@ -422,7 +369,7 @@ sealed partial class EDBReadBuffer : IDisposable
                         }
                         else
                         {
-                            isStreamBroken = connector.IsSecure && e is IOException;
+                            isStreamBroken = connector.IsSslEncrypted && e is IOException;
                         }
 #endif
                         // When reading notifications (Wait), just throw TimeoutException or
@@ -435,8 +382,7 @@ sealed partial class EDBReadBuffer : IDisposable
                         // TODO: As an optimization, we can still attempt to send a cancellation request, but after
                         // that immediately break the connection
                         if (!isStreamBroken 
-							&& connector.AttemptPostgresCancellation &&
-                            !connector.PostgresCancellationPerformed &&
+							&& connector is { AttemptPostgresCancellation: true, PostgresCancellationPerformed: false } &&
                             connector.PerformPostgresCancellation())
                         {
                             // Note that if the cancellation timeout is negative, we flow down and break the
@@ -810,7 +756,7 @@ sealed partial class EDBReadBuffer : IDisposable
     {
         if (_lastStream is not { IsDisposed: true })
             _lastStream = new ColumnStream(Connector);
-        _lastStream.Init(len, canSeek, !Connector.LongRunningConnection, consumeOnDispose);
+        _lastStream.Init(len, canSeek, Connector.Settings.ReplicationMode == ReplicationMode.Off, consumeOnDispose);
         return _lastStream;
     }
 

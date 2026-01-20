@@ -42,14 +42,14 @@ public class EDBException : DbException
     /// Specifies whether the exception is considered transient, that is, whether retrying the operation could
     /// succeed (e.g. a network error or a timeout).
     /// </summary>
-#if NET6_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     public override bool IsTransient
 #else
     public virtual bool IsTransient
 #endif
         => InnerException is IOException or SocketException or TimeoutException or EDBException { IsTransient: true };
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
     /// <inheritdoc cref="DbException.BatchCommand"/>
     public new EDBBatchCommand? BatchCommand { get; set; }
 

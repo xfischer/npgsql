@@ -19,8 +19,8 @@ public static class TestUtil
     /// test database.
     /// </summary>
     public const string DefaultConnectionString =
-        //"port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
-    "port=5444;Server=localhost;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0;SSL Mode=Disable;Multiplexing=False";
+    //"port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
+    "port=5447;Server=localhost;Username=enterprisedb;Password=edb;Database=test;Timeout=0;Command Timeout=0;SSL Mode=Disable;Multiplexing=False";
 
     /// <summary>
     /// The connection string that will be used when opening the connection to the tests database.
@@ -140,7 +140,7 @@ public static class TestUtil
     // EnterpriseDB Team
     public static bool? IsEPASRedwood(EDBConnection conn)
     {
-        var isRedwood = conn?.EDBDataSource?.DatabaseInfo?.SupportsRedwoodDialect;
+        var isRedwood = conn.SupportsRedwoodDialect;
         return isRedwood;
     }
 
@@ -148,12 +148,12 @@ public static class TestUtil
     public static bool EnsureEDBAdvancedServer(EDBConnection conn, string? message = null)
     {
         // Checks for server long version
-        var longVersion = (conn?.EDBDataSource?.DatabaseInfo as PostgresDatabaseInfo)?.LongVersion;
+        var longVersion = (conn?.Connector!.DatabaseInfo as PostgresDatabaseInfo)?.LongVersion;
         const string EPASCriteria = "EnterpriseDB Advanced Server";
         if (longVersion is null)
             return false;
 
-#if NETFRAMEWORK || NETCOREAPP3_1
+#if NETFRAMEWORK
         if (!longVersion.Contains(EPASCriteria))
 #else
         if (!longVersion.Contains(EPASCriteria, StringComparison.OrdinalIgnoreCase))
@@ -179,8 +179,7 @@ public static class TestUtil
     public static bool EnsurePostgres(EDBConnection conn, string? message = null)
     {
         // Only EPAS has this 'db_dialect' property, we use this to know that it is not PG or PGE
-        var hasDbDialectProperty = conn?.EDBDataSource?.DatabaseInfo?.SupportsDbDialect;
-        if (hasDbDialectProperty is not null)
+        if (conn.SupportsRedwoodDialect)
         {
             Assert.Ignore(message ?? "Requires Postgres (EDB PG Advanced Server detected)");
             return false;
@@ -569,7 +568,7 @@ CREATE TABLE {tableName} ({columns});");
         (LogLevel Level, EventId Id, string Message, object? State, Exception? Exception) log,
         string key,
         T value)
-        => Assert.That(log.State, Contains.Item(new KeyValuePair<string, T>(key, value)));
+        => Assert.That(log.State as IEnumerable<KeyValuePair<string, object>>, Contains.Item(new KeyValuePair<string, T>(key, value)));
 
     internal static void AssertLoggingStateDoesNotContain(
         (LogLevel Level, EventId Id, string Message, object? State, Exception? Exception) log,

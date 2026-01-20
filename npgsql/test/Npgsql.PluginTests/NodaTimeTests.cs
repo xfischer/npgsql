@@ -586,7 +586,7 @@ public class NodaTimeTests : MultiplexingTestBase, IDisposable
             isEDBDbTypeInferredFromClrType: false);
     }
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
     [Test]
     public Task Date_as_DateOnly()
         => AssertType(new DateOnly(2020, 10, 1), "2020-10-01", "date", EDBDbType.Date, DbType.Date, isDefaultForReading: false);
@@ -673,7 +673,7 @@ public class NodaTimeTests : MultiplexingTestBase, IDisposable
             DbType.Time,
             isDefault: false);
 
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
     [Test]
     public Task Time_as_TimeOnly()
         => AssertType(

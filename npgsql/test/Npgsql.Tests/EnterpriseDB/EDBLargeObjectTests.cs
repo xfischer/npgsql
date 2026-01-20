@@ -16,7 +16,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
 [NonParallelizable]
 public class EDBLargeObjectTests : EPASTestBase
 {
-    EDBConnection? con = null;
+    EDBConnection con = null!;
     readonly string testPath = @"C:\Windows\media\Windows Background.wav";
 
     [SetUp]
@@ -42,11 +42,11 @@ public class EDBLargeObjectTests : EPASTestBase
         var command = new EDBCommand("INSERT INTO LOTest VALUES(1, " + oid.ToString() + "); ", con);
 
         var rowsAdded = command.ExecuteNonQuery();
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command = new EDBCommand("select f1 from LOTest;", con);
         var oid2 = (uint)command.ExecuteScalar()!;
-        Assert.NotZero(oid2, "Invalid OID value");
+        Assert.That(oid2, Is.Not.Zero, "Invalid OID value");
     }
 
     [Test]
@@ -60,11 +60,11 @@ public class EDBLargeObjectTests : EPASTestBase
         var command = new EDBCommand("INSERT INTO LOTest VALUES(1, lo_import('" + testPath + "')); ", con);
 
         var rowsAdded = command.ExecuteNonQuery();
-        Assert.AreEqual(1, rowsAdded);
+        Assert.That(rowsAdded, Is.EqualTo(1));
 
         command = new EDBCommand("select f1 from LOTest;", con);
         var oid = (uint)command.ExecuteScalar()!;
-        Assert.NotZero(oid, "Invalid OID value");
+        Assert.That(oid, Is.Not.Zero, "Invalid OID value");
     }
 
     [Test]
@@ -108,5 +108,6 @@ public class EDBLargeObjectTests : EPASTestBase
         Console.WriteLine("DROP TABLE returned " + result);
 
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 }

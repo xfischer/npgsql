@@ -1,12 +1,12 @@
 using EDBTypes;
 using EnterpriseDB.EDBClient.Tests.Support;
-using Npgsql.Tests.Support;
 using NUnit.Framework;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
@@ -182,8 +182,8 @@ internal class EDBNestedTableTest : EPASTestBase
                 });
             }
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgsimpletest.dname_tbl_typ", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgsimpletest.dname_tbl_typ"));
 
 
             await cstmt.PrepareAsync();
@@ -191,16 +191,16 @@ internal class EDBNestedTableTest : EPASTestBase
 
             var paramValue = cstmt.Parameters[0].Value;
 
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(DEPT_TOTAL, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(string));
+            Assert.That(arrayList.Count, Is.EqualTo(DEPT_TOTAL));
+            Assert.That(arrayList, Is.All.InstanceOf<string>());
 
             for (var i = 0; i < DEPT_TOTAL; i++)
             {
-                Assert.AreEqual(deptNames[i], arrayList[i]);
+                Assert.That(arrayList[i], Is.EqualTo(deptNames[i]));
             }
         }
         finally
@@ -263,25 +263,25 @@ internal class EDBNestedTableTest : EPASTestBase
                 });
             }
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgsimpletestint.dname_int_tbl_typ", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgsimpletestint.dname_int_tbl_typ"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = cstmt.Parameters[0].Value;
 
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(EMP_TOTAL, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(int));
+            Assert.That(arrayList.Count, Is.EqualTo(EMP_TOTAL));
+            Assert.That(arrayList, Is.All.InstanceOf<int>());
 
             for (var i = 0; i < EMP_TOTAL; i++)
             {
-                Assert.AreEqual(arrayList[i].GetType(), typeof(int));
-                Assert.AreEqual(empnos[i], arrayList[i]);
+                Assert.That(arrayList[i].GetType(), Is.EqualTo(typeof(int)));
+                Assert.That(arrayList[i], Is.EqualTo(empnos[i]));
             }
         }
         finally
@@ -350,26 +350,26 @@ internal class EDBNestedTableTest : EPASTestBase
             });
             
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgextendtest.emp_tbl_typ"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = tableOfParam.Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(10, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(emp_rec_typ));
+            Assert.That(arrayList.Count, Is.EqualTo(10));
+            Assert.That(arrayList, Is.All.InstanceOf<emp_rec_typ>());
 
             for (var i = 0; i < arrayList.Count; i++)
             {
                 var tuple = (emp_rec_typ)arrayList[i]!;
 
-                Assert.AreEqual(empnos[i], tuple.empno);
-                Assert.AreEqual(enames[i], tuple.ename);
+                Assert.That(tuple.empno, Is.EqualTo(empnos[i]));
+                Assert.That(tuple.ename, Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -441,19 +441,19 @@ internal class EDBNestedTableTest : EPASTestBase
             });
             
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgextendtest.emp_tbl_typ"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = tableOfParam.Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(10000, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(emp_rec_typ));
+            Assert.That(arrayList.Count, Is.EqualTo(10000));
+            Assert.That(arrayList, Is.All.InstanceOf<emp_rec_typ>());
         }
         finally
         {
@@ -520,30 +520,30 @@ internal class EDBNestedTableTest : EPASTestBase
                 DataTypeName = "pkgextendtest.emp_tbl_typ"
             });
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgextendtest.emp_tbl_typ"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = tableOfParam.Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(10, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
+            Assert.That(arrayList.Count, Is.EqualTo(10));
+            Assert.That(arrayList, Is.All.InstanceOf<List<object>>());
 
             for (var i = 0; i < arrayList.Count; i++)
             {
                 var tuple = (List<object>)arrayList[i]!;
 
-                Assert.AreEqual(2, tuple.Count);
+                Assert.That(tuple.Count, Is.EqualTo(2));
 
-                Assert.AreEqual(tuple[0].GetType(), typeof(decimal));
-                Assert.AreEqual(tuple[1].GetType(), typeof(string));
-                Assert.AreEqual(empnos[i], tuple[0]);
-                Assert.AreEqual(enames[i], tuple[1]);
+                Assert.That(tuple[0].GetType(), Is.EqualTo(typeof(decimal)));
+                Assert.That(tuple[1].GetType(), Is.EqualTo(typeof(string)));
+                Assert.That(tuple[0], Is.EqualTo(empnos[i]));
+                Assert.That(tuple[1], Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -602,30 +602,30 @@ internal class EDBNestedTableTest : EPASTestBase
 
             cstmt.DeriveParameters();
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgextendtest.emp_tbl_typ"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = cstmt.Parameters[0].Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(10, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
+            Assert.That(arrayList.Count, Is.EqualTo(10));
+            Assert.That(arrayList, Is.All.InstanceOf<List<object>>());
 
             for (var i = 0; i < arrayList.Count; i++)
             {
                 var tuple = (List<object>)arrayList[i]!;
 
-                Assert.AreEqual(2, tuple.Count);
+                Assert.That(tuple.Count, Is.EqualTo(2));
 
-                Assert.AreEqual(tuple[0].GetType(), typeof(decimal));
-                Assert.AreEqual(tuple[1].GetType(), typeof(string));
-                Assert.AreEqual(empnos[i], tuple[0]);
-                Assert.AreEqual(enames[i], tuple[1]);
+                Assert.That(tuple[0].GetType(), Is.EqualTo(typeof(decimal)));
+                Assert.That(tuple[1].GetType(), Is.EqualTo(typeof(string)));
+                Assert.That(tuple[0], Is.EqualTo(empnos[i]));
+                Assert.That(tuple[1], Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -708,41 +708,41 @@ internal class EDBNestedTableTest : EPASTestBase
                 });
             }
 
-            Assert.AreEqual(3, cstmt.Parameters.Count);
-            Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
-            Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[1].DataTypeName);
-            Assert.AreEqual("integer", cstmt.Parameters[2].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(3));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("integer"));
+            Assert.That(cstmt.Parameters[1].DataTypeName, Is.EqualTo("pkgextendtest.emp_tbl_typ"));
+            Assert.That(cstmt.Parameters[2].DataTypeName, Is.EqualTo("integer"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValueInt = cstmt.Parameters[0].Value;
-            Assert.IsNotNull(paramValueInt);
-            Assert.IsInstanceOf<int>(paramValueInt);
-            Assert.AreEqual(123, paramValueInt);
+            Assert.That(paramValueInt, Is.Not.Null);
+            Assert.That(paramValueInt, Is.InstanceOf<int>());
+            Assert.That(paramValueInt, Is.EqualTo(123));
 
             var paramValue = cstmt.Parameters[1].Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
             paramValueInt = cstmt.Parameters[2].Value;
-            Assert.IsNotNull(paramValueInt);
-            Assert.IsInstanceOf<int>(paramValueInt);
-            Assert.AreEqual(456, paramValueInt);
+            Assert.That(paramValueInt, Is.Not.Null);
+            Assert.That(paramValueInt, Is.InstanceOf<int>());
+            Assert.That(paramValueInt, Is.EqualTo(456));
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(10, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
+            Assert.That(arrayList.Count, Is.EqualTo(10));
+            Assert.That(arrayList, Is.All.InstanceOf<List<object>>());
 
             for (var i = 0; i < arrayList.Count; i++)
             {
                 var tuple = (List<object>)arrayList[i]!;
 
-                Assert.AreEqual(2, tuple.Count);
+                Assert.That(tuple.Count, Is.EqualTo(2));
 
-                Assert.AreEqual(tuple[0].GetType(), typeof(decimal));
-                Assert.AreEqual(tuple[1].GetType(), typeof(string));
-                Assert.AreEqual(empnos[i], tuple[0]);
-                Assert.AreEqual(enames[i], tuple[1]);
+                Assert.That(tuple[0].GetType(), Is.EqualTo(typeof(decimal)));
+                Assert.That(tuple[1].GetType(), Is.EqualTo(typeof(string)));
+                Assert.That(tuple[0], Is.EqualTo(empnos[i]));
+                Assert.That(tuple[1], Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -826,37 +826,37 @@ internal class EDBNestedTableTest : EPASTestBase
                 });
             }
 
-            Assert.AreEqual(3, cstmt.Parameters.Count);
-            Assert.AreEqual("integer", cstmt.Parameters[0].DataTypeName);
-            Assert.AreEqual("pkgextendtest.emp_tbl_typ", cstmt.Parameters[1].DataTypeName);
-            Assert.AreEqual("integer", cstmt.Parameters[2].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(3));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("integer"));
+            Assert.That(cstmt.Parameters[1].DataTypeName, Is.EqualTo("pkgextendtest.emp_tbl_typ"));
+            Assert.That(cstmt.Parameters[2].DataTypeName, Is.EqualTo("integer"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValueInt = cstmt.Parameters[0].Value;
-            Assert.IsNotNull(paramValueInt);
-            Assert.IsInstanceOf<int>(paramValueInt);
-            Assert.AreEqual(123, paramValueInt);
+            Assert.That(paramValueInt, Is.Not.Null);
+            Assert.That(paramValueInt, Is.InstanceOf<int>());
+            Assert.That(paramValueInt, Is.EqualTo(123));
 
             var paramValue = cstmt.Parameters[1].Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
             paramValueInt = cstmt.Parameters[2].Value;
-            Assert.IsNotNull(paramValueInt);
-            Assert.IsInstanceOf<int>(paramValueInt);
-            Assert.AreEqual(456, paramValueInt);
+            Assert.That(paramValueInt, Is.Not.Null);
+            Assert.That(paramValueInt, Is.InstanceOf<int>());
+            Assert.That(paramValueInt, Is.EqualTo(456));
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(10, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(emp_rec_typ));
+            Assert.That(arrayList.Count, Is.EqualTo(10));
+            Assert.That(arrayList, Is.All.InstanceOf<emp_rec_typ>());
 
             for (var i = 0; i < arrayList.Count; i++)
             {
                 var tuple = (emp_rec_typ)arrayList[i]!;
 
-                Assert.AreEqual(empnos[i], tuple.empno);
-                Assert.AreEqual(enames[i], tuple.ename);
+                Assert.That(tuple.empno, Is.EqualTo(empnos[i]));
+                Assert.That(tuple.ename, Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -921,32 +921,31 @@ internal class EDBNestedTableTest : EPASTestBase
                 Direction = ParameterDirection.Output,
                 DataTypeName = "pkgobjecttypetest.dept_tbl_typ"
             });
-            
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgobjecttypetest.dept_tbl_typ", cstmt.Parameters[0].DataTypeName);
+
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgobjecttypetest.dept_tbl_typ"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = cstmt.Parameters[0].Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(4, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
-
+            Assert.That(arrayList.Count, Is.EqualTo(4));
+            Assert.That(arrayList, Is.All.InstanceOf<List<object>>());
 
             for (var i = 0; i < DEPT_TOTAL; i++)
             {
 
                 var tuple = (List<object>)arrayList[i]!;
-                Assert.AreEqual(2, tuple.Count);
+                Assert.That(tuple.Count, Is.EqualTo(2));
 
-                Assert.AreEqual(tuple[0].GetType(), typeof(string));
-                Assert.AreEqual(tuple[1].GetType(), typeof(string));
-                Assert.AreEqual(deptNames[i], tuple[0]);
-                Assert.AreEqual(deptLocs[i], tuple[1]);
+                Assert.That(tuple[0].GetType(), Is.EqualTo(typeof(string)));
+                Assert.That(tuple[1].GetType(), Is.EqualTo(typeof(string)));
+                Assert.That(tuple[0], Is.EqualTo(deptNames[i]));
+                Assert.That(tuple[1], Is.EqualTo(deptLocs[i]));
             }
         }
         finally
@@ -1006,28 +1005,27 @@ internal class EDBNestedTableTest : EPASTestBase
             };
             cstmt.DeriveParameters();
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgobjecttypetestcomposite.dept_tbl_typ_composite", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgobjecttypetestcomposite.dept_tbl_typ_composite"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = cstmt.Parameters[0].Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(4, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(dept_obj_typ));
-
+            Assert.That(arrayList.Count, Is.EqualTo(4));
+            Assert.That(arrayList, Is.All.InstanceOf<dept_obj_typ>());
 
             for (var i = 0; i < DEPT_TOTAL; i++)
             {
 
                 var tuple = (dept_obj_typ)arrayList[i]!;
 
-                Assert.AreEqual(deptNames[i], tuple.dname);
-                Assert.AreEqual(deptLocs[i], tuple.loc);
+                Assert.That(tuple.dname, Is.EqualTo(deptNames[i]));
+                Assert.That(tuple.loc, Is.EqualTo(deptLocs[i]));
             }
         }
         finally
@@ -1094,20 +1092,20 @@ internal class EDBNestedTableTest : EPASTestBase
             };
             cstmt.DeriveParameters();
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgobjecttypetestnestedcompositejoint.comp_tbl_typ", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgobjecttypetestnestedcompositejoint.comp_tbl_typ"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = cstmt.Parameters[0].Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
 
-            Assert.AreEqual(EMP_TOTAL * DEPT_TOTAL, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(List<object>));
+            Assert.That(arrayList.Count, Is.EqualTo(EMP_TOTAL * DEPT_TOTAL));
+            Assert.That(arrayList, Is.All.InstanceOf<List<object>>());
 
             var arrayIndex = 0;
             for (var empIndex = 0; empIndex < EMP_TOTAL; empIndex++)
@@ -1116,16 +1114,16 @@ internal class EDBNestedTableTest : EPASTestBase
                 {
                     var tuple = (List<object>)arrayList[arrayIndex++]!;
 
-                    Assert.AreEqual(2, tuple.Count);
-                    CollectionAssert.AllItemsAreInstancesOfType(tuple, typeof(List<object>));
+                    Assert.That(tuple.Count, Is.EqualTo(2));
+                    Assert.That(tuple, Is.All.InstanceOf<List<object>>());
 
                     var empTuple = (List<object>)tuple[0]!;
                     var deptTuple = (List<object>)tuple[1]!;
 
-                    Assert.AreEqual(empTuple[0].GetType(), typeof(decimal));
-                    Assert.AreEqual(empTuple[1].GetType(), typeof(string));
-                    Assert.AreEqual(deptTuple[0].GetType(), typeof(string));
-                    Assert.AreEqual(deptTuple[1].GetType(), typeof(string));
+                    Assert.That(empTuple[0].GetType(), Is.EqualTo(typeof(decimal)));
+                    Assert.That(empTuple[1].GetType(), Is.EqualTo(typeof(string)));
+                    Assert.That(deptTuple[0].GetType(), Is.EqualTo(typeof(string)));
+                    Assert.That(deptTuple[1].GetType(), Is.EqualTo(typeof(string)));
                 }
             }
         }
@@ -1196,33 +1194,33 @@ internal class EDBNestedTableTest : EPASTestBase
             };
             cstmt.DeriveParameters();
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgobjecttypetestnestedcompositejoint.comp_tbl_typ", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgobjecttypetestnestedcompositejoint.comp_tbl_typ"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = cstmt.Parameters[0].Value;
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(DEPT_TOTAL * EMP_TOTAL, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(JointComposite));
+            Assert.That(arrayList.Count, Is.EqualTo(DEPT_TOTAL * EMP_TOTAL));
+            Assert.That(arrayList, Is.All.InstanceOf<JointComposite>());
 
             for (var i = 0; i < DEPT_TOTAL * EMP_TOTAL; i++)
             {
                 var tuple = (JointComposite)arrayList[i]!;
 
-                Assert.IsInstanceOf<emp_rec_typ>(tuple.emp);
-                Assert.IsNotNull(tuple.emp);
-                Assert.AreEqual(empnos[i / DEPT_TOTAL], tuple.emp!.empno);
-                Assert.AreEqual(enames[i / DEPT_TOTAL], tuple.emp!.ename);
+                Assert.That(tuple.emp, Is.InstanceOf<emp_rec_typ>());
+                Assert.That(tuple.emp, Is.Not.Null);
+                Assert.That(tuple.emp!.empno, Is.EqualTo(empnos[i / DEPT_TOTAL]));
+                Assert.That(tuple.emp!.ename, Is.EqualTo(enames[i / DEPT_TOTAL]));
 
-                Assert.IsInstanceOf<dept_obj_typ>(tuple.loc);
-                Assert.IsNotNull(tuple.loc);
-                Assert.AreEqual(deptLocs[i % DEPT_TOTAL], tuple.loc!.loc);
-                Assert.AreEqual(deptNames[i % DEPT_TOTAL], tuple.loc!.dname);
+                Assert.That(tuple.loc, Is.InstanceOf<dept_obj_typ>());
+                Assert.That(tuple.loc, Is.Not.Null);
+                Assert.That(tuple.loc!.loc, Is.EqualTo(deptLocs[i % DEPT_TOTAL]));
+                Assert.That(tuple.loc!.dname, Is.EqualTo(deptNames[i % DEPT_TOTAL]));
             }
         }
         finally
@@ -1442,6 +1440,17 @@ internal class EDBNestedTableTest : EPASTestBase
 
     }
 
+#if NET8_0_OR_GREATER
+    [Test]
+    public async Task DomainTypeNestedTableTest_Cidr()
+    {
+        var testArray = new IPNetwork[] {
+            new IPNetwork(IPAddress.Parse("192.168.1.0"), 24)
+            , new IPNetwork(IPAddress.Parse("192.168.1.0"), 24) };
+
+        await DomainTypeNestedTableTest<IPNetwork>("cidr", testArray);
+    }
+#else
     [Test]
     public async Task DomainTypeNestedTableTest_Cidr()
     {
@@ -1451,6 +1460,7 @@ internal class EDBNestedTableTest : EPASTestBase
 
         await DomainTypeNestedTableTest<EDBCidr>("cidr", testArray);
     }
+#endif
 
     [Test]
     public async Task DomainTypeNestedTableTest_TsQuery()
@@ -1648,33 +1658,33 @@ internal class EDBNestedTableTest : EPASTestBase
             };
             cstmt.DeriveParameters();
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgdomaintypetest.type_tbl_type", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgdomaintypetest.type_tbl_type"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = cstmt.Parameters[0].Value;
 
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(values.Length, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(TExpected));
+            Assert.That(arrayList.Count, Is.EqualTo(values.Length));
+            Assert.That(arrayList, Is.All.InstanceOf<TExpected>());
 
             if (expectedResults != null)
             {
                 for (var i = 0; i < expectedResults.Length; i++)
                 {
-                    Assert.AreEqual(expectedResults[i], arrayList[i]);
+                    Assert.That(arrayList[i], Is.EqualTo(expectedResults[i]));
                 }
             }
             else
             {
                 for (var i = 0; i < values.Length; i++)
                 {
-                    Assert.AreEqual(values[i], arrayList[i]);
+                    Assert.That(arrayList[i], Is.EqualTo(values[i]));
                 }
             }
         }
@@ -1740,6 +1750,9 @@ internal class EDBNestedTableTest : EPASTestBase
             || typeof(T) == typeof(DateTimeOffset)
             || typeof(T) == typeof(TimeSpan)
             || typeof(T) == typeof(EDBCidr)
+#if NET8_0_OR_GREATER
+            || typeof(T) == typeof(IPNetwork)
+#endif
             || typeof(T) == typeof(EDBInet))
             return values.Select(v => string.Concat('\'', v!.ToString(), '\'')).ToArray();
 
@@ -1887,25 +1900,24 @@ internal class EDBNestedTableTest : EPASTestBase
             };
             cstmt.DeriveParameters();
 
-            Assert.AreEqual(1, cstmt.Parameters.Count);
-            Assert.AreEqual("pkgdomaintypetest.type_tbl_type", cstmt.Parameters[0].DataTypeName);
+            Assert.That(cstmt.Parameters.Count, Is.EqualTo(1));
+            Assert.That(cstmt.Parameters[0].DataTypeName, Is.EqualTo("pkgdomaintypetest.type_tbl_type"));
 
             await cstmt.PrepareAsync();
             await cstmt.ExecuteNonQueryAsync();
 
             var paramValue = cstmt.Parameters[0].Value;
 
-            Assert.IsNotNull(paramValue);
-            Assert.IsInstanceOf<List<object>>(paramValue);
+            Assert.That(paramValue, Is.Not.Null);
+            Assert.That(paramValue, Is.InstanceOf<List<object>>());
 
             var arrayList = (List<object>)paramValue!;
-            Assert.AreEqual(values.Length, arrayList.Count);
-            CollectionAssert.AllItemsAreInstancesOfType(arrayList, typeof(TExpected));
-
+            Assert.That(arrayList.Count, Is.EqualTo(values.Length));
+            Assert.That(arrayList, Is.All.InstanceOf<TExpected>());
 
             for (var i = 0; i < expectedResults.Length; i++)
             {
-                Assert.AreEqual(expectedResults[i], arrayList[i]);
+                Assert.That(arrayList[i], Is.EqualTo(expectedResults[i]));
             }
         }
         finally

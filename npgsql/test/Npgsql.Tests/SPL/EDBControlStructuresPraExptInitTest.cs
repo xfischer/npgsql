@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using System.Data;
 using System.Threading;
@@ -101,7 +101,10 @@ internal class EDBControlStructuresPraExptInitTest : EPASTestBase
     }
 
     [TearDown]
-    public void Dispose() => TestUtil.closeDB(conn);
+    public void Dispose() {
+        TestUtil.closeDB(conn);
+        conn?.Dispose();
+    }
 
     private void Execute(string query)
     {
@@ -163,8 +166,8 @@ internal class EDBControlStructuresPraExptInitTest : EPASTestBase
             cstmt.ExecuteNonQuery();
         }
 
-        Assert.AreEqual(4000, GetCustomerStmtAmount("customer1", 1001), 0.00);
-        Assert.AreEqual(17000, GetCustomerBalance("customer1", 1001), 0.00);
+        Assert.That(GetCustomerStmtAmount("customer1", 1001), Is.EqualTo(4000.0).Within(0.00));
+        Assert.That(GetCustomerBalance("customer1", 1001), Is.EqualTo(17000.0).Within(0.00));
     }
 
     [Test]
@@ -180,7 +183,7 @@ internal class EDBControlStructuresPraExptInitTest : EPASTestBase
         PostgresNotice? notice = null;
         NoticeEventHandler action = (sender, args) =>
         {
-            Assert.IsNotNull(args.Notice);
+            Assert.That(args.Notice, Is.Not.Null);
             notice = args.Notice;
             mre.Set();
         };
@@ -202,8 +205,8 @@ internal class EDBControlStructuresPraExptInitTest : EPASTestBase
             }
 
             mre.WaitOne(5000);
-            Assert.IsNotNull(notice);
-            Assert.AreEqual("SQLCode :-20100 User-Defined Exception", notice!.MessageText);
+            Assert.That(notice, Is.Not.Null);
+            Assert.That(notice!.MessageText, Is.EqualTo("SQLCode :-20100 User-Defined Exception"));
         }
         finally
         {

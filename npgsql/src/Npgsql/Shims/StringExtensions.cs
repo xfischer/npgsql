@@ -15,6 +15,7 @@ public static class StringExtensions
     /// </summary>
     /// <param name="query"></param>
     /// <param name="word"></param>
+    /// <param name="comparison"></param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool ContainsWord(this string query, string word, StringComparison comparison)
@@ -37,6 +38,7 @@ public static class StringExtensions
     /// </summary>
     /// <param name="query"></param>
     /// <param name="word"></param>
+    /// <param name="comparison"></param>
     /// <returns></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool StartsWithWord(this string query, string word, StringComparison comparison)

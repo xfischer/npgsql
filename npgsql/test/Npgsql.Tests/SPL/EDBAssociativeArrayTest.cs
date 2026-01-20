@@ -148,11 +148,11 @@ internal class EDBAssociativeArrayTest : EPASTestBase
                 await cstmt.ExecuteNonQueryAsync();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_TOTAL));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(enames[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -210,15 +210,15 @@ internal class EDBAssociativeArrayTest : EPASTestBase
                 await cstmt.ExecuteNonQueryAsync();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_TOTAL));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
                 var arr = notice.MessageText.Split(":");
                 var empno = arr[0].Trim();
                 var ename = arr[1].Trim();
-                Assert.AreEqual(empnos[i].ToString(), empno);
-                Assert.AreEqual(enames[i], ename);
+                Assert.That(empno, Is.EqualTo(empnos[i].ToString()));
+                Assert.That(ename, Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -275,15 +275,15 @@ internal class EDBAssociativeArrayTest : EPASTestBase
                 await cstmt.ExecuteNonQueryAsync();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_TOTAL));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
                 var arr = notice.MessageText.Split(":");
                 var empno = arr[0].Trim();
                 var ename = arr[1].Trim();
-                Assert.AreEqual(empnos[i].ToString(), empno);
-                Assert.AreEqual(enames[i], ename);
+                Assert.That(empno, Is.EqualTo(empnos[i].ToString()));
+                Assert.That(ename, Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -341,15 +341,15 @@ internal class EDBAssociativeArrayTest : EPASTestBase
                 await cstmt.ExecuteNonQueryAsync();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_TOTAL));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
                 var arr = notice.MessageText.Split(":");
                 var empno = arr[0].Trim();
                 var ename = arr[1].Trim();
-                Assert.AreEqual(empnos[i].ToString(), empno);
-                Assert.AreEqual(enames[i], ename);
+                Assert.That(empno, Is.EqualTo(empnos[i].ToString()));
+                Assert.That(ename, Is.EqualTo(enames[i]));
             }
         }
         finally
@@ -404,15 +404,15 @@ internal class EDBAssociativeArrayTest : EPASTestBase
                 await cstmt.ExecuteNonQueryAsync();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(JOB_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(JOB_TOTAL));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
                 var arr = notice.MessageText.Split(":");
                 var jobType = arr[0].Trim();
                 var jobNumber = arr[1].Trim();
-                Assert.AreEqual(jobTypes[i], jobType);
-                Assert.AreEqual(jobNumbers[i], jobNumber);
+                Assert.That(jobType, Is.EqualTo(jobTypes[i]));
+                Assert.That(jobNumber, Is.EqualTo(jobNumbers[i]));
             }
         }
         finally

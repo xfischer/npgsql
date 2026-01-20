@@ -123,6 +123,12 @@ public enum EDBDbType
     /// <remarks>See https://www.postgresql.org/docs/current/static/datatype-geometric.html</remarks>
     Polygon = 16,
 
+    /// <summary>
+    /// Corresponds to the PostgreSQL "cube" type, a geometric type representing multi-dimensional cubes.
+    /// </summary>
+    /// <remarks>See https://www.postgresql.org/docs/current/cube.html</remarks>
+    Cube = 63, // Extension type
+
     #endregion
 
     #region Character Types
@@ -740,6 +746,7 @@ static class EDBDbTypeExtensions
 
             // Plugin types
             EDBDbType.Citext    => "citext",
+            EDBDbType.Cube      => "cube",
             EDBDbType.LQuery    => "lquery",
             EDBDbType.LTree     => "ltree",
             EDBDbType.LTxtQuery => "ltxtquery",
@@ -869,11 +876,11 @@ static class EDBDbTypeExtensions
 
     internal static EDBDbType? ToEDBDbType(this DataTypeName dataTypeName) => ToEDBDbType(dataTypeName.UnqualifiedName);
     /// Should not be used with display names, first normalize it instead.
-    internal static EDBDbType? ToEDBDbType(string dataTypeName)
+    internal static EDBDbType? ToEDBDbType(string normalizedDataTypeName)
     {
-        var unqualifiedName = dataTypeName;
-        if (dataTypeName.IndexOf(".", StringComparison.Ordinal) is not -1 and var index)
-            unqualifiedName = dataTypeName.Substring(0, index);
+        var unqualifiedName = normalizedDataTypeName.AsSpan();
+        if (unqualifiedName.IndexOf('.') is not -1 and var index)
+            unqualifiedName = unqualifiedName.Slice(index + 1);
 
         return unqualifiedName switch
             {
@@ -964,6 +971,7 @@ static class EDBDbTypeExtensions
 
                 // Plugin types
                 "citext" => EDBDbType.Citext,
+                "cube" => EDBDbType.Cube,
                 "lquery" => EDBDbType.LQuery,
                 "ltree" => EDBDbType.LTree,
                 "ltxtquery" => EDBDbType.LTxtQuery,
@@ -971,12 +979,13 @@ static class EDBDbTypeExtensions
                 "geometry" => EDBDbType.Geometry,
                 "geography" => EDBDbType.Geography,
 
-                _ when unqualifiedName.Contains("unknown")
+                _ when unqualifiedName.IndexOf("unknown") != -1
                     => !unqualifiedName.StartsWith("_", StringComparison.Ordinal)
                         ? EDBDbType.Unknown
                         : null,
                 _ when unqualifiedName.StartsWith("_", StringComparison.Ordinal)
-                    => ToEDBDbType(unqualifiedName.Substring(1)) is { } elementEDBDbType
+					=> ToEDBDbType(unqualifiedName.Slice(1).ToString()) is { } elementEDBDbType
+                    //=> ToEDBDbType(unqualifiedName.Substring(1)) is { } elementEDBDbType
                         ? elementEDBDbType | EDBDbType.Array
                         : null,
                 // e.g. custom ranges, plugin types etc.

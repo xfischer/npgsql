@@ -98,7 +98,7 @@ public class EDBAQQueue(string name, EDBConnection con) : IDisposable, ICloneabl
             });
             var msgProps = command.Parameters.Add(new EDBParameter("message_properties", EDBTypes.EDBDbType.Unknown, 110, "message_properties", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, null!));
             msgProps.DataTypeName = "dbms_aq.message_properties_t";
-            msgProps.Value = MessageProperties.ToTextParam();
+            msgProps.Value = MessageProperties;//.ToTextParam();
 
 
             command.Parameters.Add(new EDBParameter
@@ -158,7 +158,7 @@ public class EDBAQQueue(string name, EDBConnection con) : IDisposable, ICloneabl
                 DataTypeName = "dbms_aq.dequeue_options_t",
                 Value = DequeueOptions
             });
-            var messageProps = command.Parameters.Add(new EDBParameter("message_properties", EDBTypes.EDBDbType.Unknown, 110, "message_properties", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+            var messageProps = command.Parameters.Add(new EDBParameter("message_properties", EDBTypes.EDBDbType.Text, 110, "message_properties", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
             messageProps.DataTypeName = "dbms_aq.message_properties_t";
             command.Parameters.Add(new EDBParameter
             {
@@ -171,7 +171,7 @@ public class EDBAQQueue(string name, EDBConnection con) : IDisposable, ICloneabl
             command.ExecuteNonQuery();
             msg.MessageId = Convert.ToBase64String((byte[])msgIdParam.Value!);
             msg.Payload = command.Parameters[3].Value;
-            MessageProperties = MessageProperties.ToObjectParam(messageProps.Value!.ToString()!);
+            MessageProperties = (EDBAQMessageProperties)messageProps.Value!;
             return msg;
         }
         catch (Exception ex)

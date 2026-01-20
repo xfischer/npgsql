@@ -91,10 +91,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 mapping => mapping with { MatchRequirement = MatchRequirement.DataTypeName, TypeMatchPredicate = type => typeof(Stream).IsAssignableFrom(type) });
             //Special mappings, these have no corresponding array mapping.
             mappings.AddType<TextReader>(DataTypeNames.Text,
-                static (options, mapping, _) => mapping.CreateInfo(options, new TextReaderTextConverter(options.TextEncoding), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new TextReaderTextConverter(options.TextEncoding), preferredFormat: DataFormat.Text, supportsWriting: false),
                 MatchRequirement.DataTypeName);
             mappings.AddStructType<GetChars>(DataTypeNames.Text,
-                static (options, mapping, _) => mapping.CreateInfo(options, new GetCharsTextConverter(options.TextEncoding), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new GetCharsTextConverter(options.TextEncoding), preferredFormat: DataFormat.Text, supportsWriting: false),
                 MatchRequirement.DataTypeName);
 
             // Alternative text types
@@ -118,10 +118,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                     mapping => mapping with { MatchRequirement = MatchRequirement.DataTypeName, TypeMatchPredicate = type => typeof(Stream).IsAssignableFrom(type) });
                 //Special mappings, these have no corresponding array mapping.
                 mappings.AddType<TextReader>(dataTypeName,
-                    static (options, mapping, _) => mapping.CreateInfo(options, new TextReaderTextConverter(options.TextEncoding), supportsWriting: false, preferredFormat: DataFormat.Text),
+                    static (options, mapping, _) => mapping.CreateInfo(options, new TextReaderTextConverter(options.TextEncoding), preferredFormat: DataFormat.Text, supportsWriting: false),
                     MatchRequirement.DataTypeName);
                 mappings.AddStructType<GetChars>(dataTypeName,
-                    static (options, mapping, _) => mapping.CreateInfo(options, new GetCharsTextConverter(options.TextEncoding), supportsWriting: false, preferredFormat: DataFormat.Text),
+                    static (options, mapping, _) => mapping.CreateInfo(options, new GetCharsTextConverter(options.TextEncoding), preferredFormat: DataFormat.Text, supportsWriting: false),
                     MatchRequirement.DataTypeName);
             }
 
@@ -149,10 +149,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 mapping => mapping with { MatchRequirement = MatchRequirement.DataTypeName, TypeMatchPredicate = type => typeof(Stream).IsAssignableFrom(type) });
             //Special mappings, these have no corresponding array mapping.
             mappings.AddType<TextReader>(DataTypeNames.Jsonb,
-                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<TextReader>(jsonbVersion, new TextReaderTextConverter(options.TextEncoding)), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<TextReader>(jsonbVersion, new TextReaderTextConverter(options.TextEncoding)), preferredFormat: DataFormat.Text, supportsWriting: false),
                 MatchRequirement.DataTypeName);
             mappings.AddStructType<GetChars>(DataTypeNames.Jsonb,
-                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<GetChars>(jsonbVersion, new GetCharsTextConverter(options.TextEncoding)), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<GetChars>(jsonbVersion, new GetCharsTextConverter(options.TextEncoding)), preferredFormat: DataFormat.Text, supportsWriting: false),
                 MatchRequirement.DataTypeName);
 
             // Jsonpath
@@ -161,10 +161,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<string>(jsonpathVersion, new StringTextConverter(options.TextEncoding))), isDefault: true);
             //Special mappings, these have no corresponding array mapping.
             mappings.AddType<TextReader>(DataTypeNames.Jsonpath,
-                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<TextReader>(jsonpathVersion, new TextReaderTextConverter(options.TextEncoding)), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<TextReader>(jsonpathVersion, new TextReaderTextConverter(options.TextEncoding)), preferredFormat: DataFormat.Text, supportsWriting: false),
                 MatchRequirement.DataTypeName);
             mappings.AddStructType<GetChars>(DataTypeNames.Jsonpath,
-                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<GetChars>(jsonpathVersion, new GetCharsTextConverter(options.TextEncoding)), supportsWriting: false, preferredFormat: DataFormat.Text),
+                static (options, mapping, _) => mapping.CreateInfo(options, new VersionPrefixedTextConverter<GetChars>(jsonpathVersion, new GetCharsTextConverter(options.TextEncoding)), preferredFormat: DataFormat.Text, supportsWriting: false),
                 MatchRequirement.DataTypeName);
 
             // Bytea
@@ -237,13 +237,14 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 static (options, mapping, _) => mapping.CreateInfo(options, new Int8Converter<long>()));
 
             // Date
-            mappings.AddStructType<DateTime>(DataTypeNames.Date,
+			mappings.AddStructType<DateTime>(DataTypeNames.Date,
                 static (options, mapping, _) =>
                     mapping.CreateInfo(options, new DateTimeDateConverter(options.EnableDateTimeInfinityConversions)),
                 MatchRequirement.DataTypeName);
             mappings.AddStructType<int>(DataTypeNames.Date,
                 static (options, mapping, _) => mapping.CreateInfo(options, new Int4Converter<int>()));
-    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             mappings.AddStructType<DateOnly>(DataTypeNames.Date,
                 static (options, mapping, _) => mapping.CreateInfo(options, new DateOnlyDateConverter(options.EnableDateTimeInfinityConversions)));
 
@@ -258,6 +259,7 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                     mapping.CreateInfo(options, new DateOnlyFromRedwoodDateConverter(options.EnableDateTimeInfinityConversions, DateTimeKind.Utc)),
                 MatchRequirement.DataTypeName);
 #endif
+            
 
             // Interval
             mappings.AddStructType<TimeSpan>(DataTypeNames.Interval,
@@ -266,14 +268,24 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 static (options, mapping, _) => mapping.CreateInfo(options, new EDBIntervalConverter()));
 
             // Time
+            // NET10 code
+            //#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+            //            mappings.AddStructType<TimeOnly>(DataTypeNames.Time,
+            //                static (options, mapping, _) => mapping.CreateInfo(options, new TimeOnlyTimeConverter()), isDefault: true);
+            //            mappings.AddStructType<TimeSpan>(DataTypeNames.Time,
+            //                static (options, mapping, _) => mapping.CreateInfo(options, new TimeSpanTimeConverter()));
+            //#else
+            //			mappings.AddStructType<TimeSpan>(DataTypeNames.Time,
+            //                static (options, mapping, _) => mapping.CreateInfo(options, new TimeSpanTimeConverter()), isDefault: true);
+            //#endif
             mappings.AddStructType<TimeSpan>(DataTypeNames.Time,
-                static (options, mapping, _) => mapping.CreateInfo(options, new TimeSpanTimeConverter()), isDefault: true);
+                            static (options, mapping, _) => mapping.CreateInfo(options, new TimeSpanTimeConverter()), isDefault: true);
             mappings.AddStructType<long>(DataTypeNames.Time,
                 static (options, mapping, _) => mapping.CreateInfo(options, new Int8Converter<long>()));
-    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             mappings.AddStructType<TimeOnly>(DataTypeNames.Time,
                 static (options, mapping, _) => mapping.CreateInfo(options, new TimeOnlyTimeConverter()));
-    #endif
+#endif
 
             // TimeTz
             mappings.AddStructType<DateTimeOffset>(DataTypeNames.TimeTz,
@@ -398,7 +410,7 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             // Alternative text types
             foreach(var dataTypeName in new[] { "citext", DataTypeNames.Varchar,
                         DataTypeNames.Bpchar, DataTypeNames.Json,
-                        DataTypeNames.Xml, DataTypeNames.Name, DataTypeNames.RefCursor})
+                        DataTypeNames.Xml, DataTypeNames.Name, DataTypeNames.RefCursor })
             {
                 mappings.AddArrayType<string>(dataTypeName);
                 mappings.AddStructArrayType<char>(dataTypeName);
@@ -471,9 +483,9 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             mappings.AddStructArrayType<long>(DataTypeNames.TimestampTz);
 
             // Date
-            mappings.AddStructArrayType<DateTime>(DataTypeNames.Date);
+			mappings.AddStructArrayType<DateTime>(DataTypeNames.Date);
             mappings.AddStructArrayType<int>(DataTypeNames.Date);
-    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             mappings.AddStructArrayType<DateOnly>(DataTypeNames.Date);
 
             // EnterpriseDB
@@ -487,7 +499,7 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             // Time
             mappings.AddStructArrayType<TimeSpan>(DataTypeNames.Time);
             mappings.AddStructArrayType<long>(DataTypeNames.Time);
-    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+    #if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             mappings.AddStructArrayType<TimeOnly>(DataTypeNames.Time);
     #endif
 

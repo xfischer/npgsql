@@ -1,12 +1,9 @@
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Internal;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Update;
-
-#nullable enable
+namespace Microsoft.EntityFrameworkCore.Update;
 
 [MinimumPostgresVersion(14, 0)]
-public class StoredProcedureUpdateNpgsqlTest : StoredProcedureUpdateTestBase
+public class StoredProcedureUpdateNpgsqlTest(NonSharedFixture fixture) : StoredProcedureUpdateTestBase(fixture)
 {
     public override async Task Insert_with_output_parameter(bool async)
     {

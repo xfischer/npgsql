@@ -208,8 +208,8 @@ END$$");
         };
 
         await batch.ExecuteNonQueryAsync();
-        Assert.AreEqual(1, batch.BatchCommands[0].Parameters[1].Value);
-        Assert.AreEqual(1, batch.BatchCommands[1].Parameters[1].Value);
+        Assert.That(batch.BatchCommands[0].Parameters[1].Value, Is.EqualTo(1));
+        Assert.That(batch.BatchCommands[1].Parameters[1].Value, Is.EqualTo(1));
     }
 
     #region DeriveParameters
@@ -300,8 +300,8 @@ $$ LANGUAGE plpgsql");
         {
             await using var command = new EDBCommand(@"""ProcedureCaseSensitive""", conn) { CommandType = CommandType.StoredProcedure };
             EDBCommandBuilder.DeriveParameters(command);
-            Assert.AreEqual(EDBDbType.Integer, command.Parameters[0].EDBDbType);
-            Assert.AreEqual(EDBDbType.Text, command.Parameters[1].EDBDbType);
+            Assert.That(command.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Integer));
+            Assert.That(command.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Text));
         }
         finally
         {
@@ -320,8 +320,8 @@ $$ LANGUAGE plpgsql");
         {
             await using var command = new EDBCommand(sproc, conn) { CommandType = CommandType.StoredProcedure };
             EDBCommandBuilder.DeriveParameters(command);
-            Assert.AreEqual(EDBDbType.Integer, command.Parameters[0].EDBDbType);
-            Assert.AreEqual(EDBDbType.Text, command.Parameters[1].EDBDbType);
+            Assert.That(command.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Integer));
+            Assert.That(command.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Text));
         }
         finally
         {
@@ -340,8 +340,8 @@ $$ LANGUAGE plpgsql");
         {
             await using var command = new EDBCommand(@"""My.Dotted.Procedure""", conn) { CommandType = CommandType.StoredProcedure };
             EDBCommandBuilder.DeriveParameters(command);
-            Assert.AreEqual(EDBDbType.Integer, command.Parameters[0].EDBDbType);
-            Assert.AreEqual(EDBDbType.Text, command.Parameters[1].EDBDbType);
+            Assert.That(command.Parameters[0].EDBDbType, Is.EqualTo(EDBDbType.Integer));
+            Assert.That(command.Parameters[1].EDBDbType, Is.EqualTo(EDBDbType.Text));
         }
         finally
         {
@@ -360,8 +360,8 @@ $$ LANGUAGE plpgsql");
             $"CREATE PROCEDURE {sproc}(x int, y int, out sum int, out product int) AS 'SELECT $1 + $2, $1 * $2' LANGUAGE sql");
         await using var command = new EDBCommand(sproc, conn) { CommandType = CommandType.StoredProcedure };
         EDBCommandBuilder.DeriveParameters(command);
-        Assert.AreEqual("x", command.Parameters[0].ParameterName);
-        Assert.AreEqual("y", command.Parameters[1].ParameterName);
+        Assert.That(command.Parameters[0].ParameterName, Is.EqualTo("x"));
+        Assert.That(command.Parameters[1].ParameterName, Is.EqualTo("y"));
     }
 
     [Test]

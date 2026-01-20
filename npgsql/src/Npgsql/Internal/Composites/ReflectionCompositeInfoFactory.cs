@@ -87,7 +87,21 @@ static class ReflectionCompositeInfoFactory
             else
                 throw new InvalidOperationException($"Cannot find property or field for composite field '{pgFields[fieldIndex].Name}'.");
 
+
+#if DEBUG // EnterpriseDB: useful to debug mapping issues
+            try
+            {
+                compositeFields[fieldIndex] = CreateCompositeFieldInfo(pgField.Name, pgTypeInfo.Type, pgTypeInfo, options.ToCanonicalTypeId(pgField.Type), getter, setter);
+            }
+            catch (Exception)
+            {
+                var message = $"Field '{pgField.Name}' ({pgTypeInfo.Type.Name}) not found on {pgType.Name}";
+                Debugger.Break();
+                throw;
+            }
+#else
             compositeFields[fieldIndex] = CreateCompositeFieldInfo(pgField.Name, pgTypeInfo.Type, pgTypeInfo, options.ToCanonicalTypeId(pgField.Type), getter, setter);
+#endif
         }
 
         Debug.Assert(compositeFields.All(x => x is not null));
@@ -257,8 +271,8 @@ static class ReflectionCompositeInfoFactory
         foreach (var constructor in typeof(T).GetConstructors().OrderByDescending(x => x.GetParameters().Length))
         {
             var parameters = constructor.GetParameters();
-                if (parameters.Length == 0)
-                    clrDefaultConstructor = constructor;
+            if (parameters.Length == 0)
+                clrDefaultConstructor = constructor;
 
             var parametersMap = new int[parameters.Length];
 #if NETSTANDARD2_0 || NETFRAMEWORK  // EnterpriseDB
@@ -279,8 +293,8 @@ static class ReflectionCompositeInfoFactory
                 {
                     if (fields[pgFieldIndex].Name == name)
                     {
-                    parametersMap[i] = pgFieldIndex;
-                    break;
+                        parametersMap[i] = pgFieldIndex;
+                        break;
                     }
                 }
             }

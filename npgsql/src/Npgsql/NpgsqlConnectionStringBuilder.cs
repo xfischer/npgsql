@@ -8,6 +8,8 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Replication;
+using System.Runtime.ExceptionServices;
+using System.Linq;
 
 namespace EnterpriseDB.EDBClient;
 
@@ -481,6 +483,29 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     internal SslNegotiation? UserProvidedSslNegotiation { get; private set; }
 
     /// <summary>
+    /// Controls whether GSS encryption is required, disabled or preferred, depending on server support.
+    /// </summary>
+    [Category("Security")]
+    [Description("Controls whether GSS encryption is required, disabled or preferred, depending on server support.")]
+    [DisplayName("GSS Encryption Mode")]
+    [EDBConnectionStringProperty]
+    public GssEncryptionMode GssEncryptionMode
+    {
+#if NETFRAMEWORK
+        get => UserProvidedGssEncMode ?? GssEncryptionMode.Disable;
+#else
+        get => UserProvidedGssEncMode ?? GssEncryptionMode.Prefer;
+#endif
+        set
+        {
+            UserProvidedGssEncMode = value;
+            SetValue(nameof(GssEncryptionMode), value);
+        }
+    }
+
+    internal GssEncryptionMode? UserProvidedGssEncMode { get; private set; }
+
+    /// <summary>
     /// Location of a client certificate to be sent to the server.
     /// </summary>
     [Category("Security")]
@@ -596,6 +621,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     [Category("Security")]
     [Description("The Kerberos realm to be used for authentication.")]
     [DisplayName("Include Realm")]
+    [DefaultValue(true)]
     [EDBConnectionStringProperty]
     public bool IncludeRealm
     {
@@ -666,6 +692,24 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     bool _includeErrorDetail;
 
     /// <summary>
+    /// When enabled, failed statements are included on <see cref="EDBException.BatchCommand" />.
+    /// </summary>
+    [Category("Security")]
+    [Description("When enabled, failed batched commands are included on EDBException.BatchCommand.")]
+    [DisplayName("Include Failed Batched Command")]
+    [EDBConnectionStringProperty]
+    public bool IncludeFailedBatchedCommand
+    {
+        get => _includeFailedBatchedCommand;
+        set
+        {
+            _includeFailedBatchedCommand = value;
+            SetValue(nameof(IncludeFailedBatchedCommand), value);
+        }
+    }
+    bool _includeFailedBatchedCommand;
+
+    /// <summary>
     /// Controls whether channel binding is required, disabled or preferred, depending on server support.
     /// </summary>
     [Category("Security")]
@@ -684,7 +728,118 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     }
     ChannelBinding _channelBinding;
 
-    #endregion
+    /// <summary>
+    /// Controls the available authentication methods.
+    /// </summary>
+    [Category("Security")]
+    [Description("Controls the available authentication methods.")]
+    [DisplayName("Require Auth")]
+    [EDBConnectionStringProperty]
+    public string? RequireAuth
+    {
+        get => _requireAuth;
+        set
+        {
+            RequireAuthModes = ParseAuthMode(value);
+            _requireAuth = value;
+            SetValue(nameof(RequireAuth), value);
+        }
+    }
+    string? _requireAuth;
+
+    internal RequireAuthMode RequireAuthModes { get; private set; }
+
+#if NET8_0_OR_GREATER
+    internal static RequireAuthMode ParseAuthMode(string? value)
+    {
+        var modes = value?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (modes is not { Length: > 0 })
+            return RequireAuthMode.All;
+
+        var isNegative = false;
+        RequireAuthMode parsedModes = default;
+        for (var i = 0; i < modes.Length; i++)
+        {
+            var mode = modes[i];
+            var modeToParse = mode.AsSpan();
+            if (mode.StartsWith('!'))
+            {
+                if (i > 0 && !isNegative)
+                    throw new ArgumentException("Mixing both positive and negative authentication methods is not supported");
+
+                modeToParse = modeToParse.Slice(1);
+                isNegative = true;
+            }
+            else
+            {
+                if (i > 0 && isNegative)
+                    throw new ArgumentException("Mixing both positive and negative authentication methods is not supported");
+            }
+
+            // Explicitly disallow 'All' as libpq doesn't have it
+            if (!Enum.TryParse<RequireAuthMode>(modeToParse, out var parsedMode) || parsedMode == RequireAuthMode.All)
+                throw new ArgumentException($"Unable to parse authentication method \"{modeToParse}\"");
+
+            parsedModes |= parsedMode;
+        }
+
+        var allowedModes = isNegative
+            ? (RequireAuthMode)(RequireAuthMode.All - parsedModes)
+            : parsedModes;
+
+        if (allowedModes == default)
+            throw new ArgumentException($"No authentication method is allowed. Check \"{nameof(RequireAuth)}\" in connection string.");
+
+        return allowedModes;
+    }
+
+#else
+    internal static RequireAuthMode ParseAuthMode(string? value)
+    {        
+        var modes = value?.Split([','], StringSplitOptions.RemoveEmptyEntries)
+            .Where(e => !string.IsNullOrWhiteSpace(e.Trim()))
+            .ToArray();
+        if (modes is not { Length: > 0 })
+            return RequireAuthMode.All;
+
+        var isNegative = false;
+        RequireAuthMode parsedModes = default;
+        for (var i = 0; i < modes.Length; i++)
+        {
+            var mode = modes[i];
+            var modeToParse = mode;
+            if (mode.StartsWith("!", StringComparison.OrdinalIgnoreCase))
+            {
+                if (i > 0 && !isNegative)
+                    throw new ArgumentException("Mixing both positive and negative authentication methods is not supported");
+
+                modeToParse = modeToParse.Substring(1);
+                isNegative = true;
+            }
+            else
+            {
+                if (i > 0 && isNegative)
+                    throw new ArgumentException("Mixing both positive and negative authentication methods is not supported");
+            }
+
+            // Explicitly disallow 'All' as libpq doesn't have it
+            if (!Enum.TryParse<RequireAuthMode>(modeToParse, out var parsedMode) || parsedMode == RequireAuthMode.All)
+                throw new ArgumentException($"Unable to parse authentication method \"{modeToParse}\"");
+
+            parsedModes |= parsedMode;
+        }
+
+        var allowedModes = isNegative
+            ? (RequireAuthMode)(RequireAuthMode.All - parsedModes)
+            : parsedModes;
+
+        if (allowedModes == default)
+            throw new ArgumentException($"No authentication method is allowed. Check \"{nameof(RequireAuth)}\" in connection string.");
+
+        return allowedModes;
+    }
+#endif
+#endregion
 
     #region Properties - Pooling
 
@@ -909,13 +1064,13 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     {
         get => TargetSessionAttributesParsed switch
         {
-            EnterpriseDB.EDBClient.TargetSessionAttributes.Any           => "any",
-            EnterpriseDB.EDBClient.TargetSessionAttributes.Primary       => "primary",
-            EnterpriseDB.EDBClient.TargetSessionAttributes.Standby       => "standby",
+            EnterpriseDB.EDBClient.TargetSessionAttributes.Any => "any",
+            EnterpriseDB.EDBClient.TargetSessionAttributes.Primary => "primary",
+            EnterpriseDB.EDBClient.TargetSessionAttributes.Standby => "standby",
             EnterpriseDB.EDBClient.TargetSessionAttributes.PreferPrimary => "prefer-primary",
             EnterpriseDB.EDBClient.TargetSessionAttributes.PreferStandby => "prefer-standby",
-            EnterpriseDB.EDBClient.TargetSessionAttributes.ReadWrite     => "read-write",
-            EnterpriseDB.EDBClient.TargetSessionAttributes.ReadOnly      => "read-only",
+            EnterpriseDB.EDBClient.TargetSessionAttributes.ReadWrite => "read-write",
+            EnterpriseDB.EDBClient.TargetSessionAttributes.ReadOnly => "read-only",
             null => null,
 
             _ => throw new ArgumentException($"Unhandled enum value '{TargetSessionAttributesParsed}'")
@@ -923,7 +1078,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
 
         set
         {
-            TargetSessionAttributesParsed = value is null ? null : ParseTargetSessionAttributes(value);
+            TargetSessionAttributesParsed = value is null ? null : ParseTargetSessionAttributes(value.ToLowerInvariant());
             SetValue(nameof(TargetSessionAttributes), value);
         }
     }
@@ -933,13 +1088,13 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     internal static TargetSessionAttributes ParseTargetSessionAttributes(string s)
         => s switch
         {
-            "any"            => EnterpriseDB.EDBClient.TargetSessionAttributes.Any,
-            "primary"        => EnterpriseDB.EDBClient.TargetSessionAttributes.Primary,
-            "standby"        => EnterpriseDB.EDBClient.TargetSessionAttributes.Standby,
+            "any" => EnterpriseDB.EDBClient.TargetSessionAttributes.Any,
+            "primary" => EnterpriseDB.EDBClient.TargetSessionAttributes.Primary,
+            "standby" => EnterpriseDB.EDBClient.TargetSessionAttributes.Standby,
             "prefer-primary" => EnterpriseDB.EDBClient.TargetSessionAttributes.PreferPrimary,
             "prefer-standby" => EnterpriseDB.EDBClient.TargetSessionAttributes.PreferStandby,
-            "read-write"     => EnterpriseDB.EDBClient.TargetSessionAttributes.ReadWrite,
-            "read-only"      => EnterpriseDB.EDBClient.TargetSessionAttributes.ReadOnly,
+            "read-write" => EnterpriseDB.EDBClient.TargetSessionAttributes.ReadWrite,
+            "read-only" => EnterpriseDB.EDBClient.TargetSessionAttributes.ReadOnly,
 
             _ => throw new ArgumentException($"TargetSessionAttributes contains an invalid value '{s}'")
         };
@@ -976,7 +1131,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
         set
         {
             if (value < 0)
-                throw new ArgumentException($"{HostRecheckSeconds} cannot be negative", nameof(HostRecheckSeconds));
+                throw new ArgumentOutOfRangeException($"{HostRecheckSeconds} cannot be negative", nameof(HostRecheckSeconds));
             _hostRecheckSeconds = value;
             SetValue(nameof(HostRecheckSeconds), value);
         }
@@ -1231,7 +1386,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     }
     bool _isPgPoolConnection;
 
-	// EnterpriseDB
+    // EnterpriseDB
     /// <summary>
     /// Property specifying sync time in case connection is made with PGPOOL.
     /// No need to se this property when connecting with EPAS.
@@ -1252,7 +1407,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     }
     int _pgPoolSyncTime;
 
-	// EnterpriseDB
+    // EnterpriseDB
     /// <summary>
     /// /// A compatibility mode for special PostgreSQL server types.
     /// Load table composite type definitions, and not just free-standing composite types.
@@ -1470,7 +1625,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     internal void PostProcessAndValidate()
     {
         if (string.IsNullOrWhiteSpace(Host))
-            throw new ArgumentException("Host can't be null");
+            throw new ArgumentNullException("Host can't be null");
         if (Multiplexing && !Pooling)
             throw new ArgumentException("Pooling must be on to use multiplexing");
         if (SslNegotiation == SslNegotiation.Direct && SslMode is not SslMode.Require and not SslMode.VerifyCA and not SslMode.VerifyFull)
@@ -1522,7 +1677,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
             var ipv6End = originalHost.LastIndexOf(']');
             if (otherColon == -1 || portSeparator > ipv6End && otherColon < ipv6End)
             {
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
                 port = int.Parse(originalHost.Slice(portSeparator + 1));
 #else
                 port = int.Parse(originalHost.Slice(portSeparator + 1).ToString());
@@ -1573,7 +1728,7 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
     /// <returns></returns>
     public override int GetHashCode() => Host?.GetHashCode() ?? 0;
 
-#endregion
+    #endregion
 
     #region IDictionary<string, object>
 
@@ -1649,9 +1804,22 @@ public sealed partial class EDBConnectionStringBuilder : DbConnectionStringBuild
         foreach (var value in propertyDescriptors.Values)
         {
             var d = (PropertyDescriptor)value;
+            var isConnectionStringProperty = false;
+            var isObsolete = false;
             foreach (var attribute in d.Attributes)
-                if (attribute is EDBConnectionStringPropertyAttribute or ObsoleteAttribute)
-                    toRemove.Add(d);
+            {
+                if (attribute is EDBConnectionStringPropertyAttribute)
+                {
+                    isConnectionStringProperty = true;
+                }
+                else if (attribute is ObsoleteAttribute)
+                {
+                    isObsolete = true;
+                }
+            }
+
+            if (!isConnectionStringProperty || isObsolete)
+                toRemove.Add(d);
         }
 
         foreach (var o in toRemove)
@@ -1739,6 +1907,25 @@ public enum SslNegotiation
 }
 
 /// <summary>
+/// Specifies how to manage GSS encryption.
+/// </summary>
+public enum GssEncryptionMode
+{
+    /// <summary>
+    /// GSS encryption is disabled. If the server requires GSS encryption, the connection will fail.
+    /// </summary>
+    Disable,
+    /// <summary>
+    /// Prefer GSS encrypted connections if the server allows them, but allow connections without GSS encryption.
+    /// </summary>
+    Prefer,
+    /// <summary>
+    /// Fail the connection if the server doesn't support GSS encryption.
+    /// </summary>
+    Require
+}
+
+/// <summary>
 /// Specifies how to manage channel binding.
 /// </summary>
 public enum ChannelBinding
@@ -1810,6 +1997,42 @@ enum ReplicationMode
     /// Logical replication enabled
     /// </summary>
     Logical
+}
+
+/// <summary>
+/// Specifies which authentication methods are supported.
+/// </summary>
+[Flags]
+enum RequireAuthMode
+{
+    /// <summary>
+    /// Plaintext password.
+    /// </summary>
+    Password = 1,
+    /// <summary>
+    /// MD5 hashed password.
+    /// </summary>
+    MD5 = 2,
+    /// <summary>
+    /// Kerberos.
+    /// </summary>
+    GSS = 4,
+    /// <summary>
+    /// Windows SSPI.
+    /// </summary>
+    SSPI = 8,
+    /// <summary>
+    /// SASL.
+    /// </summary>
+    ScramSHA256 = 16,
+    /// <summary>
+    /// No authentication exchange.
+    /// </summary>
+    None = 32,
+    /// <summary>
+    /// All authentication methods. For internal use.
+    /// </summary>
+    All = Password | MD5 | GSS | SSPI | ScramSHA256 | None
 }
 
 #endregion

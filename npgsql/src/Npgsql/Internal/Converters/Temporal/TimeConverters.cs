@@ -3,18 +3,7 @@ using System;
 // ReSharper disable once CheckNamespace
 namespace EnterpriseDB.EDBClient.Internal.Converters;
 
-sealed class TimeSpanTimeConverter : PgBufferedConverter<TimeSpan>
-{
-    public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
-    {
-        bufferRequirements = BufferRequirements.CreateFixedSize(sizeof(long));
-        return format is DataFormat.Binary;
-    }
-    protected override TimeSpan ReadCore(PgReader reader) => new(reader.ReadInt64() * 10);
-    protected override void WriteCore(PgWriter writer, TimeSpan value) => writer.WriteInt64(value.Ticks / 10);
-}
-
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
 sealed class TimeOnlyTimeConverter : PgBufferedConverter<TimeOnly>
 {
     public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
@@ -26,6 +15,17 @@ sealed class TimeOnlyTimeConverter : PgBufferedConverter<TimeOnly>
     protected override void WriteCore(PgWriter writer, TimeOnly value) => writer.WriteInt64(value.Ticks / 10);
 }
 #endif
+
+sealed class TimeSpanTimeConverter : PgBufferedConverter<TimeSpan>
+{
+    public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
+    {
+        bufferRequirements = BufferRequirements.CreateFixedSize(sizeof(long));
+        return format is DataFormat.Binary;
+    }
+    protected override TimeSpan ReadCore(PgReader reader) => new(reader.ReadInt64() * 10);
+    protected override void WriteCore(PgWriter writer, TimeSpan value) => writer.WriteInt64(value.Ticks / 10);
+}
 
 sealed class DateTimeOffsetTimeTzConverter : PgBufferedConverter<DateTimeOffset>
 {

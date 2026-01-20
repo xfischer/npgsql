@@ -206,6 +206,7 @@ internal class EDBCollectionMethodTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -241,7 +242,7 @@ internal class EDBCollectionMethodTest : EPASTestBase
 
             var value = int.Parse(cstmt.Parameters[0].Value.ToString());
 
-            Assert.AreEqual(5, value);
+            Assert.That(value, Is.EqualTo(5));
         }
     }
 
@@ -262,8 +263,8 @@ internal class EDBCollectionMethodTest : EPASTestBase
             cstmt.Prepare();
             cstmt.ExecuteNonQuery();                
 
-            Assert.IsTrue((bool)cstmt.Parameters["exists10"].Value!);
-            Assert.IsFalse((bool)cstmt.Parameters["exists20"].Value!);
+            Assert.That((bool)cstmt.Parameters["exists10"].Value!);
+            Assert.That((bool)cstmt.Parameters["exists20"].Value!, Is.False);
         }
     }
 
@@ -283,7 +284,7 @@ internal class EDBCollectionMethodTest : EPASTestBase
 
             var value = int.Parse(cstmt.Parameters[0].Value.ToString());
 
-            Assert.AreEqual(-100, value);
+            Assert.That(value, Is.EqualTo(-100));
         }
     }
 
@@ -303,7 +304,7 @@ internal class EDBCollectionMethodTest : EPASTestBase
 
             var value = int.Parse(cstmt.Parameters[0].Value.ToString());
 
-            Assert.AreEqual(100, value);
+            Assert.That(value, Is.EqualTo(100));
         }
     }
 
@@ -337,8 +338,8 @@ internal class EDBCollectionMethodTest : EPASTestBase
             var exists10 = int.Parse(cstmt.Parameters[0].Value.ToString());
             var exists20 = int.Parse(cstmt.Parameters[1].Value.ToString());
 
-            Assert.AreEqual(4, exists10);
-            Assert.AreEqual(3, exists20);
+            Assert.That(exists10, Is.EqualTo(4));
+            Assert.That(exists20, Is.EqualTo(3));
         }
     }
 
@@ -358,7 +359,7 @@ internal class EDBCollectionMethodTest : EPASTestBase
 
             var value = int.Parse(cstmt.Parameters[0].Value.ToString());
 
-            Assert.AreEqual(100, value);
+            Assert.That(value, Is.EqualTo(100));
         }
     }
 
@@ -378,7 +379,7 @@ internal class EDBCollectionMethodTest : EPASTestBase
 
             var value = int.Parse(cstmt.Parameters[0].Value.ToString());
 
-            Assert.AreEqual(10, value);
+            Assert.That(value, Is.EqualTo(10));
         }
     }
 
@@ -450,11 +451,11 @@ internal class EDBCollectionMethodTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(DELETE_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DELETE_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(DELETE_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(DELETE_RESULT[i]));
             }
         }
         finally
@@ -512,11 +513,11 @@ internal class EDBCollectionMethodTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EXTEND_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EXTEND_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EXTEND_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(EXTEND_RESULT[i]));
             }
         }
         finally
@@ -573,11 +574,11 @@ internal class EDBCollectionMethodTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EXTEND_WITH_NUMBER_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EXTEND_WITH_NUMBER_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EXTEND_WITH_NUMBER_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(EXTEND_WITH_NUMBER_RESULT[i]));
             }
         }
         finally
@@ -637,11 +638,11 @@ internal class EDBCollectionMethodTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EXTEND_WITH_ELEMENT_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EXTEND_WITH_ELEMENT_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EXTEND_WITH_ELEMENT_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(EXTEND_WITH_ELEMENT_RESULT[i]));
             }
         }
         finally
@@ -690,11 +691,11 @@ internal class EDBCollectionMethodTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(TRIM_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(TRIM_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(TRIM_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(TRIM_RESULT[i]));
             }
         }
         finally
@@ -751,11 +752,11 @@ internal class EDBCollectionMethodTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(TRIM_WITH_NUMBER_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(TRIM_WITH_NUMBER_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(TRIM_WITH_NUMBER_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(TRIM_WITH_NUMBER_RESULT[i]));
             }
         }
         finally

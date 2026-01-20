@@ -6,7 +6,7 @@ using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Diagnostics.Internal
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Scaffolding.Internal;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
 public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
 {
@@ -55,8 +55,7 @@ public class NpgsqlDatabaseCleaner : RelationalDatabaseCleaner
     private void DropExtensions(EDBConnection conn)
     {
         // EnterpriseDB Team
-        const string getExtensions = @"
-SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND name <> 'plpgsql' AND name NOT LIKE 'edb%'";
+        const string getExtensions = "SELECT name FROM pg_available_extensions WHERE installed_version IS NOT NULL AND name <> 'plpgsql' AND name NOT LIKE 'edb%'";
 
         List<string> extensions;
         using (var cmd = new EDBCommand(getExtensions, conn))

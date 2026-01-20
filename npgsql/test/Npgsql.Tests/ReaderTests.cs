@@ -240,7 +240,7 @@ UPDATE {table} SET name='b' WHERE name='doesnt_exist';";
         using var dr = await command.ExecuteReaderAsync(Behavior);
         dr.Read();
         var result = dr.GetString(0);
-        Assert.AreEqual(text, result);
+        Assert.That(result, Is.EqualTo(text));
     }
 
     [Test]
@@ -266,7 +266,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
         using var dr = await command.ExecuteReaderAsync(Behavior);
         dr.Read();
         var result = dr.GetString(0);
-        Assert.AreEqual(test, result);
+        Assert.That(result, Is.EqualTo(test));
     }
 
     [Test]
@@ -307,7 +307,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
     {
         await using var conn = await OpenConnectionAsync();
         await using var cmd = new EDBCommand(@"SELECT 1::INT4 AS some_column", conn);
-        await using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SchemaOnly);
+        await using var reader = await cmd.ExecuteReaderAsync(Behavior | CommandBehavior.SchemaOnly);
         reader.Read();
         Assert.That(reader.GetFieldType(0), Is.SameAs(typeof(int)));
     }
@@ -499,7 +499,7 @@ INSERT INTO {table} (name) VALUES ('Text with '' single quote');");
         param.Direction = ParameterDirection.Output;
         command.Parameters.Add(param);
         using var dr = await command.ExecuteReaderAsync(Behavior);
-        Assert.IsFalse(dr.NextResult());
+        Assert.That(dr.NextResult(), Is.False);
     }
 
     [Test]
@@ -626,9 +626,10 @@ LANGUAGE 'plpgsql';
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/967")]
-    public async Task EDBException_references_BatchCommand_with_single_command()
+    public async Task NpgsqlException_references_BatchCommand_with_single_command([Values] bool includeFailedBatchedCommand)
     {
-        await using var conn = await OpenConnectionAsync();
+        await using var dataSource = CreateDataSource(x => x.IncludeFailedBatchedCommand = includeFailedBatchedCommand);
+        await using var conn = await dataSource.OpenConnectionAsync();
         var function = await GetTempFunctionName(conn);
 
         await conn.ExecuteNonQueryAsync($@"
@@ -641,19 +642,23 @@ LANGUAGE 'plpgsql'");
         cmd.CommandText = $"SELECT {function}()";
 
         var exception = Assert.ThrowsAsync<PostgresException>(() => cmd.ExecuteReaderAsync(Behavior))!;
-        Assert.That(exception.BatchCommand, Is.SameAs(cmd.InternalBatchCommands[0]));
+        if (includeFailedBatchedCommand)
+            Assert.That(exception.BatchCommand, Is.SameAs(cmd.InternalBatchCommands[0]));
+        else
+            Assert.That(exception.BatchCommand, Is.Null);
 
         // Make sure the command isn't recycled by the connection when it's disposed - this is important since internal command
         // resources are referenced by the exception above, which is very likely to escape the using statement of the command.
         cmd.Dispose();
         var cmd2 = conn.CreateCommand();
-        Assert.AreNotSame(cmd2, cmd);
+        Assert.That(cmd, Is.Not.SameAs(cmd2));
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/967")]
-    public async Task EDBException_references_BatchCommand_with_multiple_commands()
+    public async Task NpgsqlException_references_BatchCommand_with_multiple_commands([Values] bool includeFailedBatchedCommand)
     {
-        await using var conn = await OpenConnectionAsync();
+        await using var dataSource = CreateDataSource(x => x.IncludeFailedBatchedCommand = includeFailedBatchedCommand);
+        await using var conn = await dataSource.OpenConnectionAsync();
         var function = await GetTempFunctionName(conn);
 
         await conn.ExecuteNonQueryAsync($@"
@@ -668,14 +673,17 @@ LANGUAGE 'plpgsql'");
         await using (var reader = await cmd.ExecuteReaderAsync(Behavior))
         {
             var exception = Assert.ThrowsAsync<PostgresException>(() => reader.NextResultAsync())!;
-            Assert.That(exception.BatchCommand, Is.SameAs(cmd.InternalBatchCommands[1]));
+            if (includeFailedBatchedCommand)
+                Assert.That(exception.BatchCommand, Is.SameAs(cmd.InternalBatchCommands[1]));
+            else
+                Assert.That(exception.BatchCommand, Is.Null);
         }
 
         // Make sure the command isn't recycled by the connection when it's disposed - this is important since internal command
         // resources are referenced by the exception above, which is very likely to escape the using statement of the command.
         cmd.Dispose();
         var cmd2 = conn.CreateCommand();
-        Assert.AreNotSame(cmd2, cmd);
+        Assert.That(cmd, Is.Not.SameAs(cmd2));
     }
 
     #region SchemaOnly
@@ -697,8 +705,8 @@ LANGUAGE 'plpgsql'");
 
         using var cmd = new EDBCommand($"SELECT * FROM {table}", conn);
         using var reader = await cmd.ExecuteReaderAsync(CommandBehavior.SchemaOnly);
-        Assert.False(reader.NextResult());
-        Assert.False(reader.NextResult());
+        Assert.That(reader.NextResult(), Is.False);
+        Assert.That(reader.NextResult(), Is.False);
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/4124")]
@@ -812,6 +820,7 @@ LANGUAGE 'plpgsql'");
             Assert.That(reader.GetFieldValue<object>(i), Is.EqualTo(DBNull.Value));
             Assert.That(reader.GetProviderSpecificValue(i), Is.EqualTo(DBNull.Value));
             Assert.That(() => reader.GetString(i), Throws.Exception.TypeOf<InvalidCastException>());
+            Assert.That(() => reader.GetStream(i), Throws.Exception.TypeOf<InvalidCastException>());
         }
     }
 
@@ -882,7 +891,7 @@ LANGUAGE 'plpgsql'");
         var table = await CreateTempTable(conn, "name TEXT");
         using var command = new EDBCommand($"DELETE FROM {table} WHERE name = 'unknown'", conn);
         using var reader = await command.ExecuteReaderAsync(Behavior);
-        Assert.IsFalse(reader.HasRows);
+        Assert.That(reader.HasRows, Is.False);
     }
 
     [Test]
@@ -891,9 +900,9 @@ LANGUAGE 'plpgsql'");
         using var conn = await OpenConnectionAsync();
         using var command = new EDBCommand("SELECT CAST('1 hour' AS interval) AS dauer", conn);
         using var dr = await command.ExecuteReaderAsync(Behavior);
-        Assert.IsTrue(dr.HasRows);
-        Assert.IsTrue(dr.Read());
-        Assert.IsTrue(dr.HasRows);
+        Assert.That(dr.HasRows);
+        Assert.That(dr.Read());
+        Assert.That(dr.HasRows);
         var ts = dr.GetTimeSpan(0);
     }
 
@@ -949,7 +958,7 @@ LANGUAGE 'plpgsql'");
             //_ = rdr[5]; // uncomment lines for successful execution
             _ = rdr.IsDBNull(6);
             _ = rdr[6];
-            Assert.True(rdr.IsDBNull(6));
+            Assert.That(rdr.IsDBNull(6));
         }
     }
 
@@ -982,7 +991,7 @@ LANGUAGE 'plpgsql'");
                 .WriteCommandComplete()
                 .WriteReadyForQuery()
                 .FlushAsync();
-            Assert.AreEqual(expected, await task);
+            Assert.That(await task, Is.EqualTo(expected));
         }
     }
 
@@ -1295,8 +1304,8 @@ LANGUAGE plpgsql VOLATILE";
 
         reader.GetInt32(0);
 
-        Assert.Zero(reader.Connector.ReadBuffer.ReadBytesLeft);
-        Assert.NotZero(reader.Connector.ReadBuffer.ReadPosition);
+        Assert.That(reader.Connector.ReadBuffer.ReadBytesLeft, Is.Zero);
+        Assert.That(reader.Connector.ReadBuffer.ReadPosition, Is.Not.Zero);
 
         writeBuffer.WriteInt32(byteValue.Length);
         writeBuffer.WriteBytes(byteValue);
@@ -1354,7 +1363,7 @@ LANGUAGE plpgsql VOLATILE";
         cmd.CommandText = "SELECT 'abcdefgh', 'ijklmnop'";
 
         await using var reader = await cmd.ExecuteReaderAsync(Behavior);
-        Assert.IsTrue(await reader.ReadAsync());
+        Assert.That(await reader.ReadAsync());
         Assert.That(reader.GetChar(0), Is.EqualTo('a'));
         if (Behavior == CommandBehavior.SequentialAccess)
             Assert.Throws<InvalidOperationException>(() => reader.GetChar(0));
@@ -1410,7 +1419,7 @@ LANGUAGE plpgsql VOLATILE";
         reader.GetBytes(5, 0, actual, 0, 2);
 
         //var result = (byte[]) cmd.ExecuteScalar();
-        //Assert.AreEqual(2, result.Length);
+        //Assert.That(2, result.Length);
     }
 
     [Test]
@@ -1429,6 +1438,25 @@ LANGUAGE plpgsql VOLATILE";
 
         Assert.That(async () => await streamGetter(reader, 0),
             Throws.Exception.TypeOf<InvalidOperationException>());
+    }
+
+    [Test]
+    public async Task GetBytes_before_getstream([Values(true, false)] bool isAsync)
+    {
+        var expected = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+        var streamGetter = BuildStreamGetter(isAsync);
+
+        using var conn = await OpenConnectionAsync();
+        using var cmd = new EDBCommand($"SELECT {EncodeByteaHex(expected)}::bytea", conn);
+        using var reader = await cmd.ExecuteReaderAsync(Behavior);
+
+        await reader.ReadAsync();
+
+        // GetBytes with null buffer won't consume column in any way
+        Assert.That(reader.GetBytes(0, 0, null, 0, 0), Is.EqualTo(expected.Length), "Bad column length");
+
+        using var stream = await streamGetter(reader, 0);
+        Assert.That(stream.Length, Is.EqualTo(expected.Length));
     }
 
     public static IEnumerable GetStreamCases()
@@ -1597,7 +1625,7 @@ LANGUAGE plpgsql VOLATILE";
 #else
         await using var stream = reader.GetStream(0);
 #endif
-        Assert.IsTrue(stream.CanSeek);
+        Assert.That(stream.CanSeek);
 
         var seekPosition = stream.Seek(-1, SeekOrigin.End);
         Assert.That(seekPosition, Is.EqualTo(stream.Length - 1));
@@ -1750,7 +1778,7 @@ LANGUAGE plpgsql VOLATILE";
         cmd.CommandText = "SELECT ''";
 
         await using var reader = await cmd.ExecuteReaderAsync(Behavior);
-        Assert.IsTrue(await reader.ReadAsync());
+        Assert.That(await reader.ReadAsync());
 
         using var textReader = reader.GetTextReader(0);
         Assert.That(textReader.Peek(), Is.EqualTo(-1));
@@ -1952,7 +1980,7 @@ LANGUAGE plpgsql VOLATILE";
         await using (var reader = await cmd.ExecuteReaderAsync(Behavior))
         {
             // Successfully read the first row
-            Assert.True(await reader.ReadAsync());
+            Assert.That(await reader.ReadAsync());
             Assert.That(reader.GetInt32(0), Is.EqualTo(1));
 
             // Attempt to read the second row - simulate blocking and cancellation
@@ -2001,7 +2029,7 @@ LANGUAGE plpgsql VOLATILE";
         await using (var reader = await cmd.ExecuteReaderAsync(Behavior))
         {
             // Successfully read the first row
-            Assert.True(await reader.ReadAsync());
+            Assert.That(await reader.ReadAsync());
             Assert.That(reader.GetInt32(0), Is.EqualTo(1));
 
             // Attempt to read the second row - simulate blocking and cancellation
@@ -2053,7 +2081,7 @@ LANGUAGE plpgsql VOLATILE";
         await using (var reader = await cmd.ExecuteReaderAsync(Behavior))
         {
             // Successfully read the first resultset
-            Assert.True(await reader.ReadAsync());
+            Assert.That(await reader.ReadAsync());
             Assert.That(reader.GetInt32(0), Is.EqualTo(1));
 
             // Attempt to advance to the second resultset - simulate blocking and cancellation
@@ -2104,7 +2132,7 @@ LANGUAGE plpgsql VOLATILE";
         await using var reader = await cmd.ExecuteReaderAsync(Behavior);
 
         // Successfully read the first row
-        Assert.True(await reader.ReadAsync());
+        Assert.That(await reader.ReadAsync());
         Assert.That(reader.GetInt32(0), Is.EqualTo(1));
 
         // Attempt to read the second row - simulate blocking and cancellation
@@ -2149,7 +2177,7 @@ LANGUAGE plpgsql VOLATILE";
         await using var reader = await cmd.ExecuteReaderAsync(Behavior);
 
         // Successfully read the first resultset
-        Assert.True(await reader.ReadAsync());
+        Assert.That(await reader.ReadAsync());
         Assert.That(reader.GetInt32(0), Is.EqualTo(1));
 
         // Attempt to read the second row - simulate blocking and cancellation
@@ -2257,11 +2285,11 @@ LANGUAGE plpgsql VOLATILE";
         await using var cmd = new EDBCommand("SELECT generate_series(1, 100); SELECT generate_series(1, 100)", conn);
         await using var reader = await cmd.ExecuteReaderAsync(Behavior);
         var cancelledToken = new CancellationToken(canceled: true);
-        Assert.IsTrue(await reader.ReadAsync());
+        Assert.That(await reader.ReadAsync());
         while (await reader.ReadAsync(cancelledToken)) { }
-        Assert.IsTrue(await reader.NextResultAsync(cancelledToken));
+        Assert.That(await reader.NextResultAsync(cancelledToken));
         while (await reader.ReadAsync(cancelledToken)) { }
-        Assert.IsFalse(conn.Connector!.UserCancellationRequested);
+        Assert.That(conn.Connector!.UserCancellationRequested, Is.False);
     }
 
     #endregion Cancellation
@@ -2269,7 +2297,7 @@ LANGUAGE plpgsql VOLATILE";
     #region Timeout
 
     [Test, Description("Timeouts sequential ReadAsGetFieldValueAsync")]
-    [Timeout(30000)] // EnterpriseDB
+    [CancelAfter(30000)] // EnterpriseDB
     public async Task GetFieldValueAsync_sequential_timeout()
     {
         if (IsMultiplexing)
@@ -2314,7 +2342,7 @@ LANGUAGE plpgsql VOLATILE";
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
     }
 
-    [Test, Description("Timeouts sequential IsDBNullAsync"), EDBExplicit("Needs to be fixed on .NET Framework")]
+    [Test, Description("Timeouts sequential IsDBNullAsync")]//, EDBExplicit("Needs to be fixed on .NET Framework")]
     public async Task IsDBNullAsync_sequential_timeout()
     {
         if (IsMultiplexing)
@@ -2387,7 +2415,42 @@ LANGUAGE plpgsql VOLATILE";
         Assert.That(conn.Connector!.State, Is.EqualTo(ConnectorState.Ready));
     }
 
-#endregion
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/6160")]
+    [Description("Consuming result set shouldn't go infinite in case connection is broken")]
+    public async Task Bug6160()
+    {
+        var csb = new EDBConnectionStringBuilder(ConnectionString)
+        {
+            // Set to -1 to trigger immediate connection break on timeout
+            CancellationTimeout = -1,
+            CommandTimeout = 1
+        };
+        await using var postmasterMock = PgPostmasterMock.Start(csb.ConnectionString);
+        await using var dataSource = CreateDataSource(postmasterMock.ConnectionString);
+        await using var conn = await dataSource.OpenConnectionAsync();
+
+        var pgMock = await postmasterMock.WaitForServerConnection();
+        await pgMock
+            .WriteParseComplete()
+            .WriteBindComplete()
+            .WriteRowDescription(new FieldDescription(Int4Oid))
+            .WriteDataRow(new byte[4])
+            .FlushAsync();
+
+        await using var cmd = new EDBCommand("SELECT 1", conn);
+        await using (var reader = await cmd.ExecuteReaderAsync(Behavior | CommandBehavior.SingleRow))
+        {
+            await reader.ReadAsync();
+            // The second read will try to consume the whole resultset due to CommandBehavior.SingleRow
+            // Which will fail with timeout (and immediate connection break) since we didn't send anything else beside the first row
+            var ex = Assert.ThrowsAsync<EDBException>(async () => await reader.ReadAsync())!;
+            Assert.That(ex.InnerException, Is.TypeOf<TimeoutException>());
+
+            Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
+        }
+    }
+
+    #endregion
 
     #region Initialization / setup / teardown
 

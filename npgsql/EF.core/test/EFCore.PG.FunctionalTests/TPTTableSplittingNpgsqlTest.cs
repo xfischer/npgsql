@@ -1,8 +1,7 @@
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace Microsoft.EntityFrameworkCore;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
-
-public class TPTTableSplittingNpgsqlTest(ITestOutputHelper testOutputHelper) : TPTTableSplittingTestBase(testOutputHelper)
+public class TPTTableSplittingNpgsqlTest(NonSharedFixture fixture, ITestOutputHelper testOutputHelper)
+    : TPTTableSplittingTestBase(fixture, testOutputHelper)
 {
     public override Task Can_insert_dependent_with_just_one_parent()
         // This scenario is not valid for TPT

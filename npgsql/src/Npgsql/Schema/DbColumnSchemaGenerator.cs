@@ -11,6 +11,7 @@ using EnterpriseDB.EDBClient.Internal.Postgres;
 using EnterpriseDB.EDBClient.PostgresTypes;
 using EnterpriseDB.EDBClient.Util;
 using EDBTypes;
+using System.Data.Common;
 
 namespace EnterpriseDB.EDBClient.Schema;
 
@@ -94,13 +95,13 @@ ORDER BY attnum"; // EnterpriseDB Team : add sys schema
 
     #endregion Column queries
 
-    internal async Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchema(bool async, CancellationToken cancellationToken = default)
+    internal async Task<ReadOnlyCollection<T>> GetColumnSchema<T>(bool async, CancellationToken cancellationToken = default) where T : DbColumn
     {
         // This is mainly for Amazon Redshift
         var oldQueryMode = _connection.PostgreSqlVersion < new Version(8, 2);
 
         var numFields = _rowDescription.Count;
-        var result = new List<EDBDbColumn?>(numFields);
+        var result = new List<T?>(numFields);
         for (var i = 0; i < numFields; i++)
             result.Add(null);
         var populatedColumns = 0;
@@ -160,7 +161,7 @@ ORDER BY attnum"; // EnterpriseDB Team : add sys schema
 
                                 // The column's ordinal is with respect to the resultset, not its table
                                 column.ColumnOrdinal = ordinal;
-                                result[ordinal] = column;
+                                result[ordinal] = (T?)(object)column;
                             }
                         }
                     }
@@ -179,14 +180,14 @@ ORDER BY attnum"; // EnterpriseDB Team : add sys schema
         // Fill in whatever info we have from the RowDescription itself
         for (var i = 0; i < numFields; i++)
         {
-            var column = result[i];
+            var column = (EDBDbColumn?)(object?)result[i];
             var field = _rowDescription[i];
 
             if (column is null)
             {
                 column = SetUpNonColumnField(field);
                 column.ColumnOrdinal = i;
-                result[i] = column;
+                result[i] = (T?)(object)column;
                 populatedColumns++;
             }
 
@@ -266,8 +267,11 @@ ORDER BY attnum"; // EnterpriseDB Team : add sys schema
     {
         var serializerOptions = _connection.Connector!.SerializerOptions;
 
-        column.EDBDbType = column.PostgresType.DataTypeName.ToEDBDbType();
-        if (serializerOptions.GetDefaultTypeInfo(serializerOptions.ToCanonicalTypeId(column.PostgresType)) is { } typeInfo)
+        // Call GetRepresentationalType to also handle domain types
+        // Because EDBCommandBuilder relies on EDBDbType for correct type mapping
+        // And otherwise we'll get EDBDbType.Unknown
+        column.EDBDbType = column.PostgresType.GetRepresentationalType().DataTypeName.ToEDBDbType();
+        if (serializerOptions.GetTypeInfo(typeof(object), serializerOptions.ToCanonicalTypeId(column.PostgresType)) is { } typeInfo)
         {
             column.DataType = typeInfo.Type;
             column.IsLong = column.PostgresType.DataTypeName == DataTypeNames.Bytea;

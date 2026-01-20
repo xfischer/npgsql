@@ -11,7 +11,7 @@ class TransportSecurityHandler
 {
     public virtual bool SupportEncryption => false;
 
-    public virtual Func<X509Certificate2?>? RootCertificateCallback
+    public virtual Func<X509Certificate2Collection?>? RootCertificatesCallback
     {
         get => throw new NotSupportedException(string.Format(EDBStrings.TransportSecurityDisabled, nameof(EDBSlimDataSourceBuilder.EnableTransportSecurity)));
         set => throw new NotSupportedException(string.Format(EDBStrings.TransportSecurityDisabled, nameof(EDBSlimDataSourceBuilder.EnableTransportSecurity)));
@@ -29,7 +29,7 @@ sealed class RealTransportSecurityHandler : TransportSecurityHandler
 {
     public override bool SupportEncryption => true;
 
-    public override Func<X509Certificate2?>? RootCertificateCallback { get; set; }
+    public override Func<X509Certificate2Collection?>? RootCertificatesCallback { get; set; }
 
     public override Task NegotiateEncryption(bool async, EDBConnector connector, SslMode sslMode, EDBTimeout timeout, CancellationToken cancellationToken)
         => connector.NegotiateEncryption(sslMode, timeout, async, cancellationToken);

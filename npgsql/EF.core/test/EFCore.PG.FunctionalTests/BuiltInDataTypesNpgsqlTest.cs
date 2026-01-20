@@ -1,9 +1,10 @@
 ﻿using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Net.NetworkInformation;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
+
+#nullable disable
 
 public class BuiltInDataTypesNpgsqlTest : BuiltInDataTypesTestBase<BuiltInDataTypesNpgsqlTest.BuiltInDataTypesNpgsqlFixture>
 {
@@ -27,7 +28,7 @@ public class BuiltInDataTypesNpgsqlTest : BuiltInDataTypesTestBase<BuiltInDataTy
         Assert.Empty(results);
 
         AssertSql(
-"""
+            """
 SELECT m."Int"
 FROM "MappedNullableDataTypes" AS m
 WHERE m."TimeSpanAsTime" = TIME '00:01:02'
@@ -47,12 +48,12 @@ WHERE m."TimeSpanAsTime" = TIME '00:01:02'
         Assert.Empty(results);
 
         AssertSql(
-"""
-@__timeSpan_0='02:01:00' (Nullable = true)
+            """
+@timeSpan='02:01:00' (Nullable = true)
 
 SELECT m."Int"
 FROM "MappedNullableDataTypes" AS m
-WHERE m."TimeSpanAsTime" = @__timeSpan_0
+WHERE m."TimeSpanAsTime" = @timeSpan
 """);
     }
 
@@ -116,7 +117,6 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
 #pragma warning restore CS0618
                     RankingNormalization = NpgsqlTsRankingNormalization.DivideByLength,
                     Regconfig = 12724,
-
                     Mood = Mood.Sad
                 });
 
@@ -461,7 +461,6 @@ WHERE m."TimeSpanAsTime" = @__timeSpan_0
     public virtual void Can_insert_and_read_back_all_mapped_data_types()
     {
         var entity = CreateMappedDataTypes(77);
-
         using var context = CreateContext();
         context.Set<MappedDataTypes>().Add(entity);
 

@@ -53,6 +53,8 @@ public struct EDBPoint(double x, double y) : IEquatable<EDBPoint>
 
     public override string ToString()
         => string.Format(CultureInfo.InvariantCulture, "({0},{1})", X, Y);
+
+    public void Deconstruct(out double x, out double y) => (x, y) = (X, Y);
 }
 
 /// <summary>
@@ -97,6 +99,8 @@ public struct EDBLine(double a, double b, double c) : IEquatable<EDBLine>
 
     public static bool operator ==(EDBLine x, EDBLine y) => x.Equals(y);
     public static bool operator !=(EDBLine x, EDBLine y) => !(x == y);
+
+    public void Deconstruct(out double a, out double b, out double c) => (a, b, c) = (A, B, C);
 }
 
 /// <summary>
@@ -152,6 +156,8 @@ public struct EDBLSeg : IEquatable<EDBLSeg>
 
     public static bool operator ==(EDBLSeg x, EDBLSeg y) => x.Equals(y);
     public static bool operator !=(EDBLSeg x, EDBLSeg y) => !(x == y);
+
+    public void Deconstruct(out EDBPoint start, out EDBPoint end) => (start, end) = (Start, End);
 }
 
 /// <summary>
@@ -239,6 +245,30 @@ public struct EDBBox : IEquatable<EDBBox>
 
         if (_upperRight.Y < _lowerLeft.Y)
             (_upperRight.Y, _lowerLeft.Y) = (_lowerLeft.Y, _upperRight.Y);
+    }
+
+    public void Deconstruct(out EDBPoint lowerLeft, out EDBPoint upperRight)
+    {
+        lowerLeft = LowerLeft;
+        upperRight = UpperRight;
+    }
+
+    public void Deconstruct(out double left, out double right, out double bottom, out double top)
+    {
+        left = Left;
+        right = Right;
+        bottom = Bottom;
+        top = Top;
+    }
+
+    public void Deconstruct(out double left, out double right, out double bottom, out double top, out double width, out double height)
+    {
+        left = Left;
+        right = Right;
+        bottom = Bottom;
+        top = Top;
+        width = Width;
+        height = Height;
     }
 }
 
@@ -530,6 +560,19 @@ public struct EDBCircle(double x, double y, double radius) : IEquatable<EDBCircl
 
     public override int GetHashCode()
         => HashCode.Combine(X, Y, Radius);
+
+    public void Deconstruct(out double x, out double y, out double radius)
+    {
+        x = X;
+        y = Y;
+        radius = Radius;
+    }
+
+    public void Deconstruct(out EDBPoint center, out double radius)
+    {
+        center = Center;
+        radius = Radius;
+    }
 }
 
 /// <summary>
@@ -586,6 +629,14 @@ public readonly record struct EDBInet
     public static implicit operator EDBInet(IPAddress ip)
         => new(ip);
 
+#if NET8_0_OR_GREATER
+    public static implicit operator EDBInet(IPNetwork cidr)
+        => new(
+            cidr.BaseAddress,
+            cidr.PrefixLength <= byte.MaxValue
+                ? (byte)cidr.PrefixLength
+                : throw new ArgumentOutOfRangeException(nameof(cidr), "IPNetwork.PrefixLength is too large to fit in a byte"));
+#endif
     public void Deconstruct(out IPAddress address, out byte netmask)
     {
         address = Address;
@@ -605,6 +656,7 @@ public readonly record struct EDBInet
 /// <remarks>
 /// https://www.postgresql.org/docs/current/static/datatype-net-types.html
 /// </remarks>
+[Obsolete("Use .NET IPNetwork instead of EDBCidr to map to PostgreSQL cidr")]
 public readonly record struct EDBCidr
 {
     public IPAddress Address { get; }
@@ -671,6 +723,12 @@ public readonly struct EDBTid(uint blockNumber, ushort offsetNumber) : IEquatabl
     public static bool operator ==(EDBTid left, EDBTid right) => left.Equals(right);
     public static bool operator !=(EDBTid left, EDBTid right) => !(left == right);
     public override string ToString() => $"({BlockNumber},{OffsetNumber})";
+
+    public void Deconstruct(out uint blockNumber, out ushort offsetNumber)
+    {
+        blockNumber = BlockNumber;
+        offsetNumber = OffsetNumber;
+    }
 }
 
 #pragma warning restore 1591

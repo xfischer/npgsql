@@ -114,6 +114,7 @@ VALUES ('Migration1', '7.0.0');
 
         Assert.Equal(
 """
+
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = 'Migration1') THEN

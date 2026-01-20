@@ -4,7 +4,7 @@ using System.Numerics;
 namespace EnterpriseDB.EDBClient.Internal.Converters;
 
 sealed class MoneyConverter<T> : PgBufferedConverter<T>
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     where T : INumberBase<T>
 #endif
 {
@@ -18,7 +18,7 @@ sealed class MoneyConverter<T> : PgBufferedConverter<T>
 
     static PgMoney ConvertFrom(T value)
     {
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
         if (typeof(short) == typeof(T))
             return new PgMoney((decimal)(short)(object)value!);
         if (typeof(int) == typeof(T))
@@ -46,7 +46,7 @@ sealed class MoneyConverter<T> : PgBufferedConverter<T>
 
     static T ConvertTo(PgMoney money)
     {
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
         if (typeof(short) == typeof(T))
             return (T)(object)(short)money.ToDecimal();
         if (typeof(int) == typeof(T))

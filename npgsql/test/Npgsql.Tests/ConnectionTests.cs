@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -111,7 +112,7 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
         Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
         Assert.That(eventClosed, Is.True);
         Assert.That(conn.Connector is null);
-        Assert.AreEqual(0, conn.EDBDataSource.Statistics.Total);
+        Assert.That(conn.EDBDataSource.Statistics.Total, Is.EqualTo(0));
 
         if (openFromClose)
         {
@@ -123,13 +124,12 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
         }
 
         Assert.DoesNotThrowAsync(conn.OpenAsync);
-        Assert.AreEqual(1, await conn.ExecuteScalarAsync("SELECT 1"));
-        Assert.AreEqual(1, conn.EDBDataSource.Statistics.Total);
+        Assert.That(await conn.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
+        Assert.That(conn.EDBDataSource.Statistics.Total, Is.EqualTo(1));
         Assert.DoesNotThrowAsync(conn.CloseAsync);
     }
 
     [Test]
-    [Platform(Exclude = "MacOsX", Reason = "Flaky on MacOS")]
     public async Task Break_while_open()
     {
         if (IsMultiplexing)
@@ -188,9 +188,11 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
 #endif
 
     [Test]
-    [Ignore("Fails in a non-determinstic manner and only on the build server... investigate...")]
     public void Invalid_Username()
     {
+        if (IsMultiplexing)
+            Assert.Ignore();
+
         var connString = new EDBConnectionStringBuilder(ConnectionString)
         {
             Username = "unknown",
@@ -218,11 +220,11 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
 
     [Test, Description("Tests that mandatory connection string parameters are indeed mandatory")]
     public void Mandatory_connection_string_params()
-        => Assert.Throws<ArgumentException>(() =>
+        => Assert.Throws<ArgumentNullException>(() =>
             new EDBConnection("User ID=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests"));
 
     // EnterpriseDB (timeout added)
-    [Test, Description("Reuses the same connection instance for a failed connection, then a successful one"), Timeout(15000)]
+    [Test, Description("Reuses the same connection instance for a failed connection, then a successful one"), CancelAfter(15000)]
     public async Task Fail_connect_then_succeed([Values] bool pooling)
     {
         if (IsMultiplexing && !pooling) // Multiplexing doesn't work without pooling
@@ -315,6 +317,38 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
         Assert.That(conn.State, Is.EqualTo(ConnectionState.Closed));
     }
 
+    [Test]
+    public void Bad_hostname()
+    {
+        using var dataSource = CreateDataSource(csb => csb.Host = "hostname.that.does.not.exist");
+        using var conn = dataSource.CreateConnection();
+
+        Assert.That(
+            () => conn.Open(),
+            Throws.Exception
+                .TypeOf<EDBException>()
+                .With
+                .Property(nameof(EDBException.InnerException))
+                .TypeOf<SocketException>()
+        );
+    }
+
+    [Test]
+    public void Bad_hostname_async()
+    {
+        using var dataSource = CreateDataSource(csb => csb.Host = "hostname.that.does.not.exist");
+        using var conn = dataSource.CreateConnection();
+
+        Assert.That(
+            async () => await conn.OpenAsync(),
+            Throws.Exception
+                .TypeOf<EDBException>()
+                .With
+                .Property(nameof(EDBException.InnerException))
+                .TypeOf<SocketException>()
+        );
+    }
+
     #endregion
 
     #region Client Encoding
@@ -392,6 +426,47 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
     }
 
     #endregion Timezone
+
+    #region Application Name
+
+    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/6133")]
+    [NonParallelizable] // Sets environment variable
+    public async Task Application_name_env_var()
+    {
+        const string testAppName = "MyTestApp";
+
+        // Note that the pool is unaware of the environment variable, so if a connection is
+        // returned from the pool it may contain the wrong application name
+        using var _ = SetEnvironmentVariable("PGAPPNAME", testAppName);
+        await using var dataSource = CreateDataSource();
+        await using var conn = await dataSource.OpenConnectionAsync();
+        Assert.That(conn.PostgresParameters["application_name"], Is.EqualTo(testAppName));
+    }
+
+    [Test]
+    public async Task Application_name_connection_param()
+    {
+        const string testAppName = "MyTestApp2";
+
+        await using var dataSource = CreateDataSource(csb => csb.ApplicationName = testAppName);
+        await using var conn = await dataSource.OpenConnectionAsync();
+        Assert.That(conn.PostgresParameters["application_name"], Is.EqualTo(testAppName));
+    }
+
+    [Test]
+    [NonParallelizable] // Sets environment variable
+    public async Task Application_name_connection_param_overrides_env_var()
+    {
+        const string envAppName = "EnvApp";
+        const string connAppName = "ConnApp";
+
+        using var _ = SetEnvironmentVariable("PGAPPNAME", envAppName);
+        await using var dataSource = CreateDataSource(csb => csb.ApplicationName = connAppName);
+        await using var conn = await dataSource.OpenConnectionAsync();
+        Assert.That(conn.PostgresParameters["application_name"], Is.EqualTo(connAppName));
+    }
+
+    #endregion Application Name
 
     #region ConnectionString - Host
 
@@ -703,25 +778,26 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
                 });
             });
             using var conn = await dataSource.OpenConnectionAsync();
+            var databaseInfo = dataSource.CurrentReloadableState.DatabaseInfo;
             if (enabled)
             {
-                Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_1"));
+                Assert.That(databaseInfo.CompositeTypes.Any(x => x.Name == "test_type_1"));
                 if (testSchema == "public" || otherSchema == "public")
                 {
-                    Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
-                    Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"));
+                    Assert.That(databaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
+                    Assert.That(databaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"));
                 }
                 else
                 {
-                    Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
-                    Assert.False(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"));
+                    Assert.That(databaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
+                    Assert.That(databaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"), Is.False);
                 }
             }
             else
             {
-                Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_1"));
-                Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
-                Assert.True(dataSource.DatabaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"));
+                Assert.That(databaseInfo.CompositeTypes.Any(x => x.Name == "test_type_1"));
+                Assert.That(databaseInfo.CompositeTypes.Any(x => x.Name == "test_type_2"));
+                Assert.That(databaseInfo.CompositeTypes.Any(x => x.Name == "test_type_3"));
             }
         }
         finally
@@ -749,7 +825,6 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
     }
 
     [Test, Description("Breaks a connector while it's in the pool, with a keepalive and without")]
-    [Platform(Exclude = "MacOsX", Reason = "Fails only on mac, needs to be investigated")]
     [TestCase(false, TestName = nameof(Break_connector_in_pool) + "_without_keep_alive")]
     [TestCase(true, TestName = nameof(Break_connector_in_pool) + "_with_keep_alive")]
     public async Task Break_connector_in_pool(bool keepAlive)
@@ -801,12 +876,19 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
 
         var startTimestamp = Stopwatch.GetTimestamp();
         // Give a few seconds for a KeepAlive to possibly perform
+#if NETFRAMEWORK
+        // EDB: old code
         while (GetElapsedTime(startTimestamp).TotalSeconds < 2)
             Assert.DoesNotThrow(conn.ReloadTypes);
 
         // dotnet 3.1 doesn't have Stopwatch.GetElapsedTime method.
         static TimeSpan GetElapsedTime(long startingTimestamp) =>
             new((long)((Stopwatch.GetTimestamp() - startingTimestamp) * ((double)10000000 / Stopwatch.Frequency)));
+
+#else
+        while (Stopwatch.GetElapsedTime(startTimestamp).TotalSeconds < 2)
+            Assert.DoesNotThrow(conn.ReloadTypes);
+#endif
     }
 
     #region ChangeDatabase
@@ -914,7 +996,7 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
         var cs1 = csb1.ToString();
         var csb2 = new EDBConnectionStringBuilder(cs1);
         var cs2 = csb2.ToString();
-        Assert.IsTrue(cs1 == cs2);
+        Assert.That(cs1 == cs2);
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/pull/164")]
@@ -922,7 +1004,7 @@ public class ConnectionTests(MultiplexingMode multiplexingMode) : MultiplexingTe
     {
         var c = new EDBConnection();
         c.Dispose();
-        Assert.AreEqual(ConnectionState.Closed, c.State);
+        Assert.That(c.State, Is.EqualTo(ConnectionState.Closed));
     }
 
     [Test]
@@ -1079,7 +1161,9 @@ LANGUAGE 'plpgsql'");
         await clonedConnection.OpenAsync();
     }
 
-#if NET6_0_OR_GREATER
+    #endregion PersistSecurityInfo
+
+#if NET8_0_OR_GREATER
 
     [Test]
     public async Task CloneWith_and_data_source_with_auth_callbacks([Values] bool async)
@@ -1102,9 +1186,9 @@ LANGUAGE 'plpgsql'");
 
         var sslClientAuthenticationOptions = new SslClientAuthenticationOptions();
         clonedConnection.SslClientAuthenticationOptionsCallback!(sslClientAuthenticationOptions);
-        Assert.True(clientCertificatesCallbackCalled);
+        Assert.That(clientCertificatesCallbackCalled);
         sslClientAuthenticationOptions.RemoteCertificateValidationCallback!(null!, null, null, SslPolicyErrors.None);
-        Assert.True(userCertificateValidationCallbackCalled);
+        Assert.That(userCertificateValidationCallbackCalled);
 
         bool UserCertificateValidationCallback(object sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors errors)
             => userCertificateValidationCallbackCalled = true;
@@ -1112,8 +1196,6 @@ LANGUAGE 'plpgsql'");
         void ClientCertificatesCallback(X509CertificateCollection? certs)
             => clientCertificatesCallbackCalled = true;
     }
-
-
 
     [Test]
     [IssueLink("https://github.com/npgsql/npgsql/issues/743")]
@@ -1134,10 +1216,7 @@ LANGUAGE 'plpgsql'");
         conn2.Open();
         Assert.That(async () => await conn2.ExecuteScalarAsync("SELECT 1"), Is.EqualTo(1));
     }
-    
 #endif
-
-    #endregion PersistSecurityInfo
 
     [Test]
     public async Task Clone_with_data_source()
@@ -1200,10 +1279,12 @@ LANGUAGE 'plpgsql'");
     [Test]
     [IssueLink("https://github.com/npgsql/npgsql/issues/927")]
     [IssueLink("https://github.com/npgsql/npgsql/issues/736")]
-    [Ignore("Fails when running the entire test suite but not on its own...")]
     public async Task Rollback_on_close()
     {
-        // EDB 3.0.0 to 3.0.4 prepended a rollback for the next time the connector is used, as an optimization.
+        if (IsMultiplexing)
+            Assert.Ignore();
+
+        // Npgsql 3.0.0 to 3.0.4 prepended a rollback for the next time the connector is used, as an optimization.
         // This caused some issues (#927) and was removed.
 
         await using var dataSource = CreateDataSource();
@@ -1301,11 +1382,10 @@ CREATE TABLE record ()");
     //#if !NETFRAMEWORK && !NETSTANDARD2_0 && !NETSTANDARD2_1 // EnterpriseDB
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/392")]
     [NonParallelizable]
-    [Timeout(10000)]
-    [Platform(Exclude = "MacOsX", Reason = "Flaky in CI on Mac")]
+    [CancelAfter(10000)]
     public async Task Non_UTF8_Encoding()
     {
-#if NETCOREAPP
+#if NET8_0_OR_GREATER
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 #endif
         await using var adminConn = await OpenConnectionAsync();
@@ -1338,7 +1418,7 @@ CREATE TABLE record ()");
                 await using var cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT * FROM foo";
                 await using var reader = await cmd.ExecuteReaderAsync();
-                Assert.IsTrue(await reader.ReadAsync());
+                Assert.That(await reader.ReadAsync());
 
                 using (var textReader = await reader.GetTextReaderAsync(0))
                     Assert.That(textReader.ReadToEnd(), Is.EqualTo(value));
@@ -1535,7 +1615,7 @@ CREATE TABLE record ()");
 
         foreach (var sameThreadTask in sameThreadTasks)
         {
-            Assert.IsTrue(await sameThreadTask, "Synchronous open completed on different thread");
+            Assert.That(await sameThreadTask, "Synchronous open completed on different thread");
         }
     }
 
@@ -1708,6 +1788,139 @@ CREATE TABLE record ()");
     }
 
     #endregion Physical connection initialization
+
+    #region Require auth
+
+    [Test]
+    public async Task Connect_with_any_auth()
+    {
+        await using var dataSource = CreateDataSource(csb =>
+        {
+            csb.RequireAuth = $"{RequireAuthMode.Password},{RequireAuthMode.MD5},{RequireAuthMode.GSS},{RequireAuthMode.SSPI},{RequireAuthMode.ScramSHA256},{RequireAuthMode.None}";
+        });
+        await using var conn = await dataSource.OpenConnectionAsync();
+    }
+
+    [Test]
+    [NonParallelizable] // Sets environment variable
+    public async Task Connect_with_any_auth_env()
+    {
+        using var _ = SetEnvironmentVariable("PGREQUIREAUTH", $"{RequireAuthMode.Password},{RequireAuthMode.MD5},{RequireAuthMode.GSS},{RequireAuthMode.SSPI},{RequireAuthMode.ScramSHA256},{RequireAuthMode.None}");
+        await using var dataSource = CreateDataSource();
+        await using var conn = await dataSource.OpenConnectionAsync();
+    }
+
+    [Test]
+    public async Task Connect_with_any_except_none_auth()
+    {
+        await using var dataSource = CreateDataSource(csb =>
+        {
+            csb.RequireAuth = $"!{RequireAuthMode.None}";
+        });
+        await using var conn = await dataSource.OpenConnectionAsync();
+    }
+
+    [Test]
+    [NonParallelizable] // Sets environment variable
+    public async Task Connect_with_any_except_none_auth_env()
+    {
+        using var _ = SetEnvironmentVariable("PGREQUIREAUTH", $"!{RequireAuthMode.None}");
+        await using var dataSource = CreateDataSource();
+        await using var conn = await dataSource.OpenConnectionAsync();
+    }
+
+    [Test]
+    public async Task Fail_connect_with_none_auth()
+    {
+        await using var dataSource = CreateDataSource(csb =>
+        {
+            csb.RequireAuth = $"{RequireAuthMode.None}";
+        });
+        var ex = Assert.ThrowsAsync<EDBException>(async () => await dataSource.OpenConnectionAsync())!;
+        Assert.That(ex.Message, Does.Contain("authentication method is not allowed"));
+    }
+
+    [Test]
+    [NonParallelizable] // Sets environment variable
+    public async Task Fail_connect_with_none_auth_env()
+    {
+        using var _ = SetEnvironmentVariable("PGREQUIREAUTH", $"{RequireAuthMode.None}");
+        await using var dataSource = CreateDataSource();
+        var ex = Assert.ThrowsAsync<EDBException>(async () => await dataSource.OpenConnectionAsync())!;
+        Assert.That(ex.Message, Does.Contain("authentication method is not allowed"));
+    }
+
+    [Test]
+    public async Task Connect_with_md5_auth()
+    {
+        await using var dataSource = CreateDataSource(csb =>
+        {
+            csb.RequireAuth = $"{RequireAuthMode.MD5}";
+        });
+        try
+        {
+            await using var conn = await dataSource.OpenConnectionAsync();
+        }
+        catch (Exception e) when (!IsOnBuildServer)
+        {
+            Console.WriteLine(e);
+            Assert.Ignore("MD5 authentication doesn't seem to be set up");
+        }
+    }
+
+    [Test]
+    [NonParallelizable] // Sets environment variable
+    public async Task Connect_with_md5_auth_env()
+    {
+        using var _ = SetEnvironmentVariable("PGREQUIREAUTH", $"{RequireAuthMode.MD5}");
+        await using var dataSource = CreateDataSource();
+        try
+        {
+            await using var conn = await dataSource.OpenConnectionAsync();
+        }
+        catch (Exception e) when (!IsOnBuildServer)
+        {
+            Console.WriteLine(e);
+            Assert.Ignore("MD5 authentication doesn't seem to be set up");
+        }
+    }
+
+    [Test]
+    public void Mixed_auth_methods_not_supported([Values(
+            $"{nameof(RequireAuthMode.ScramSHA256)},!{nameof(RequireAuthMode.None)}",
+            $"!{nameof(RequireAuthMode.ScramSHA256)},{nameof(RequireAuthMode.None)}")]
+            string authMethods)
+    {
+        var csb = new EDBConnectionStringBuilder();
+        Assert.Throws<ArgumentException>(() => csb.RequireAuth = authMethods);
+    }
+
+    [Test]
+    public void Remove_all_auth_methods_throws()
+    {
+        var csb = new EDBConnectionStringBuilder();
+        Assert.Throws<ArgumentException>(() =>
+            csb.RequireAuth = $"!{RequireAuthMode.Password},!{RequireAuthMode.MD5},!{RequireAuthMode.GSS},!{RequireAuthMode.SSPI},!{RequireAuthMode.ScramSHA256},!{RequireAuthMode.None}");
+    }
+
+    [Test]
+    public void Unknown_auth_method_throws()
+    {
+        var csb = new EDBConnectionStringBuilder();
+        Assert.Throws<ArgumentException>(() => csb.RequireAuth = "SuperSecure");
+    }
+
+    [Test]
+    public void Auth_methods_are_trimmed()
+    {
+        var csb = new EDBConnectionStringBuilder
+        {
+            RequireAuth = $"{RequireAuthMode.Password} , {RequireAuthMode.MD5}"
+        };
+        Assert.That(csb.RequireAuthModes, Is.EqualTo(RequireAuthMode.Password | RequireAuthMode.MD5));
+    }
+
+    #endregion Require auth
 
     [Test]
     [NonParallelizable] // Modifies global database info factories

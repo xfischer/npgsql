@@ -205,13 +205,4 @@ class MiscTypeTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(mu
         await using var conn = await OpenConnectionAsync();
         Assert.That(await conn.ExecuteScalarAsync("SELECT pg_sleep(0)"), Is.SameAs(null));
     }
-
-    [Test, IssueLink("https://github.com/npgsql/npgsql/issues/1364")]
-    public async Task Unsupported_DbType()
-    {
-        await using var conn = await OpenConnectionAsync();
-        await using var cmd = new EDBCommand("SELECT @p", conn);
-        Assert.That(() => cmd.Parameters.Add(new EDBParameter("p", DbType.UInt32) { Value = 8u }),
-            Throws.Exception.TypeOf<NotSupportedException>());
-    }
 }

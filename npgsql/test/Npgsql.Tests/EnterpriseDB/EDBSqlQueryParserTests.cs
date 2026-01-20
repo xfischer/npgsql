@@ -156,7 +156,7 @@ LANGUAGE SQL;
     [TestCase("procedure ABC", "PROCEDURE ", false)]
     public void TestSPLDetection_ContainsWord(string query, string keyword,  bool expected)
     {
-        Assert.AreEqual(expected, query.ContainsWord(keyword, StringComparison.OrdinalIgnoreCase));
+        Assert.That(query.ContainsWord(keyword, StringComparison.OrdinalIgnoreCase) , Is.EqualTo(expected));
     }
 
     [Theory]
@@ -166,7 +166,7 @@ LANGUAGE SQL;
     [TestCase("procedure ABC", "PROCEDURE", true)]
     public void TestSPLDetection_StartsWithWord(string query, string keyword, bool expected)
     {
-        Assert.AreEqual(expected, query.StartsWithWord(keyword, StringComparison.OrdinalIgnoreCase));
+        Assert.That(query.StartsWithWord(keyword, StringComparison.OrdinalIgnoreCase), Is.EqualTo(expected));
     }
 
     [Test]

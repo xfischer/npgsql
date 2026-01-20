@@ -16,7 +16,10 @@ class IntegratedSecurityHandler
         return new();
     }
 
-    public virtual ValueTask NegotiateAuthentication(bool async, EDBConnector connector)
+    public virtual ValueTask NegotiateAuthentication(bool async, EDBConnector connector, CancellationToken cancellationToken)
+        => throw new NotSupportedException(string.Format(EDBStrings.IntegratedSecurityDisabled, nameof(EDBSlimDataSourceBuilder.EnableIntegratedSecurity)));
+
+    public virtual ValueTask<GssEncryptionResult> GSSEncrypt(bool async, bool isRequired, EDBConnector connector, CancellationToken cancellationToken)
         => throw new NotSupportedException(string.Format(EDBStrings.IntegratedSecurityDisabled, nameof(EDBSlimDataSourceBuilder.EnableIntegratedSecurity)));
 }
 
@@ -27,6 +30,13 @@ sealed class RealIntegratedSecurityHandler : IntegratedSecurityHandler
     public override ValueTask<string?> GetUsername(bool async, bool includeRealm, ILogger connectionLogger, CancellationToken cancellationToken)
         => KerberosUsernameProvider.GetUsername(async, includeRealm, connectionLogger, cancellationToken);
 
-    public override ValueTask NegotiateAuthentication(bool async, EDBConnector connector)
-        => new(connector.AuthenticateGSS(async));
+
+    public override ValueTask NegotiateAuthentication(bool async, EDBConnector connector, CancellationToken cancellationToken)
+        => connector.AuthenticateGSS(async, cancellationToken);
+
+#if NET8_0_OR_GREATER
+    public override ValueTask<GssEncryptionResult> GSSEncrypt(bool async, bool isRequired, EDBConnector connector, CancellationToken cancellationToken)
+        => connector.GSSEncrypt(async, isRequired, cancellationToken);
+#endif
+
 }

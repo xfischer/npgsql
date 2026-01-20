@@ -56,6 +56,8 @@ sealed class MultiplexingDataSource : PoolingDataSource
         _connectionLogger = dataSourceConfig.LoggingConfiguration.ConnectionLogger;
         _commandLogger = dataSourceConfig.LoggingConfiguration.CommandLogger;
 
+        // Make sure we do not flow AsyncLocals like Activity.Current
+        using var _ = ExecutionContext.SuppressFlow();
         _multiplexWriteLoop = Task.Run(MultiplexingWriteLoop, CancellationToken.None)
             .ContinueWith(t =>
             {
@@ -75,7 +77,7 @@ sealed class MultiplexingDataSource : PoolingDataSource
         // on to the next connector.
         Debug.Assert(_multiplexCommandReader != null);
 
-        var stats = new MultiplexingStats { Stopwatch = new Stopwatch() };
+        var stats = new MultiplexingStats();
 
         while (true)
         {
@@ -106,15 +108,30 @@ sealed class MultiplexingDataSource : PoolingDataSource
                         break;
                     }
 
-                    connector = await OpenNewConnector(
-                        command.InternalConnection!,
-                        new EDBTimeout(TimeSpan.FromSeconds(Settings.Timeout)),
-                        async: true,
-                        CancellationToken.None).ConfigureAwait(false);
+#if NETCOREAPP
+                    // At no point should we ever have an activity here
+                    Debug.Assert(Activity.Current is null);
+#endif
+                    // Set current activity as the one from the command
+                    // So child activities from physical open are bound to it
+                    Activity.Current = command.CurrentActivity;
+
+                    try
+                    {
+                        connector = await OpenNewConnector(
+                            command.InternalConnection!,
+                            new EDBTimeout(TimeSpan.FromSeconds(Settings.Timeout)),
+                            async: true,
+                            CancellationToken.None).ConfigureAwait(false);
+                    }
+                    finally
+                    {
+                        Activity.Current = null;
+                    }
 
                     if (connector != null)
                     {
-                        // Managed to created a new connector
+                        // Managed to create a new connector
                         connector.Connection = null;
 
                         // See increment under over-capacity mode below
@@ -221,11 +238,20 @@ sealed class MultiplexingDataSource : PoolingDataSource
             // to buffer in memory), and the actual flush will occur at the level above. For cases where the
             // command overflows the buffer, async I/O is done, and we schedule continuations separately -
             // but the main thread continues to handle other commands on other connectors.
+
+            var fullyPrepared = _autoPrepare;
+
             if (_autoPrepare)
             {
                 // TODO: Need to log based on numPrepared like in non-multiplexing mode...
                 for (var i = 0; i < command.InternalBatchCommands.Count; i++)
-                    command.InternalBatchCommands[i].TryAutoPrepare(connector);
+                    if (!command.InternalBatchCommands[i].TryAutoPrepare(connector))
+                        fullyPrepared = false;
+            }
+
+            if (command.CurrentActivity is not null && fullyPrepared)
+            {
+                command.CurrentActivity.SetTag("db.npgsql.prepared", true);
             }
 
             var written = connector.CommandsInFlightWriter!.TryWrite(command);
@@ -358,7 +384,11 @@ sealed class MultiplexingDataSource : PoolingDataSource
             // for over-capacity write.
             connector.FlagAsWritableForMultiplexing();
 
-            EDBEventSource.Log.MultiplexingBatchSent(stats.NumCommands, stats.Stopwatch);
+#if NET8_0_OR_GREATER
+            EDBEventSource.Log.MultiplexingBatchSent(stats.NumCommands, Stopwatch.GetElapsedTime(stats.StartTimestamp).Ticks);
+#else
+            EDBEventSource.Log.MultiplexingBatchSent(stats.NumCommands, StopwatchExtensions.GetElapsedTime(stats.StartTimestamp).Ticks);
+#endif
         }
 
         // ReSharper disable once FunctionNeverReturns
@@ -380,19 +410,18 @@ sealed class MultiplexingDataSource : PoolingDataSource
 
     struct MultiplexingStats
     {
-        internal Stopwatch Stopwatch;
+        internal long StartTimestamp;
         internal int NumCommands;
 
         internal void Reset()
         {
             NumCommands = 0;
-            Stopwatch.Reset();
+            StartTimestamp = Stopwatch.GetTimestamp();
         }
 
         internal MultiplexingStats Clone()
         {
-            var clone = new MultiplexingStats { Stopwatch = Stopwatch, NumCommands = NumCommands };
-            Stopwatch = new Stopwatch();
+            var clone = new MultiplexingStats { StartTimestamp = StartTimestamp, NumCommands = NumCommands };
             return clone;
         }
     }

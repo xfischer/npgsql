@@ -10,15 +10,11 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal
 ///     any release. You should only use it directly in your code with extreme caution and knowing that
 ///     doing so can result in application failures when updating to a new Entity Framework Core release.
 /// </summary>
-
-[System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S2223:Non-constant static fields should not be visible", Justification = "Used in debug builds for tests only")]
 public class NpgsqlNodaTimeTypeMappingSourcePlugin : IRelationalTypeMappingSourcePlugin
 {
 #if DEBUG
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    public static bool LegacyTimestampBehavior;
-    public static bool DisableDateTimeInfinityConversions;
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+    internal static bool LegacyTimestampBehavior;
+    internal static bool DisableDateTimeInfinityConversions;
 #else
     internal static readonly bool LegacyTimestampBehavior;
     internal static readonly bool DisableDateTimeInfinityConversions;

@@ -5,6 +5,7 @@ using System.Data;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Drawing;
+using NUnit.Framework.Constraints;
 
 #pragma warning disable IDE0007 // Use implicit type
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB;
@@ -168,6 +169,7 @@ public class EDB_EC_1113_Tests : EPASTestBase
         Cleanup(con);
 
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     private void Cleanup(EDBConnection con)
@@ -415,7 +417,7 @@ public class EDB_EC_1084_Tests : EPASTestBase
         insertCommand.CommandText = insertString;
         int count = insertCommand.ExecuteNonQuery();
 
-        Assert.IsTrue(count != 0, "Data was not inserted.");
+        Assert.That(count, Is.Not.EqualTo(0), "Data was not inserted.");
     }
 
     private static void CreateDropProcedure(EDBConnection con, string procString, bool create)
@@ -428,7 +430,7 @@ public class EDB_EC_1084_Tests : EPASTestBase
         int count = createProcCommand.ExecuteNonQuery();
 
         if (create)
-            Assert.IsTrue(count != 0, "Procedure was not created");
+            Assert.That(count, Is.Not.EqualTo(0), "Procedure was not created");
     }
 
     private void DoSupressTest(string pkg, string pkgBody, string pkgNameCall, string pkgNameDelete, bool shouldThrow, string shouldThrowThis)
@@ -479,9 +481,9 @@ public class EDB_EC_1084_Tests : EPASTestBase
             else
                 CreateDropProcedure(con, "DROP PROCEDURE " + pkgNameCall, false);
 
-            Assert.AreEqual(shouldThrow, isThrown, "Test result is not as expected.");
+            Assert.That(isThrown, Is.EqualTo(shouldThrow), "Test result is not as expected.");
             if (shouldThrow)
-                Assert.IsTrue(exceptionMessage.StartsWith(shouldThrowThis), "Exception message is not as expected");
+                Assert.That(exceptionMessage.StartsWith(shouldThrowThis), Is.True, "Exception message is not as expected");  
         }
         finally
         {

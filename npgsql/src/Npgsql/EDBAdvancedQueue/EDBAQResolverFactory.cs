@@ -1,85 +1,101 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading;
-using System.Threading.Tasks;
-using EnterpriseDB.EDBClient.Internal;
+﻿using EnterpriseDB.EDBClient.Internal;
+using EnterpriseDB.EDBClient.Internal.Converters;
 using EnterpriseDB.EDBClient.Internal.Postgres;
+using System;
 
 namespace EnterpriseDB.EDBClient;
 
-internal class EDBAQResolverFactory : PgTypeInfoResolverFactory
+internal class EDBAQConverterFactory() : PgTypeInfoResolverFactory
 {
-    public override IPgTypeInfoResolver? CreateArrayResolver() => null;
-    public override IPgTypeInfoResolver CreateResolver() => new Resolver();
+    public override IPgTypeInfoResolver? CreateArrayResolver() => new EDBAQTypeInfoArrayResolver();
+    public override IPgTypeInfoResolver CreateResolver() => new EDBAQTypeInfoResolver();
 
-    private class Resolver : IPgTypeInfoResolver
+    private class EDBAQTypeInfoResolver() : IPgTypeInfoResolver
     {
         TypeInfoMappingCollection? _mappings;
         protected TypeInfoMappingCollection Mappings => _mappings ??= AddMappings(new());
 
-        public PgTypeInfo? GetTypeInfo(System.Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
-        {
-            var typeInfo = Mappings.Find(type, dataTypeName, options);
-            if (typeInfo is not null)
-            {
-                return typeInfo;
-            }
-            return null;
-        }
+        public PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
+            => Mappings.Find(type, dataTypeName, options);
 
         static TypeInfoMappingCollection AddMappings(TypeInfoMappingCollection mappings)
         {
-            mappings.AddType<string>("dbms_aq.message_properties_t",
-                (options, mapping, _) => mapping.CreateInfo(options, new EDBAQMessagePropertiesStringConverter(options), preferredFormat: DataFormat.Text, supportsWriting: true),
-                MatchRequirement.DataTypeName);
+            mappings.AddType<EDBAQMessageProperties>("dbms_aq.message_properties_t",
+                (options, mapping, _) => mapping.CreateInfo(options, new EDBAQMessagePropertiesTextConverter(options.TextEncoding, isArray: false)),
+                isDefault: true);
+            mappings.AddType<EDBAQMessageProperties>("message_properties_t",
+                (options, mapping, _) => mapping.CreateInfo(options, new EDBAQMessagePropertiesTextConverter(options.TextEncoding, isArray: false)),
+                isDefault: true);
 
             return mappings;
         }
     }
+
+    // See NetTopology for implementation of array resolver
+    //
+    //private class EDBAQTypeInfoArrayResolver() : EDBAQTypeInfoResolver(), IPgTypeInfoResolver
+    //{
+    //    TypeInfoMappingCollection? _mappings;
+    //    protected TypeInfoMappingCollection Mappings => _mappings ??= AddMappings(new(base.Mappings));
+
+    //    public PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
+    //        => Mappings.Find(type, dataTypeName, options);
+
+    //    static TypeInfoMappingCollection AddMappings(TypeInfoMappingCollection mappings)
+    //    {
+    //        mappings.AddArrayType<EDBAQMessageProperties>("dbms_aq.message_properties_t");
+    //        mappings.AddArrayType<EDBAQMessageProperties>("message_properties_t");
+
+    //        return mappings;
+    //    }
+    //}
+
+    private class EDBAQTypeInfoArrayResolver() : IPgTypeInfoResolver
+    {
+        TypeInfoMappingCollection? _mappings;
+        protected TypeInfoMappingCollection Mappings => _mappings ??= AddMappings(new());
+
+        public PgTypeInfo? GetTypeInfo(Type? type, DataTypeName? dataTypeName, PgSerializerOptions options)
+            => Mappings.Find(type, dataTypeName, options);
+
+        static TypeInfoMappingCollection AddMappings(TypeInfoMappingCollection mappings)
+        {
+            mappings.AddType<EDBAQMessageProperties>("dbms_aq.message_properties_t",
+                (options, mapping, _) => mapping.CreateInfo(options, new EDBAQMessagePropertiesTextConverter(options.TextEncoding, isArray: true)),
+                isDefault: true);
+            mappings.AddType<EDBAQMessageProperties>("message_properties_t",
+                (options, mapping, _) => mapping.CreateInfo(options, new EDBAQMessagePropertiesTextConverter(options.TextEncoding, isArray: true)),
+                isDefault: true);
+            mappings.AddArrayType<EDBAQMessageProperties>("dbms_aq.message_properties_t");
+            mappings.AddArrayType<EDBAQMessageProperties>("message_properties_t");
+
+            return mappings;
+        }
+    }    
+
+    sealed class EDBAQMessagePropertiesTextConverter(System.Text.Encoding encoding, bool isArray) : StringBasedTextConverter<EDBAQMessageProperties>(encoding)
+    {
+        public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
+        {
+            bufferRequirements = BufferRequirements.None;
+            return isArray ? true : format is DataFormat.Text;
+        }
+        protected override EDBAQMessageProperties ConvertFrom(string value)
+        {
+            if (isArray)
+                throw new NotSupportedException("EnterpriseDB: Array conversion is not supported for EDBAQMessageProperties.");
+
+            EDBAQMessageProperties result = new();
+            return result.ToObjectParam(value);
+        }
+        protected override ReadOnlyMemory<char> ConvertTo(EDBAQMessageProperties value)
+        {
+            if (isArray)
+                throw new NotSupportedException("EnterpriseDB: Array conversion is not supported for EDBAQMessageProperties.");
+
+            return value.ToTextParam().AsMemory();
+        }
+    }
 }
 
-internal class EDBAQMessagePropertiesStringConverter(PgSerializerOptions options) : PgStreamingConverter<string>
-{
 
-    // msg size    + (oid size    + param length) * numbers of param
-    // int               int             int             int
-    // sizeof(int) + sizeof(int) * 2 * _memberHandlers.Length
-    public override Size GetSize(SizeContext context, [DisallowNull] string value, ref object? writeState)
-        => options.TextEncoding.GetByteCount(value);
-
-    public override bool CanConvert(DataFormat format, out BufferRequirements bufferRequirements)
-    {
-        bufferRequirements = BufferRequirements.None;
-        return format is DataFormat.Text;
-    }
-    public override string Read(PgReader reader)
-    {
-        return reader.GetTextReader(options.TextEncoding).ReadToEnd();
-    }
-
-    public async override ValueTask<string> ReadAsync(PgReader reader, CancellationToken cancellationToken = default)
-    {
-#if NETFRAMEWORK || NETSTANDARD || NET6_0
-        return await reader.GetTextReader(options.TextEncoding).ReadToEndAsync().ConfigureAwait(false);
-#else
-        return await reader.GetTextReader(options.TextEncoding).ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-#endif
-    }
-    public override void Write(PgWriter writer, [DisallowNull] string value) => Write(async: false, writer, value).AsTask().GetAwaiter().GetResult();
-
-    public override ValueTask WriteAsync(PgWriter writer, [DisallowNull] string value, CancellationToken cancellationToken = default) => Write(async: true, writer, value, cancellationToken);
-
-    async ValueTask Write(bool async, PgWriter writer, string value, CancellationToken cancellationToken = default)
-    {
-        var size = options.TextEncoding.GetByteCount(value);
-
-        if (writer.ShouldFlush(sizeof(int) + size))
-            await writer.Flush(async, cancellationToken).ConfigureAwait(false);
-
-        if (async)
-            await writer.WriteCharsAsync(value.AsMemory(), options.TextEncoding, cancellationToken).ConfigureAwait(false);
-        else
-            writer.WriteChars(value.AsSpan(), options.TextEncoding);
-
-    }
-}

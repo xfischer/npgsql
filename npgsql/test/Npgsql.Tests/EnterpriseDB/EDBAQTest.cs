@@ -4,6 +4,7 @@ using EnterpriseDB.EDBClient;
 using System.Data;
 using NUnit;
 using System.Diagnostics;
+using EnterpriseDB.EDBClient.TypeMapping;
 #nullable disable
 namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 {
@@ -24,35 +25,37 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
         {
 
             //write setup for following test cases
-            con = CreateDataSourceBuilder()
+            var dataSourceBuilder = CreateDataSourceBuilder();
+            
+            con = dataSourceBuilder
                 .MapComposite<MyXML>("public.myxml")
                 .Build()
                 .OpenConnection();
 
-            var Command = new EDBCommand("", con)
-            {
-                CommandText = "CREATE OR REPLACE TYPE myxml AS (value XML);"
-            };
+            var command = new EDBCommand("", con);
 
-            Console.WriteLine("CREATE type TYPE myxml: " + Command.ExecuteNonQuery());
+            command.CommandText = "SELECT to_regtype('public.myxml') IS NOT NULL;";
+            var typeExists = (bool?)command.ExecuteScalar();
+            if (typeExists ?? false)
+                return;
 
-            Command.CommandText = "EXEC DBMS_AQADM.CREATE_QUEUE_TABLE (queue_table => 'MSG_QUEUE_TABLE', queue_payload_type => 'myxml', comment => 'Message queue table'); END; ";
+            command.CommandText = "CREATE OR REPLACE TYPE myxml AS (value XML);";
+            command.ExecuteNonQuery();
 
-            Command.ExecuteNonQuery();
+            command.CommandText = "EXEC DBMS_AQADM.CREATE_QUEUE_TABLE (queue_table => 'MSG_QUEUE_TABLE', queue_payload_type => 'myxml', comment => 'Message queue table'); END; ";
+            command.ExecuteNonQuery();
 
-            Command.CommandText = "EXEC DBMS_AQADM.CREATE_QUEUE(queue_name => 'MSG_QUEUE', queue_table => 'MSG_QUEUE_TABLE', comment => 'This queue contains pending messages.'); ";
+            command.CommandText = "EXEC DBMS_AQADM.CREATE_QUEUE(queue_name => 'MSG_QUEUE', queue_table => 'MSG_QUEUE_TABLE', comment => 'This queue contains pending messages.'); ";
+            command.ExecuteNonQuery();
 
-            Command.ExecuteNonQuery();
+            command.CommandText = "EXEC DBMS_AQADM.START_QUEUE (queue_name => 'MSG_QUEUE'); ";
+            command.ExecuteNonQuery();
 
-            Command.CommandText = "EXEC DBMS_AQADM.START_QUEUE (queue_name => 'MSG_QUEUE'); ";
-
-            Command.ExecuteNonQuery();
-
-            Command.CommandText = "commit; ";
+            command.CommandText = "commit; ";
 
             con.ReloadTypes();
 
-            Command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
         }
 
         [TearDown]
@@ -68,6 +71,8 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             Command.CommandText = "DROP TYPE myxml;";
             Command.ExecuteNonQuery();
             TestUtil.closeDB(con);
+
+            con.Dispose();
         }
 
         [Test]
@@ -76,14 +81,14 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var msg = Enqueue();
             var msgOut = Dequeue();
 
-            Assert.AreEqual(msg.MessageId, msgOut.MessageId);
-            Assert.IsInstanceOf(typeof(MyXML), msg.Payload);
-            Assert.IsInstanceOf(typeof(MyXML), msgOut.Payload);
+            Assert.That(msgOut.MessageId,Is.EqualTo(msg.MessageId));
+            Assert.That(msg.Payload, Is.InstanceOf(typeof(MyXML)));
+            Assert.That(msgOut.Payload, Is.InstanceOf(typeof(MyXML)));
 
             var payload = (MyXML)msg.Payload;
             var payloadOut = (MyXML)msgOut.Payload;
 
-            Assert.AreEqual(payload.value, payloadOut.value);
+            Assert.That(payloadOut.value, Is.EqualTo(payload.value));
         }
 
         [Test]
@@ -99,13 +104,13 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
             var msg1 = Enqueue();
             var msg2 = Enqueue();
 
-            Assert.AreNotEqual(msg1.MessageId, msg2.MessageId);
+            Assert.That(msg2.MessageId, Is.Not.EqualTo(msg1.MessageId));
 
             var msg1Out = Dequeue();
             var msg2Out = Dequeue();
 
-            Assert.AreEqual(msg1.MessageId, msg1Out.MessageId);
-            Assert.AreEqual(msg2.MessageId, msg2Out.MessageId);
+            Assert.That(msg1Out.MessageId, Is.EqualTo(msg1.MessageId));
+            Assert.That(msg2Out.MessageId, Is.EqualTo(msg2.MessageId));
         }
 
         private EDBAQMessage Enqueue()
@@ -122,7 +127,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
                 queue.MessageType = EDBAQMessageType.Udt;
                 queue.UdtTypeName = "myxml";
                 queue.Enqueue(queMsg);
-                Assert.IsNotNull(queMsg.MessageId);
+                Assert.That(queMsg.MessageId, Is.Not.Null);
                 txn.Commit();
                 return queMsg;
             }
@@ -179,7 +184,7 @@ namespace EnterpriseDB.EDBClient.Tests.EnterpriseDB
 
                     // Direct cast
                     var obj = (MyXML)deqMsg.Payload;
-                    Assert.AreEqual("(<Message><MessageText>Mahesh</MessageText></Message>)", obj.value);
+                    Assert.That(obj.value, Is.EqualTo("(<Message><MessageText>Mahesh</MessageText></Message>)"));
 
                     txn.Commit();
 

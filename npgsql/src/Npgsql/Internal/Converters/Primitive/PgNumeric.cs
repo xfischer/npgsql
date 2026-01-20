@@ -41,7 +41,7 @@ readonly struct PgNumeric(ArraySegment<short> digits, short weight, short sign, 
 #else
         decimal.GetBits(value, MemoryMarshal.Cast<uint, int>(destination));
 #endif
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         scale = value.Scale;
 #else
         scale = (byte)(destination[3] >> 16);

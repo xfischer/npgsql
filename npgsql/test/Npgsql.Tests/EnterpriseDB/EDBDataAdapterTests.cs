@@ -154,7 +154,7 @@ public class EDBDataAdapterTests : EPASTestBase
             da.Fill(ds);
             Console.WriteLine(ds.Tables[0].Rows.Count.ToString());
 
-            Assert.IsNotNull(ds);
+            Assert.That(ds, Is.Not.Null);
         });
 
     }
@@ -398,7 +398,7 @@ public class EDBDataAdapterTests : EPASTestBase
                 var dt = new DataTable("testtab");
                 da.FillSchema(dt, SchemaType.Source);
 
-                Assert.AreEqual("job".ToUpper(), dt.Columns[2].ColumnName.ToUpper());
+                Assert.That(dt.Columns[2].ColumnName.ToUpper(),Is.EqualTo("job".ToUpper()));
             }
 
             catch (Exception)
@@ -424,14 +424,14 @@ public class EDBDataAdapterTests : EPASTestBase
         var dt = new DataTable("testtab");
         da.FillSchema(dt, SchemaType.Source);
 
-        Assert.AreEqual("system.decimal".ToUpper(), dt.Columns[0].DataType.FullName!.ToUpper());
-        Assert.AreEqual("system.string".ToUpper(), dt.Columns[1].DataType.FullName!.ToUpper());
-        Assert.AreEqual("system.string".ToUpper(), dt.Columns[2].DataType.FullName!.ToUpper());
-        Assert.AreEqual("system.decimal".ToUpper(), dt.Columns[3].DataType.FullName!.ToUpper());
-        Assert.AreEqual("system.datetime".ToUpper(), dt.Columns[4].DataType.FullName!.ToUpper());
-        Assert.AreEqual("system.decimal".ToUpper(), dt.Columns[5].DataType.FullName!.ToUpper());
-        Assert.AreEqual("system.decimal".ToUpper(), dt.Columns[6].DataType.FullName!.ToUpper());
-        Assert.AreEqual("system.decimal".ToUpper(), dt.Columns[7].DataType.FullName!.ToUpper());
+        Assert.That(dt.Columns[0].DataType.FullName!.ToUpper(), Is.EqualTo("system.decimal".ToUpper()));
+        Assert.That(dt.Columns[1].DataType.FullName!.ToUpper(), Is.EqualTo("system.string".ToUpper()));
+        Assert.That(dt.Columns[2].DataType.FullName!.ToUpper(), Is.EqualTo("system.string".ToUpper()));
+        Assert.That(dt.Columns[3].DataType.FullName!.ToUpper(), Is.EqualTo("system.decimal".ToUpper()));
+        Assert.That(dt.Columns[4].DataType.FullName!.ToUpper(), Is.EqualTo("system.datetime".ToUpper()));
+        Assert.That(dt.Columns[5].DataType.FullName!.ToUpper(), Is.EqualTo("system.decimal".ToUpper()));
+        Assert.That(dt.Columns[6].DataType.FullName!.ToUpper(), Is.EqualTo("system.decimal".ToUpper()));
+        Assert.That(dt.Columns[7].DataType.FullName!.ToUpper(), Is.EqualTo("system.decimal".ToUpper()));
 
         con.Close();
     }
@@ -450,7 +450,7 @@ public class EDBDataAdapterTests : EPASTestBase
         var dt = new DataTable("testtab");
         da.FillSchema(dt, SchemaType.Source);
 
-        Assert.AreEqual("empno".ToUpper(), dt.PrimaryKey!.GetValue(0)!.ToString()!.ToUpper());
+        Assert.That(dt.PrimaryKey!.GetValue(0)!.ToString()!.ToUpper(), Is.EqualTo("empno".ToUpper()));
 
         con.Close();
 

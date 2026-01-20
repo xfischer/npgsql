@@ -11,11 +11,11 @@ using System.Resources;
 [assembly: SecurityRules(SecurityRuleSet.Level1)]
 [assembly: AssemblyCompany("EnterpriseDB Development Team")]
 [assembly: AssemblyProduct("EnterpriseDB.EDBClient")]
-[assembly: AssemblyCopyright("Copyright © 2024 EnterpriseDB Development Team")]
+[assembly: AssemblyCopyright("Copyright © 2026 EnterpriseDB Development Team")]
 [assembly: AssemblyTrademark("")]
 [assembly: NeutralResourcesLanguage("en", UltimateResourceFallbackLocation.MainAssembly)]
 
 // The following version attributes get rewritten by GitVersion as part of the build
-[assembly: AssemblyVersion("9.0.3.1")]
-[assembly: AssemblyFileVersion("9.0.3.1")]
-[assembly: AssemblyInformationalVersion("9.0.3.1")]
+[assembly: AssemblyVersion("10.0.1.1")]
+[assembly: AssemblyFileVersion("10.0.1.1")]
+[assembly: AssemblyInformationalVersion("10.0.1.1")]

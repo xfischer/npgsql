@@ -4,59 +4,86 @@ using System.Data;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 
 namespace EnterpriseDB.EDBClient;
 
+// Semantic conventions for database client spans: https://opentelemetry.io/docs/specs/semconv/database/database-spans/
+// Semantic conventions for PostgreSQL client operations: https://opentelemetry.io/docs/specs/semconv/database/postgresql/
 static class EDBActivitySource
 {
-    static readonly ActivitySource Source = new("EnterpriseDB .NET Connector", "0.1.0");
+    static readonly ActivitySource Source = new("edb-dotnet", GetLibraryVersion());
 
     internal static bool IsEnabled => Source.HasListeners();
 
-    internal static Activity? CommandStart(EDBConnectionStringBuilder settings, string commandText, CommandType commandType, string? spanName)
+    internal static Activity? CommandStart(string commandText, CommandType commandType, bool? prepared, string? spanName)
     {
-        var dbName = settings.Database ?? "UNKNOWN";
-        string? dbOperation = null;
-        string? dbSqlTable = null;
-        string activityName;
+        string? operationName = null;
+
         switch (commandType)
         {
         case CommandType.StoredProcedure:
-            dbOperation = EDBCommand.EnableStoredProcedureCompatMode ? "SELECT" : "CALL";
-            // In this case our activity name follows the concept of the CommandType.TableDirect case
-            // ("<db.operation> <db.name>.<db.sql.table>") but replaces db.sql.table with the procedure name
-            // which seems to match the spec's intent without being explicitly specified that way (it suggests
-            // using the procedure name but doesn't mention using db.operation or db.name in that case).
-            activityName = $"{dbOperation} {dbName}.{commandText}";
+            // We follow the {db.operation.name} {target} pattern of the spec, with the operation being SELECT/CALL and
+            // the target being the stored procedure name.
+            operationName = EDBCommand.EnableStoredProcedureCompatMode ? "SELECT" : "CALL";
+            spanName ??= $"{operationName} {commandText}";
             break;
         case CommandType.TableDirect:
-            dbOperation = "SELECT";
-            // The OpenTelemetry spec actually asks to include the database name into db.sql.table
-            // but then again mixes the concept of database and schema.
-            // As I interpret it, it actually wants db.sql.table to include the schema name and not the
-            // database name if the concept of schemas exists in the database system.
-            // This also makes sense in the context of the activity name which otherwise would include the
-            // database name twice.
-            dbSqlTable = commandText;
-            activityName = $"{dbOperation} {dbName}.{dbSqlTable}";
+            // We follow the {db.operation.name} {target} pattern of the spec, with the operation being SELECT and
+            // the target being the table (collection) name.
+            operationName = "SELECT";
+            spanName ??= $"{operationName} {commandText}";
             break;
         case CommandType.Text:
-            activityName = dbName;
+            // We don't have db.query.summary, db.operation.name or target (without parsing SQL),
+            // so we fall back to db.system.name as per the specs.
+            spanName ??= "postgresql";
             break;
         default:
             throw new ArgumentOutOfRangeException(nameof(commandType), commandType, null);
         }
 
-        var activity = Source.StartActivity(spanName ?? activityName, ActivityKind.Client);
+        var activity = Source.StartActivity(spanName, ActivityKind.Client);
         if (activity is not { IsAllDataRequested: true })
             return activity;
 
-        activity.SetTag("db.statement", commandText);
+        activity.SetTag("db.query.text", commandText);
 
-        if (dbOperation != null)
-            activity.SetTag("db.operation", dbOperation);
-        if (dbSqlTable != null)
-            activity.SetTag("db.sql.table", dbSqlTable);
+        if (prepared is true)
+            activity.SetTag("db.npgsql.prepared", true);
+
+        switch (commandType)
+        {
+            case CommandType.StoredProcedure:
+                Debug.Assert(operationName is not null);
+                activity.SetTag("db.operation.name", operationName);
+                activity.SetTag("db.stored_procedure.name", commandText);
+                break;
+            case CommandType.TableDirect:
+                Debug.Assert(operationName is not null);
+                activity.SetTag("db.operation.name", operationName);
+                activity.SetTag("db.collection.name", commandText);
+                break;
+        }
+
+        return activity;
+    }
+
+    internal static Activity? PhysicalConnectionOpen(EDBConnector connector)
+    {
+        if (!connector.DataSource.Configuration.TracingOptions.EnablePhysicalOpenTracing)
+            return null;
+
+        // Note that physical connection open is not part of the OpenTelemetry spec.
+        // We emit it if enabled, following the general name/tags guidelines.
+        var dbName = connector.Settings.Database ?? connector.InferredUserName;
+        var activity = Source.StartActivity("CONNECT " + dbName, ActivityKind.Client);
+        if (activity is not { IsAllDataRequested: true })
+            return activity;
+
+        // We set these basic tags on the activity so that they're populated even when the physical open fails.
+        activity.SetTag("db.system.name", "postgresql");
+        activity.SetTag("db.npgsql.data_source", connector.DataSource.Name);
 
         return activity;
     }
@@ -66,34 +93,33 @@ static class EDBActivitySource
         if (!activity.IsAllDataRequested)
             return;
 
-        activity.SetTag("db.system", "postgresql");
-        activity.SetTag("db.connection_string", connector.UserFacingConnectionString);
-        activity.SetTag("db.user", connector.InferredUserName);
-        // We trace the actual (maybe inferred) database name we're connected to, even if it
-        // wasn't specified in the connection string
-        activity.SetTag("db.name", connector.Settings.Database ?? connector.InferredUserName);
-        activity.SetTag("db.connection_id", connector.Id);
+        activity.SetTag("db.system.name", "postgresql");
+
+        // TODO: For now, we only set the database name, without adding the first schema in the search_path
+        // as per the PG tracing specs (https://opentelemetry.io/docs/specs/semconv/database/postgresql/).
+        // See #6336
+        activity.SetTag("db.namespace", connector.Settings.Database ?? connector.InferredUserName);
 
         var endPoint = connector.ConnectedEndPoint;
         Debug.Assert(endPoint is not null);
+        activity.SetTag("server.address", connector.Host);
         switch (endPoint)
         {
         case IPEndPoint ipEndPoint:
-            activity.SetTag("net.transport", "ip_tcp");
-            activity.SetTag("net.peer.ip", ipEndPoint.Address.ToString());
-            if (ipEndPoint.Port != EDBConnection.DefaultPort)
-                activity.SetTag("net.peer.port", ipEndPoint.Port);
-            activity.SetTag("net.peer.name", connector.Host);
+            if (ipEndPoint.Port != 5432)
+                activity.SetTag("server.port", ipEndPoint.Port);
             break;
 
         case UnixDomainSocketEndPoint:
-            activity.SetTag("net.transport", "unix");
-            activity.SetTag("net.peer.name", connector.Host);
             break;
 
         default:
-            throw new ArgumentOutOfRangeException("Invalid endpoint type: " + endPoint.GetType());
+            throw new UnreachableException("Invalid endpoint type: " + endPoint.GetType());
         }
+
+        // Npgsql-specific tags
+        activity.SetTag("db.npgsql.data_source", connector.DataSource.Name);
+        activity.SetTag("db.npgsql.connection_id", connector.Id);
     }
 
     internal static void ReceivedFirstResponse(Activity activity, EDBTracingOptions tracingOptions)
@@ -105,25 +131,58 @@ static class EDBActivitySource
         activity.AddEvent(activityEvent);
     }
 
-    internal static void CommandStop(Activity activity)
+    internal static void SetException(Activity activity, Exception exception, bool escaped = true)
     {
-        activity.SetTag("otel.status_code", "OK");
+        activity.AddException(exception);
+
+        if (exception is PostgresException { SqlState: var sqlState })
+        {
+            activity.SetTag("db.response.status_code", sqlState);
+
+            // error.type SHOULD match the db.response.status_code returned by the database or the client library, or the canonical name of exception that occurred.
+            // Since we don't have a table to map the error code to a textual description, the SQL state is the best we can do.
+            activity.SetTag("error.type", sqlState);
+        }
+        else
+        {
+            if (exception is EDBException { InnerException: Exception innerException })
+                exception = innerException;
+
+            activity.SetTag("error.type", exception.GetType().FullName);
+        }
+
+        var statusDescription = exception is PostgresException pgEx ? pgEx.SqlState : exception.Message;
+        activity.SetStatus(ActivityStatusCode.Error, statusDescription);
         activity.Dispose();
     }
 
-    internal static void SetException(Activity activity, Exception ex, bool escaped = true)
+    internal static Activity? CopyStart(string command, EDBConnector connector, string? spanName, string operation)
     {
-        var tags = new ActivityTagsCollection
-        {
-            { "exception.type", ex.GetType().FullName },
-            { "exception.message", ex.Message },
-            { "exception.stacktrace", ex.ToString() },
-            { "exception.escaped", escaped }
-        };
-        var activityEvent = new ActivityEvent("exception", tags: tags);
-        activity.AddEvent(activityEvent);
-        activity.SetTag("otel.status_code", "ERROR");
-        activity.SetTag("otel.status_description", ex is PostgresException pgEx ? pgEx.SqlState : ex.Message);
+        var activity = Source.StartActivity(spanName ?? operation, ActivityKind.Client);
+        if (activity is not { IsAllDataRequested: true })
+            return activity;
+        activity.SetTag("db.query.text", command);
+        activity.SetTag("db.operation.name", operation);
+        Enrich(activity, connector);
+        return activity;
+    }
+
+    internal static void SetOperation(Activity activity, string operation)
+    {
+        if (!activity.IsAllDataRequested)
+            return;
+        activity.SetTag("db.operation.name", operation);
+    }
+
+    internal static void CopyStop(Activity activity, ulong? rows = null)
+    {
+        if (rows.HasValue)
+            activity.SetTag("db.npgsql.rows", rows.Value);
         activity.Dispose();
     }
+
+    static string GetLibraryVersion()
+        => typeof(EDBDataSource).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion ?? "UNKNOWN";
 }

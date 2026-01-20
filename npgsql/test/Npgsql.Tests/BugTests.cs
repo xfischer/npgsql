@@ -1269,16 +1269,16 @@ $$;");
         using (var exporter = await conn.BeginBinaryExportAsync($"COPY {table} (value) TO STDIN (FORMAT binary)"))
         {
             await exporter.StartRowAsync();
-            Assert.IsTrue(exporter.IsNull);
+            Assert.That(exporter.IsNull);
             await exporter.SkipAsync();
             await exporter.StartRowAsync();
-            Assert.AreEqual(1, await exporter.ReadAsync<int?>());
+            Assert.That(await exporter.ReadAsync<int?>(), Is.EqualTo(1));
             await exporter.StartRowAsync();
-            Assert.AreEqual(2, await exporter.ReadAsync<int?>());
+            Assert.That(await exporter.ReadAsync<int?>(), Is.EqualTo(2));
         }
     }
 
-    [Test, Timeout(30000)]
+    [Test, CancelAfter(30000)]
     [IssueLink("https://github.com/npgsql/npgsql/issues/3839")]
     public async Task UIThreadSynchronizationContext_deadlock()
     {
@@ -1304,7 +1304,7 @@ $$;");
 #else
     [Test]
 #endif
-    [Timeout(10000)]
+    [CancelAfter(10000)]
     [IssueLink("https://github.com/npgsql/npgsql/issues/3924")]
     public async Task Bug3924()
     {
@@ -1345,7 +1345,7 @@ $$;");
         }
     }
 
-    [Test]
+    [Test,EDBExplicit("Hangs"), CancelAfter(5000)]
     [IssueLink("https://github.com/npgsql/npgsql/issues/4099")]
     public async Task Bug4099()
     {

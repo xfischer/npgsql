@@ -15,6 +15,11 @@ public sealed class EDBTracingOptionsBuilder
     Func<EDBCommand, string?>? _commandSpanNameProvider;
     Func<EDBBatch, string?>? _batchSpanNameProvider;
     bool _enableFirstResponseEvent = true;
+    bool _enablePhysicalOpenTracing = true;
+
+    Func<string, bool>? _copyOperationFilter;
+    Action<Activity, string>? _copyOperationEnrichmentCallback;
+    Func<string, string?>? _copyOperationSpanNameProvider;
 
     internal EDBTracingOptionsBuilder()
     {
@@ -88,6 +93,45 @@ public sealed class EDBTracingOptionsBuilder
         return this;
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether to trace physical connection open.
+    /// Default is true to preserve existing behavior.
+    /// </summary>
+    public EDBTracingOptionsBuilder EnablePhysicalOpenTracing(bool enable = true)
+    {
+        _enablePhysicalOpenTracing = enable;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures a filter function that determines whether to emit tracing information for a copy operation.
+    /// By default, tracing information is emitted for all copy operations.
+    /// </summary>
+    public EDBTracingOptionsBuilder ConfigureCopyOperationFilter(Func<string, bool>? copyOperationFilter)
+    {
+        _copyOperationFilter = copyOperationFilter;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures a callback that can enrich the <see cref="Activity"/> emitted for a given copy operation.
+    /// </summary>
+    public EDBTracingOptionsBuilder ConfigureCopyOperationEnrichmentCallback(Action<Activity, string>? copyOperationEnrichmentCallback)
+    {
+        _copyOperationEnrichmentCallback = copyOperationEnrichmentCallback;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures a callback that provides the tracing span's name for a copy operation. If <c>null</c>, the default standard
+    /// span name is used, which is the database name.
+    /// </summary>
+    public EDBTracingOptionsBuilder ConfigureCopyOperationSpanNameProvider(Func<string, string?>? copyOperationSpanNameProvider)
+    {
+        _copyOperationSpanNameProvider = copyOperationSpanNameProvider;
+        return this;
+    }
+
     internal EDBTracingOptions Build() => new()
     {
         CommandFilter = _commandFilter,
@@ -96,7 +140,11 @@ public sealed class EDBTracingOptionsBuilder
         BatchEnrichmentCallback = _batchEnrichmentCallback,
         CommandSpanNameProvider = _commandSpanNameProvider,
         BatchSpanNameProvider = _batchSpanNameProvider,
-        EnableFirstResponseEvent = _enableFirstResponseEvent
+        EnableFirstResponseEvent = _enableFirstResponseEvent,
+        EnablePhysicalOpenTracing = _enablePhysicalOpenTracing,
+        CopyOperationFilter = _copyOperationFilter,
+        CopyOperationEnrichmentCallback = _copyOperationEnrichmentCallback,
+        CopyOperationSpanNameProvider = _copyOperationSpanNameProvider
     };
 }
 
@@ -109,4 +157,8 @@ sealed class EDBTracingOptions
     internal Func<EDBCommand, string?>? CommandSpanNameProvider { get; init; }
     internal Func<EDBBatch, string?>? BatchSpanNameProvider { get; init; }
     internal bool EnableFirstResponseEvent { get; init; }
+    internal bool EnablePhysicalOpenTracing { get; init; }
+    internal Func<string, bool>? CopyOperationFilter { get; init; }
+    internal Action<Activity, string>? CopyOperationEnrichmentCallback { get; init; }
+    internal Func<string, string?>? CopyOperationSpanNameProvider { get; init; }
 }

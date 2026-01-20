@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using NUnit.Framework;
 using System.Data;
 using System.Threading;
@@ -69,7 +69,11 @@ internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
     }
 
     [TearDown]
-    public void Dispose() => TestUtil.closeDB(conn);
+    public void Dispose()
+    {
+        TestUtil.closeDB(conn);
+        conn?.Dispose();
+    }
 
     private void Execute(string query)
     {
@@ -94,7 +98,7 @@ internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
         PostgresNotice? notice = null;
         void action(object sender, EDBNoticeEventArgs args)
         {
-            Assert.IsNotNull(args.Notice);
+            Assert.That(args.Notice, Is.Not.Null);
             notice = args.Notice;
             mre.Set();
         }
@@ -112,8 +116,8 @@ internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.IsNotNull(notice);
-            Assert.AreEqual("Employee 7369 validated without errors", notice!.MessageText);
+            Assert.That(notice, Is.Not.Null);
+            Assert.That(notice!.MessageText, Is.EqualTo("Employee 7369 validated without errors"));
         }
         finally
         {
@@ -130,7 +134,7 @@ internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
         PostgresNotice? notice = null;
         void action(object sender, EDBNoticeEventArgs args)
         {
-            Assert.IsNotNull(args.Notice);
+            Assert.That(args.Notice, Is.Not.Null);
             notice = args.Notice;
             mre.Set();
         }
@@ -148,8 +152,8 @@ internal class EDBControlStructuresRaiseAppErrTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.IsNotNull(notice);
-            Assert.AreEqual("SQLERRM: EDB-20010: No name for 7499", notice!.MessageText);
+            Assert.That(notice, Is.Not.Null);
+            Assert.That(notice!.MessageText, Is.EqualTo("SQLERRM: EDB-20010: No name for 7499"));
         }
         finally
         {

@@ -1,4 +1,5 @@
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
 namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Conventions;
 
@@ -17,7 +18,7 @@ namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Metadata.Convent
 /// </remarks>
 public class NpgsqlConventionSetBuilder : RelationalConventionSetBuilder
 {
-    private readonly IRelationalTypeMappingSource _typeMappingSource;
+    private readonly NpgsqlTypeMappingSource _typeMappingSource;
     private readonly Version _postgresVersion;
     private readonly IReadOnlyList<EnumDefinition> _enumDefinitions;
 
@@ -35,7 +36,7 @@ public class NpgsqlConventionSetBuilder : RelationalConventionSetBuilder
         INpgsqlSingletonOptions npgsqlSingletonOptions)
         : base(dependencies, relationalDependencies)
     {
-        _typeMappingSource = typeMappingSource;
+        _typeMappingSource = (NpgsqlTypeMappingSource)typeMappingSource;
         _postgresVersion = npgsqlSingletonOptions.PostgresVersion;
         _enumDefinitions = npgsqlSingletonOptions.EnumDefinitions;
     }
@@ -50,8 +51,6 @@ public class NpgsqlConventionSetBuilder : RelationalConventionSetBuilder
         conventionSet.ModelInitializedConventions.Add(valueGenerationStrategyConvention);
         conventionSet.ModelInitializedConventions.Add(
             new RelationalMaxIdentifierLengthConvention(63, Dependencies, RelationalDependencies));
-
-        conventionSet.PropertyAddedConventions.Add(new NpgsqlJsonElementHackConvention());
 
         ValueGenerationConvention valueGenerationConvention = new NpgsqlValueGenerationConvention(Dependencies, RelationalDependencies);
         ReplaceConvention(conventionSet.EntityTypeBaseTypeChangedConventions, valueGenerationConvention);

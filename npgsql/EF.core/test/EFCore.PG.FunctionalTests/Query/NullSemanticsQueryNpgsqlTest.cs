@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore.TestModels.NullSemanticsModel;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal.Mapping;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+namespace Microsoft.EntityFrameworkCore.Query;
 
 // ReSharper disable once UnusedMember.Global
 public class NullSemanticsQueryNpgsqlTest : NullSemanticsQueryTestBase<NullSemanticsQueryNpgsqlTest.NullSemanticsQueryNpgsqlFixture>
@@ -163,17 +162,6 @@ FROM "Entities1" AS e
 WHERE (e."IntA", e."StringA") <> (e."IntB", e."StringB") OR ((e."NullableBoolA" <> e."NullableBoolB" OR e."NullableBoolA" IS NULL OR e."NullableBoolB" IS NULL) AND (e."NullableBoolA" IS NOT NULL OR e."NullableBoolB" IS NOT NULL))
 """);
     }
-
-/*
-    [ConditionalTheory]
-    [MemberData(nameof(IsAsyncData))]
-    [EDBNotEPASRedwoodCompatible("Redwood nullable strings (replace function impl EC-2924)")]
-    public override Task Null_semantics_applied_when_comparing_two_functions_with_multiple_nullable_arguments(bool async)
-    {
-        return base.Null_semantics_applied_when_comparing_two_functions_with_multiple_nullable_arguments(async);
-    }
-	*/
-
 
     private void AssertSql(params string[] expected)
         => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);

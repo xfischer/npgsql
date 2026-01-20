@@ -59,7 +59,7 @@ public sealed class EDBFactory : DbProviderFactory, IServiceProvider
     public override bool CanCreateCommandBuilder => true;
 #endif
 
-#if NET6_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     /// <inheritdoc/>
     public override bool CanCreateBatch => true;
 
@@ -70,7 +70,7 @@ public sealed class EDBFactory : DbProviderFactory, IServiceProvider
     public override DbBatchCommand CreateBatchCommand() => new EDBBatchCommand();
 #endif
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     /// <inheritdoc/>
     public override DbDataSource CreateDataSource(string connectionString)
         => EDBDataSource.Create(connectionString);

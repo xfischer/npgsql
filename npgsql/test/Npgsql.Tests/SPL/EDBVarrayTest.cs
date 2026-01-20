@@ -54,6 +54,7 @@ internal class EDBVarrayTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -116,11 +117,11 @@ internal class EDBVarrayTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(DEPT_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DEPT_TOTAL));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(deptNames[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(deptNames[i]));
             }
         }
         finally

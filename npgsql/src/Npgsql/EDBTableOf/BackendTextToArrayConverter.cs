@@ -52,7 +52,7 @@ internal class BackendTextToArrayConverter : PgConverter<List<object>>
         if (async)
         {
             var textReader = await reader.GetTextReaderAsync(_options.TextEncoding, cancellationToken).ConfigureAwait(false);
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
             value = await textReader.ReadToEndAsync().ConfigureAwait(false);
 #else
             value = await textReader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);

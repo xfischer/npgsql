@@ -40,6 +40,7 @@ internal class EDBDynamicSQLTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -109,9 +110,9 @@ internal class EDBDynamicSQLTest : EPASTestBase
         }
 
         var list = getJobnos();
-        Assert.AreEqual(JOB_100_200.Length, list.Count);
+        Assert.That(list.Count, Is.EqualTo(JOB_100_200.Length));
         for (var i = 0; i < list.Count; i++)
-            Assert.AreEqual(JOB_100_200[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(JOB_100_200[i]));
     }
 
     [Test]
@@ -155,9 +156,9 @@ internal class EDBDynamicSQLTest : EPASTestBase
         }
 
         var list = getJobnos();
-        Assert.AreEqual(JOB_300_400_500.Length, list.Count);
+        Assert.That(list.Count, Is.EqualTo(JOB_300_400_500.Length));
         for (var i = 0; i < list.Count; i++)
-            Assert.AreEqual(JOB_300_400_500[i], list[i]);
+            Assert.That(list[i], Is.EqualTo(JOB_300_400_500[i]));
     }
 
     [Test]
@@ -208,11 +209,11 @@ internal class EDBDynamicSQLTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(JOB_NAMES.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(JOB_NAMES.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(JOB_NAMES[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(JOB_NAMES[i]));
             }
         }
         finally

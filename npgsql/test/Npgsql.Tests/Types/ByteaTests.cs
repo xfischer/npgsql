@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using EDBTypes;
 using NUnit.Framework;
@@ -296,9 +297,22 @@ public class ByteaTests(MultiplexingMode multiplexingMode) : MultiplexingTestBas
         var inVal = new[] { bytes, bytes };
         cmd.Parameters.AddWithValue("p1", EDBDbType.Bytea | EDBDbType.Array, inVal);
         var retVal = (byte[][]?)await cmd.ExecuteScalarAsync();
-        Assert.AreEqual(inVal.Length, retVal!.Length);
-        Assert.AreEqual(inVal[0], retVal[0]);
-        Assert.AreEqual(inVal[1], retVal[1]);
+        Assert.That(retVal!.Length, Is.EqualTo(inVal.Length));
+        Assert.That(retVal[0], Is.EqualTo(inVal[0]));
+        Assert.That(retVal[1], Is.EqualTo(inVal[1]));
+    }
+
+    [Test]
+    public async Task InvalidCastException_unknown_stream_read()
+    {
+        await using var conn = await OpenConnectionAsync();
+        await using var cmd = new EDBCommand("SELECT :p1", conn);
+        cmd.Parameters.AddWithValue("p1", EDBDbType.Bytea, new byte[] { 1 });
+        await using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            Assert.Throws<InvalidCastException>(() => reader.GetFieldValue<NetworkStream>(0));
+        }
     }
 
     sealed class NonSeekableStream(byte[] data) : MemoryStream(data)

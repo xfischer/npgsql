@@ -78,7 +78,11 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
     }
 
     [TearDown]
-    public void Dispose() => TestUtil.closeDB(conn);
+    public void Dispose()
+    {
+        TestUtil.closeDB(conn);
+        conn?.Dispose();
+    }
 
     private void Execute(string query)
     {
@@ -118,7 +122,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         cstmt.ExecuteNonQuery();
         var value = double.Parse(cstmt.Parameters[2].Value!.ToString()!);
 
-        Assert.AreEqual(28800.00, value, 0.01);
+        Assert.That(value, Is.EqualTo(28800.00).Within(0.01));
     }
 
     [Test]
@@ -142,7 +146,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         cstmt.ExecuteNonQuery();
         var value = cstmt.Parameters[1].Value!.ToString();
 
-        Assert.AreEqual("Employee 1001 validated without errors.", value);
+        Assert.That(value, Is.EqualTo("Employee 1001 validated without errors."));
     }
 
     [Test]
@@ -166,7 +170,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         cstmt.ExecuteNonQuery();
         var value = cstmt.Parameters[1].Value!.ToString();
 
-        Assert.AreEqual("Employee 4001 is not a valid employee.", value);
+        Assert.That(value, Is.EqualTo("Employee 4001 is not a valid employee."));
     }
 
     [Test]
@@ -190,7 +194,7 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         cstmt.ExecuteNonQuery();
         var value = cstmt.Parameters[1].Value!.ToString();
 
-        Assert.AreEqual("Employee 4002 is not a valid employee.", value);
+        Assert.That(value, Is.EqualTo("Employee 4002 is not a valid employee."));
     }
 
     [Test]
@@ -214,6 +218,6 @@ public class EDBControlStructuresReturnGotoStmtTest : EPASTestBase
         cstmt.ExecuteNonQuery();
         var value = cstmt.Parameters[1].Value!.ToString();
 
-        Assert.AreEqual("Employee 5001 is not a valid employee.", value);
+        Assert.That(value, Is.EqualTo("Employee 5001 is not a valid employee."));
     }
 }

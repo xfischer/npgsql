@@ -1,6 +1,4 @@
-#nullable enable
-
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public class BadDataJsonDeserializationSqlServerTest : BadDataJsonDeserializationTestBase
 {

@@ -203,20 +203,21 @@ $$ LANGUAGE 'plpgsql';");
     [Test]
     public void EDBException_IsTransient()
     {
-        Assert.True(new EDBException("", new IOException()).IsTransient);
-        Assert.True(new EDBException("", new SocketException()).IsTransient);
-        Assert.True(new EDBException("", new TimeoutException()).IsTransient);
-        Assert.False(new EDBException().IsTransient);
-        Assert.False(new EDBException("", new Exception("Inner Exception")).IsTransient);
+        Assert.That(new EDBException("", new IOException()).IsTransient);
+        Assert.That(new EDBException("", new SocketException()).IsTransient);
+        Assert.That(new EDBException("", new TimeoutException()).IsTransient);
+        Assert.That(new EDBException().IsTransient, Is.False);
+        Assert.That(new EDBException("", new Exception("Inner Exception")).IsTransient, Is.False);
     }
 
+#if !NET9_0_OR_GREATER
 #pragma warning disable SYSLIB0051
 #pragma warning disable 618
     [Test]
     public void PostgresException_IsTransient()
     {
-        Assert.True(CreateWithSqlState("53300").IsTransient);
-        Assert.False(CreateWithSqlState("0").IsTransient);
+        Assert.That(CreateWithSqlState("53300").IsTransient);
+        Assert.That(CreateWithSqlState("0").IsTransient, Is.False);
 
         PostgresException CreateWithSqlState(string sqlState)
         {
@@ -251,7 +252,7 @@ $$ LANGUAGE 'plpgsql';");
 #pragma warning disable SYSLIB0011
 #pragma warning disable SYSLIB0050
 
-#if !NET9_0_OR_GREATER
+#if !NET9_0_OR_GREATER // BinaryFormatter serialization and deserialization have been removed. See https://aka.ms/binaryformatter for more information.
     [Test]
     public void Serialization()
     {
@@ -302,11 +303,12 @@ $$ LANGUAGE 'plpgsql';");
 
         // Check virtual base properties, which can be incorrectly deserialized if overridden, because the base
         // Exception.GetObjectData() method writes the fields, not the properties (e.g. "_message" instead of "Message").
-        Assert.That(ex.Data, Is.EquivalentTo((IDictionary?)info.GetValue("Data", typeof(IDictionary))));
+        Assert.That(ex.Data, Is.EquivalentTo((IDictionary)info.GetValue("Data", typeof(IDictionary))!));
         Assert.That(ex.HelpLink, Is.EqualTo(info.GetValue("HelpURL", typeof(string))));
         Assert.That(ex.Message, Is.EqualTo(info.GetValue("Message", typeof(string))));
         Assert.That(ex.Source, Is.EqualTo(info.GetValue("Source", typeof(string))));
         Assert.That(ex.StackTrace, Is.EqualTo(info.GetValue("StackTraceString", typeof(string))));
     }
 #pragma warning restore SYSLIB0051
+#endif
 }

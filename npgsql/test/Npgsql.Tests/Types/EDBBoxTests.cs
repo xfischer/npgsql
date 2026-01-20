@@ -12,7 +12,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 	/// </summary>
 	/// 
 	[TestFixture]
-[NonParallelizable]
+    [NonParallelizable]
 	public class EDBBoxTest : TestBase
 {
 		EDBConnection? con = null;
@@ -30,10 +30,10 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 
 		private void Check(EDBBox box, double upperX, double upperY, double lowerX, double lowerY)
 		{
-			Assert.AreEqual(upperX, box.UpperRight.X);
-			Assert.AreEqual(upperY, box.UpperRight.Y);
-			Assert.AreEqual(lowerX, box.LowerLeft.X);
-			Assert.AreEqual(lowerY, box.LowerLeft.Y);
+			Assert.That(box.UpperRight.X, Is.EqualTo(upperX));
+			Assert.That(box.UpperRight.Y, Is.EqualTo(upperY));
+			Assert.That(box.LowerLeft.X, Is.EqualTo(lowerX));
+			Assert.That(box.LowerLeft.Y, Is.EqualTo(lowerY));
 		}
 
 		[Test]
@@ -70,7 +70,7 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 			var box = EDBBox.Parse("(4.0,3.0),(4.0,4.0)");
 			Check(box, 4, 4, 4, 3);
 
-			Assert.True(box.IsEmpty);
+			Assert.That(box.IsEmpty);
 		}
 
 		[Test]
@@ -79,12 +79,12 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 			var box = new EDBBox(new EDBPoint(4.0, 3.0), new EDBPoint(4.0, 13.0));
 			Check(box, 4, 13, 4, 3);
 
-			Assert.AreEqual(13, box.Top);
-			Assert.AreEqual(4, box.Right);
-			Assert.AreEqual(3, box.Bottom);
-			Assert.AreEqual(4, box.Left);
+			Assert.That(box.Top, Is.EqualTo(13));
+			Assert.That(box.Right, Is.EqualTo(4));
+			Assert.That(box.Bottom, Is.EqualTo(3));
+			Assert.That(box.Left, Is.EqualTo(4));
 
-			Assert.True(box.IsEmpty);
+			Assert.That(box.IsEmpty);
 		}
 
 		[Test]
@@ -93,12 +93,12 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 			var box = new EDBBox(4.0,3.0,4.0,13.0);
 			Check(box, 13, 4, 3, 4);
 
-			Assert.AreEqual(4, box.Top);
-			Assert.AreEqual(13, box.Right);
-			Assert.AreEqual(4, box.Bottom);
-			Assert.AreEqual(3, box.Left);
+			Assert.That(box.Top, Is.EqualTo(4));
+			Assert.That(box.Right, Is.EqualTo(13));
+			Assert.That(box.Bottom, Is.EqualTo(4));
+			Assert.That(box.Left, Is.EqualTo(3));
 
-			Assert.True(box.IsEmpty);
+			Assert.That(box.IsEmpty);
 		}
 
 		[Test]
@@ -108,15 +108,15 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 			var box2 = new EDBBox(4.0, 3.0, 4.0, 13.0);
 			var box3 = new EDBBox(4.0, 3.0, 5.0, 13.0);
 
-			Assert.True(box1 == box2);
-			Assert.True(box1.Equals(box2));
+			Assert.That(box1 == box2);
+			Assert.That(box1.Equals(box2));
 
-			Assert.False(box1.Equals(box3));
-			Assert.False(box1 == box3);
-			Assert.True(box1 != box3);
+			Assert.That(box1.Equals(box3), Is.False);
+			Assert.That(box1 == box3, Is.False);
+			Assert.That(box1 != box3);
 
 			var s = "Hello";
-			Assert.False(box1.Equals((object)s));
+			Assert.That(box1.Equals((object)s), Is.False);
 
 		}
 
@@ -133,11 +133,11 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 
 			var rowsAdded = command.ExecuteNonQuery();
 
-			Assert.AreEqual(1, rowsAdded);
+			Assert.That(rowsAdded, Is.EqualTo(1));
 
 			command = new EDBCommand("select f1 from EDBBoxTest;", con);
 			
-			var box = (EDBBox)command.ExecuteScalar();
+			var box = (EDBBox)command.ExecuteScalar()!;
 			Check(box, 3, 4, 3, 4);
 
 			// Update
@@ -147,20 +147,20 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 			command.Parameters[0].Value = box1;
 
 			rowsAdded = command.ExecuteNonQuery();
-			Assert.AreEqual(1, rowsAdded);
+			Assert.That(rowsAdded, Is.EqualTo(1));
 
 			command = new EDBCommand("select f1 from EDBBoxTest;", con);
-			box = (EDBBox)command.ExecuteScalar();
+			box = (EDBBox)command.ExecuteScalar()!;
 			Check(box, 2, 5, 2, 5);
 
 			// Delete
 			command = new EDBCommand("Delete from EDBBoxTest where id = 1", con);
 
 			rowsAdded = command.ExecuteNonQuery();
-			Assert.AreEqual(1, rowsAdded);
+			Assert.That(rowsAdded, Is.EqualTo(1));
 
 			command = new EDBCommand("select f1 from EDBBoxTest;", con);
-			Assert.AreEqual(-1, command.ExecuteNonQuery());
+			Assert.That(command.ExecuteNonQuery(), Is.EqualTo(-1));
 		}
 		
 		[TearDown] 
@@ -170,5 +170,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 			var result = command.ExecuteNonQuery();
 			Console.WriteLine("drop table returned " + result);
 			TestUtil.closeDB(con);
+            con?.Dispose();
 		}
 	}

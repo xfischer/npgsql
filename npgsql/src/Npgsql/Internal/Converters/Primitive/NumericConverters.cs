@@ -88,7 +88,7 @@ sealed class BigIntegerNumericConverter : PgStreamingConverter<BigInteger>
 }
 
 sealed class DecimalNumericConverter<T> : PgBufferedConverter<T>
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
     where T : INumberBase<T>
 #else
     where T : notnull
@@ -135,7 +135,7 @@ sealed class DecimalNumericConverter<T> : PgBufferedConverter<T>
 
     static PgNumeric.Builder ConvertFrom(T value, Span<short> destination)
     {
-#if !NET7_0_OR_GREATER || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)|| NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+#if !NET8_0_OR_GREATER || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)|| NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
         if (typeof(short) == typeof(T))
             return new PgNumeric.Builder((decimal)(short)(object)value!, destination);
         if (typeof(int) == typeof(T))
@@ -163,7 +163,7 @@ sealed class DecimalNumericConverter<T> : PgBufferedConverter<T>
 
     static T ConvertTo(in PgNumeric.Builder numeric)
     {
-#if !NET7_0_OR_GREATER || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
+#if !NET8_0_OR_GREATER || NETFRAMEWORK // EnterpriseDB (NETFRAMEWORK)
         if (typeof(short) == typeof(T))
             return (T)(object)(short)numeric.ToDecimal();
         if (typeof(int) == typeof(T))

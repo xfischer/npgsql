@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore.TestModels.ManyToManyModel;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public class ManyToManyTrackingNpgsqlTest(ManyToManyTrackingNpgsqlTest.ManyToManyTrackingNpgsqlFixture fixture)
     : ManyToManyTrackingRelationalTestBase<

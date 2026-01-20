@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Transactions;
 using Microsoft.Extensions.Logging;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Util;
@@ -75,7 +74,7 @@ class PoolingDataSource : EDBDataSource
     internal PoolingDataSource(
         EDBConnectionStringBuilder settings,
         EDBDataSourceConfiguration dataSourceConfig)
-        : base(settings, dataSourceConfig)
+        : base(settings, dataSourceConfig, reportMetrics: true)
     {
         if (settings.MaxPoolSize < settings.MinPoolSize)
             throw new ArgumentException($"Connection can't have 'Max Pool Size' {settings.MaxPoolSize} under 'Min Pool Size' {settings.MinPoolSize}");
@@ -97,7 +96,8 @@ class PoolingDataSource : EDBDataSource
         if (connectionIdleLifetime < pruningSamplingInterval)
             throw new ArgumentException($"Connection can't have {nameof(settings.ConnectionIdleLifetime)} {connectionIdleLifetime} under {nameof(settings.ConnectionPruningInterval)} {pruningSamplingInterval}");
 
-        _pruningTimer = new Timer(PruningTimerCallback, this, Timeout.Infinite, Timeout.Infinite);
+        using (ExecutionContext.SuppressFlow()) // Don't capture the current ExecutionContext and its AsyncLocals onto the timer causing them to live forever
+            _pruningTimer = new Timer(PruningTimerCallback, this, Timeout.Infinite, Timeout.Infinite);
         _pruningSampleSize = DivideRoundingUp(settings.ConnectionIdleLifetime, settings.ConnectionPruningInterval);
         _pruningMedianIndex = DivideRoundingUp(_pruningSampleSize, 2) - 1; // - 1 to go from length to index
         _pruningSamplingInterval = pruningSamplingInterval;
@@ -238,12 +238,9 @@ class PoolingDataSource : EDBDataSource
             return false;
         }
 
-        // The connector directly references the data source type mapper into the connector, to protect it against changes by a concurrent
+        // The connector directly references the current reloadable state reference, to protect it against changes by a concurrent
         // ReloadTypes. We update them here before returning the connector from the pool.
-        Debug.Assert(SerializerOptions is not null);
-        Debug.Assert(DatabaseInfo is not null);
-        connector.SerializerOptions = SerializerOptions;
-        connector.DatabaseInfo = DatabaseInfo;
+        connector.ReloadableState = CurrentReloadableState;
 
         Debug.Assert(connector.State == ConnectorState.Ready,
             $"Got idle connector but {nameof(connector.State)} is {connector.State}");
@@ -268,12 +265,12 @@ class PoolingDataSource : EDBDataSource
             try
             {
                 // We've managed to increase the open counter, open a physical connections.
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 var startTime = Stopwatch.GetTimestamp();
 #endif
                 var connector = new EDBConnector(this, conn) { ClearCounter = _clearCounter };
                 await connector.Open(timeout, async, cancellationToken).ConfigureAwait(false);
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 MetricsReporter.ReportConnectionCreateTime(Stopwatch.GetElapsedTime(startTime));
 #endif
 

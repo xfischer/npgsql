@@ -36,9 +36,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     internal EDBCommand Command { get; private set; } = default!;
     internal EDBConnector Connector { get; }
     EDBConnection? _connection;
-    /* Enterprisedb Team */
-    internal bool _isOutParamReceived;
-    private bool _isInMemoryReader = false;
+    internal bool _isOutParamReceived; // Enterprisedb Team
+    private bool _isInMemoryReader = false; // Enterprisedb Team
 
     /// <summary>
     /// The behavior of the command with which this reader was executed.
@@ -610,7 +609,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                 var statement = _statements[StatementIndex];
 
                 // Reference the triggering statement from the exception
-                postgresException.BatchCommand = statement;
+                if (Connector.Settings.IncludeFailedBatchedCommand)
+                	postgresException.BatchCommand = statement;
 
                 // Prevent the command or batch from being recycled (by the connection) when it's disposed. This is important since
                 // the exception is very likely to escape the using statement of the command, and by that time some other user may
@@ -924,7 +924,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
         var pending = new Queue<object>();
         var taken = new List<EDBParameter>();
-        for (var i = 0; i < FieldCount; i++)
+        for (var i = 0; i < ColumnCount; i++)
         {
             if (parameters.TryGetValue(GetName(i), out var p) && p.IsOutputDirection)
             {
@@ -1011,7 +1011,11 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                     case BackendMessageCode.RowDescription:
                     case BackendMessageCode.OutDescription: // EnterpriseDB
                         // We have a resultset
-                        RowDescription = _statements[StatementIndex].Description = (RowDescriptionMessage)msg;
+                        // RowDescription messages are cached on the connector, but if we're auto-preparing, we need to
+                        // clone our own copy which will last beyond the lifetime of this invocation.
+                        RowDescription = _statements[StatementIndex].Description = preparedStatement == null
+                            ? (RowDescriptionMessage)msg
+                            : ((RowDescriptionMessage)msg).Clone();
                         Command.FixupRowDescription(RowDescription, StatementIndex == 0);
                         break;
                     default:
@@ -1032,17 +1036,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
                 // Found a resultset
                 if (RowDescription is not null)
-                {
-                    if (ColumnInfoCache?.Length >= ColumnCount)
-                        Array.Clear(ColumnInfoCache, 0, ColumnCount);
-                    else
-                    {
-                        if (ColumnInfoCache is { } cache)
-                            ArrayPool<ColumnInfo>.Shared.Return(cache, clearArray: true);
-                        ColumnInfoCache = ArrayPool<ColumnInfo>.Shared.Rent(ColumnCount);
-                    }
                     return true;
-                }
             }
 
             State = ReaderState.Consumed;
@@ -1058,7 +1052,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
             // Reference the triggering statement from the exception
             if (e is PostgresException postgresException && StatementIndex >= 0 && StatementIndex < _statements.Count)
             {
-                postgresException.BatchCommand = _statements[StatementIndex];
+                // Reference the triggering statement from the exception
+                if (Connector.Settings.IncludeFailedBatchedCommand)
+                    postgresException.BatchCommand = _statements[StatementIndex];
 
                 // Prevent the command or batch from being recycled (by the connection) when it's disposed. This is important since
                 // the exception is very likely to escape the using statement of the command, and by that time some other user may
@@ -1365,7 +1361,16 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
         // Skip over the other result sets. Note that this does tally records affected from CommandComplete messages, and properly sets
         // state for auto-prepared statements
-        while (true)
+        //
+        // The only exception is when the connector is broken (which can happen in the middle of consuming)
+        // As then there is no point in going forward.
+        // An exception to the exception above is when connector is concurrently closed while
+        // the reader is still going over the result set.
+        // While this is undefined behavior and user error, we should try to at least do our best to not loop indefinitely.
+        //
+        // While we can also check our local state (State == Closed)
+        // It's probably better to rely on connector since it's private and its state can't be changed
+        while (Connector.IsConnected)
         {
             try
             {
@@ -1428,7 +1433,6 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
                         }
                     }
                 }
-
             }
             catch (Exception e)
             {
@@ -1777,7 +1781,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     public override int GetValues(object[] values)
     {
         ThrowIfNotInResult();
-#if NET6_0_OR_GREATER // EnterpriseDB
+#if NET8_0_OR_GREATER // EnterpriseDB
         ArgumentNullException.ThrowIfNull(values);
 #else
         if (values is null)
@@ -1882,9 +1886,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (dataOffset is < 0 or > int.MaxValue)
             ThrowHelper.ThrowArgumentOutOfRangeException(nameof(dataOffset), "dataOffset must be between 0 and {0}", int.MaxValue);
         if (buffer != null && (bufferOffset < 0 || bufferOffset >= buffer.Length + 1))
-            ThrowHelper.ThrowIndexOutOfRangeException(string.Format("bufferOffset must be between 0 and {0}", buffer.Length));
+            ThrowHelper.ThrowIndexOutOfRangeException("bufferOffset must be between 0 and {0}", buffer.Length);
         if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
-            ThrowHelper.ThrowIndexOutOfRangeException(string.Format("bufferOffset must be between 0 and {0}", buffer.Length - bufferOffset));
+            ThrowHelper.ThrowIndexOutOfRangeException("bufferOffset must be between 0 and {0}", buffer.Length - bufferOffset);
 
         if (SeekToColumn(ordinal, field.DataFormat, resumableOp: true) is var columnLength && columnLength is -1)
             ThrowHelper.ThrowInvalidCastException_NoValue(field);
@@ -1948,9 +1952,9 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         if (dataOffset is < 0 or > int.MaxValue)
             ThrowHelper.ThrowArgumentOutOfRangeException(nameof(dataOffset), "dataOffset must be between 0 and {0}", int.MaxValue);
         if (buffer != null && (bufferOffset < 0 || bufferOffset >= buffer.Length + 1))
-            ThrowHelper.ThrowIndexOutOfRangeException(string.Format("bufferOffset must be between 0 and {0}", buffer.Length));
+            ThrowHelper.ThrowIndexOutOfRangeException("bufferOffset must be between 0 and {0}", buffer.Length);
         if (buffer != null && (length < 0 || length > buffer.Length - bufferOffset))
-            ThrowHelper.ThrowIndexOutOfRangeException(string.Format("bufferOffset must be between 0 and {0}", buffer.Length - bufferOffset));
+            ThrowHelper.ThrowIndexOutOfRangeException("bufferOffset must be between 0 and {0}", buffer.Length - bufferOffset);
 
         if (SeekToColumn(ordinal, field, resumableOp: true) is -1)
             ThrowHelper.ThrowInvalidCastException_NoValue(RowDescription[ordinal]);
@@ -2305,7 +2309,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     /// <returns></returns>
     public ReadOnlyCollection<EDBDbColumn> GetColumnSchema()
-        => GetColumnSchema(async: false).GetAwaiter().GetResult();
+        => GetColumnSchema<EDBDbColumn>(async: false).GetAwaiter().GetResult();
 
     ReadOnlyCollection<DbColumn> IDbColumnSchemaGenerator.GetColumnSchema()
     {
@@ -2322,18 +2326,18 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// Asynchronously returns schema information for the columns in the current resultset.
     /// </summary>
     /// <returns></returns>
-#if NET6_0_OR_GREATER // EnterpriseDB 
-    public new Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
+#if NET8_0_OR_GREATER // EnterpriseDB 
+    public new Task<ReadOnlyCollection<DbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
 #else
-    public Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
+    public Task<ReadOnlyCollection<DbColumn>> GetColumnSchemaAsync(CancellationToken cancellationToken = default)
 #endif
-        => GetColumnSchema(async: true, cancellationToken);
+        => GetColumnSchema<DbColumn>(async: true, cancellationToken);
 
-    Task<ReadOnlyCollection<EDBDbColumn>> GetColumnSchema(bool async, CancellationToken cancellationToken = default)
+    Task<ReadOnlyCollection<T>> GetColumnSchema<T>(bool async, CancellationToken cancellationToken = default) where T : DbColumn
         => RowDescription == null || ColumnCount == 0
-            ? Task.FromResult(new List<EDBDbColumn>().AsReadOnly())
+            ? Task.FromResult(new List<T>().AsReadOnly())
             : new DbColumnSchemaGenerator(_connection!, RowDescription, _behavior.HasFlag(CommandBehavior.KeyInfo))
-                .GetColumnSchema(async, cancellationToken);
+                .GetColumnSchema<T>(async, cancellationToken);
 
     #endregion
 
@@ -2352,7 +2356,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     /// </summary>
     [UnconditionalSuppressMessage(
         "Composite type mapping currently isn't trimming-safe, and warnings are generated at the MapComposite level.", "IL2026")]
-#if NET6_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     public override Task<DataTable?> GetSchemaTableAsync(CancellationToken cancellationToken = default)
 #else
     public Task<DataTable?> GetSchemaTableAsync(CancellationToken cancellationToken = default)
@@ -2395,7 +2399,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
         table.Columns.Add("ProviderSpecificDataType", typeof(Type));
         table.Columns.Add("DataTypeName", typeof(string));
 
-        foreach (var column in await GetColumnSchema(async, cancellationToken).ConfigureAwait(false))
+        foreach (var column in await GetColumnSchema<EDBDbColumn>(async, cancellationToken).ConfigureAwait(false))
         {
             var row = table.NewRow();
 
@@ -2471,7 +2475,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
 
         return Core(ordinal, dataFormat, resumableOp);
 
-#if NET6_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
         async ValueTask<int> Core(int ordinal, DataFormat dataFormat, bool resumableOp)
@@ -2540,7 +2544,7 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         return !allowIO || column >= ordinal ? new(BufferSeekToColumn(column, ordinal, allowIO)) : Core(ordinal);
 
-#if NET6_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
         [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
 #endif
         async ValueTask<int> Core(int ordinal)

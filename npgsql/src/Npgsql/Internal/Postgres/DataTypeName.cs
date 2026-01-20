@@ -11,6 +11,8 @@ namespace EnterpriseDB.EDBClient.Internal.Postgres;
 [DebuggerDisplay("{DisplayName,nq}")]
 public readonly struct DataTypeName : IEquatable<DataTypeName>
 {
+    const char InvalidIdentifier = '-';
+
     /// <summary>
     /// The maximum length of names in an unmodified PostgreSQL installation.
     /// </summary>
@@ -27,7 +29,7 @@ public readonly struct DataTypeName : IEquatable<DataTypeName>
         if (!validated)
         {
             var schemaEndIndex = fullyQualifiedDataTypeName.IndexOf('.');
-            if (schemaEndIndex == -1)
+            if (schemaEndIndex is -1 or 0)
                 throw new ArgumentException("Given value does not contain a schema.", nameof(fullyQualifiedDataTypeName));
 
             // Friendly array syntax is the only fully qualified name quirk that's allowed by postgres (see FromDisplayName).
@@ -50,9 +52,9 @@ public readonly struct DataTypeName : IEquatable<DataTypeName>
     internal static DataTypeName ValidatedName(string fullyQualifiedDataTypeName)
         => new(fullyQualifiedDataTypeName, validated: true);
 
-    // Includes schema unless it's pg_catalog or the name is unspecified.
+    // Includes schema unless it's pg_catalog or the schema is an invalid character used to represent an unspecified schema.
     public string DisplayName =>
-        Value.StartsWith("pg_catalog", StringComparison.Ordinal) || Value == Unspecified
+        Value.StartsWith("pg_catalog", StringComparison.Ordinal) || IsUnqualified
             ? UnqualifiedDisplayName
             : Schema + "." + UnqualifiedDisplayName;
 
@@ -71,12 +73,24 @@ public readonly struct DataTypeName : IEquatable<DataTypeName>
 
     // This contains two invalid sql identifiers (schema and name are both separate identifiers, and would both have to be quoted to be valid).
     // Given this is an invalid name it's fine for us to represent a fully qualified 'unspecified' name with it.
-    public static DataTypeName Unspecified => new("-.-", validated: true);
+    static string UnspecifiedName => $"{InvalidIdentifier}.{InvalidIdentifier}";
+    public static DataTypeName Unspecified => ValidatedName(UnspecifiedName);
+
+    public static string GetUnqualifiedName(string dataTypeName)
+        => dataTypeName.IndexOf('.') is not -1 and var index
+            ? dataTypeName.Substring(index + 1) : dataTypeName;
+
+    public bool IsUnqualified =>
+#if NETFRAMEWORK || NETSTANDARD
+        Value.StartsWith(InvalidIdentifier.ToString(), StringComparison.Ordinal) && Value != UnspecifiedName;
+#else
+        Value.StartsWith(InvalidIdentifier) && Value != UnspecifiedName;
+#endif
 
     public bool IsArray => UnqualifiedNameSpan.StartsWith("_".AsSpan(), StringComparison.Ordinal);
 
     internal static DataTypeName CreateFullyQualifiedName(string dataTypeName)
-        => dataTypeName.IndexOf('.') != -1 ? new(dataTypeName) : new("pg_catalog." + dataTypeName);
+        => dataTypeName.IndexOf('.') != -1 ? new(dataTypeName) : new("-." + dataTypeName);
 
     // Static transform as defined by https://www.postgresql.org/docs/current/sql-createtype.html#SQL-CREATETYPE-ARRAY
     // We don't have to deal with [] as we're always starting from a normalized fully qualified name.
@@ -86,108 +100,136 @@ public readonly struct DataTypeName : IEquatable<DataTypeName>
         if (unqualifiedNameSpan.StartsWith("_".AsSpan(), StringComparison.Ordinal))
             return this;
 
-        var unqualifiedName = unqualifiedNameSpan.ToString();
-        if (unqualifiedName.Length + "_".Length > NAMEDATALEN)
-            unqualifiedName = unqualifiedName.Substring(0, NAMEDATALEN - "_".Length);
+        if (unqualifiedNameSpan.Length + "_".Length > NAMEDATALEN)
+            unqualifiedNameSpan = unqualifiedNameSpan.Slice(0, NAMEDATALEN - "_".Length);
 
-        return new(Schema + "._" + unqualifiedName);
+#if NETFRAMEWORK || NETSTANDARD
+        return new(string.Concat(Schema, "._", unqualifiedNameSpan.ToString()));
+#else
+        return new(string.Concat(Schema, "._", unqualifiedNameSpan));
+#endif
     }
 
     // Static transform as defined by https://www.postgresql.org/docs/current/sql-createtype.html#SQL-CREATETYPE-RANGE
     // Manual testing on PG confirmed it's only the first occurence of 'range' that gets replaced.
     public DataTypeName ToDefaultMultirangeName()
     {
-        var unqualifiedNameSpan = UnqualifiedNameSpan;
-        if (UnqualifiedNameSpan.IndexOf("multirange".AsSpan(), StringComparison.Ordinal) != -1)
+        var nameSpan = UnqualifiedNameSpan;
+        if (nameSpan.IndexOf("multirange".AsSpan(), StringComparison.Ordinal) is not -1)
             return this;
 
-        var unqualifiedName = unqualifiedNameSpan.ToString();
-        var rangeIndex = unqualifiedName.IndexOf("range", StringComparison.Ordinal);
-        if (rangeIndex != -1)
+        if (nameSpan.IndexOf("range", StringComparison.Ordinal) is var rangeIndex and not -1)
         {
-            var str = unqualifiedName.Substring(0, rangeIndex) + "multirange" + unqualifiedName.Substring(rangeIndex + "range".Length);
-
-            return new($"{Schema}." + (unqualifiedName.Length + "multi".Length > NAMEDATALEN
-                ? str.Substring(0, NAMEDATALEN - "multi".Length)
-                : str));
+#if NETFRAMEWORK || NETSTANDARD
+            nameSpan = string.Concat(nameSpan.Slice(0, rangeIndex).ToString(), "multirange", nameSpan.Slice(rangeIndex + "range".Length).ToString());
+            return new(string.Concat(SchemaSpan.ToString(), ".",
+                nameSpan.Length > NAMEDATALEN ? nameSpan.Slice(0, NAMEDATALEN).ToString() : nameSpan.ToString()));
+#else
+            nameSpan = string.Concat(nameSpan.Slice(0, rangeIndex), "multirange", nameSpan.Slice(rangeIndex + "range".Length));
+            return new(string.Concat(SchemaSpan, ".",
+                nameSpan.Length > NAMEDATALEN ? nameSpan.Slice(0, NAMEDATALEN) : nameSpan));
+#endif
         }
 
-        return new($"{Schema}." + (unqualifiedName.Length + "multi".Length > NAMEDATALEN
-            ? unqualifiedName.Substring(0, NAMEDATALEN - "_multirange".Length) + "_multirange"
-            : unqualifiedName + "_multirange"));
+        if (nameSpan.Length + "_multirange".Length > NAMEDATALEN)
+            nameSpan = nameSpan.Slice(0, NAMEDATALEN - "_multirange".Length);
+#if NETFRAMEWORK || NETSTANDARD
+        return new(string.Concat(SchemaSpan.ToString(), ".", nameSpan.ToString(), "_multirange"));
+#else
+        return new(string.Concat(SchemaSpan, ".", nameSpan, "_multirange"));
+#endif
     }
 
     // Create a DataTypeName from a broader range of valid names.
     // including SQL aliases like 'timestamp without time zone', trailing facet info etc.
     public static DataTypeName FromDisplayName(string displayName, string? schema = null)
+        => FromDisplayName(displayName, schema, assumeUnqualified: false); // user strings may come fully qualified.
+
+    // This method is used during type loading, it allows us to accept friendly names in constructors, without having to preconcatenate the schema.
+    internal static DataTypeName FromDisplayName(string displayName, string? schema, bool assumeUnqualified)
     {
         var displayNameSpan = displayName.AsSpan().Trim();
 
-        // If we have a schema we're done, Postgres doesn't do display name conversions on fully qualified names.
-        // There is one exception and that's array syntax, which is always resolvable in both ways, while we want the canonical name.
         var schemaEndIndex = displayNameSpan.IndexOf('.');
-        if (schemaEndIndex is not -1 &&
-            string.IsNullOrEmpty(schema) &&
-            !displayNameSpan.Slice(schemaEndIndex).StartsWith("_".AsSpan(), StringComparison.Ordinal) &&
-            !displayNameSpan.EndsWith("[]".AsSpan(), StringComparison.Ordinal))
-            return new(displayName);
-
-        // First we strip the schema to get the type name.
-        if (schemaEndIndex is not -1 &&
-            string.IsNullOrEmpty(schema))
+        ReadOnlySpan<char> schemaSpan;
+        if (schemaEndIndex is not -1 && !assumeUnqualified)
         {
-            schema = displayNameSpan.Slice(0, schemaEndIndex).ToString();
+            if (schema is not null)
+                throw new ArgumentException("Schema provided for a fully qualified name.");
+
+            schemaSpan = displayNameSpan.Slice(0, schemaEndIndex);
             displayNameSpan = displayNameSpan.Slice(schemaEndIndex + 1);
+        }
+        else
+        {
+            schemaSpan = schema is null ? $"{InvalidIdentifier}" : schema.AsSpan();
         }
 
         // Then we strip either of the two valid array representations to get the base type name (with or without facets).
         var isArray = false;
-        if (displayNameSpan.StartsWith("_".AsSpan()))
+        if (displayNameSpan.StartsWith("_", StringComparison.Ordinal))
         {
             isArray = true;
             displayNameSpan = displayNameSpan.Slice(1);
         }
-        else if (displayNameSpan.EndsWith("[]".AsSpan()))
+        else if (displayNameSpan.EndsWith("[]", StringComparison.Ordinal))
         {
             isArray = true;
             displayNameSpan = displayNameSpan.Slice(0, displayNameSpan.Length - 2);
         }
 
-        string mapped;
-        if (schemaEndIndex is -1)
+        if (schemaEndIndex is not -1)
         {
-            // Finally we strip the facet info.
-            var parenIndex = displayNameSpan.IndexOf('(');
-            if (parenIndex > -1)
-                displayNameSpan = displayNameSpan.Slice(0, parenIndex);
-
-            // Map any aliases to the internal type name.
-            mapped = displayNameSpan.ToString() switch
-            {
-                "boolean" => "bool",
-                "character" => "bpchar",
-                "decimal" => "numeric",
-                "real" => "float4",
-                "double precision" => "float8",
-                "smallint" => "int2",
-                "integer" => "int4",
-                "bigint" => "int8",
-                "time without time zone" => "time",
-                "timestamp without time zone" => "timestamp",
-                "time with time zone" => "timetz",
-                "timestamp with time zone" => "timestamptz",
-                "bit varying" => "varbit",
-                "character varying" => "varchar",
-                var value => value
-            };
-        }
-        else
-        {
-            // If we had a schema originally we stop here, see comment at schemaEndIndex.
-            mapped = displayNameSpan.ToString();
+            // If we have a schema we're done, Postgres doesn't do display name conversions on fully qualified names.
+            // There is one exception and that's array syntax, which is always resolvable in both ways, while we want the canonical name.
+#if NETFRAMEWORK || NETSTANDARD
+            return !isArray
+                ? new(displayName.Length == schemaEndIndex + displayNameSpan.Length
+                    ? displayName
+                    : string.Concat(schemaSpan.ToString(), ".", displayNameSpan.ToString()))
+                : new(string.Concat(schemaSpan.ToString(), ".", "_", displayNameSpan.ToString()));
+#else
+            return !isArray
+                ? new(displayName.Length == schemaEndIndex + displayNameSpan.Length
+                    ? displayName
+                    : string.Concat(schemaSpan, ".", displayNameSpan))
+                : new(string.Concat(schemaSpan, ".", "_", displayNameSpan));
+#endif
         }
 
-        return new((schema ?? "pg_catalog") + "." + (isArray ? "_" : "") + mapped);
+        // Finally we strip the facet info.
+        var parenIndex = displayNameSpan.IndexOf('(');
+        if (parenIndex > -1)
+            displayNameSpan = displayNameSpan.Slice(0, parenIndex);
+
+        // Map any aliases to the internal type name.
+        var mapped = displayNameSpan switch
+        {
+            "boolean" => "bool",
+            "character" => "bpchar",
+            "decimal" => "numeric",
+            "real" => "float4",
+            "double precision" => "float8",
+            "smallint" => "int2",
+            "integer" => "int4",
+            "bigint" => "int8",
+            "time without time zone" => "time",
+            "timestamp without time zone" => "timestamp",
+            "time with time zone" => "timetz",
+            "timestamp with time zone" => "timestamptz",
+            "bit varying" => "varbit",
+            "character varying" => "varchar",
+            var value => value
+        };
+
+        if (schema is null && DataTypeNames.IsWellKnownUnqualifiedName(mapped))
+            schemaSpan = "pg_catalog".AsSpan();
+
+#if NETFRAMEWORK || NETSTANDARD
+        return new(string.Concat(schemaSpan.ToString(), ".", isArray ? "_" : "", mapped.ToString()));
+#else
+        return new(string.Concat(schemaSpan, ".", isArray ? "_" : "", mapped));
+#endif
     }
 
     // The type names stored in a DataTypeName are usually the actual typname from the pg_type column.
@@ -197,8 +239,8 @@ public readonly struct DataTypeName : IEquatable<DataTypeName>
     // Alternatively some of the source lives at https://github.com/postgres/postgres/blob/c8e1ba736b2b9e8c98d37a5b77c4ed31baf94147/src/backend/utils/adt/format_type.c#L186
     static string ToDisplayName(ReadOnlySpan<char> unqualifiedName)
     {
-        var isArray = unqualifiedName.IndexOf('_') == 0;
-        var baseTypeName = isArray ? unqualifiedName.Slice(1).ToString() : unqualifiedName.ToString();
+        var isArray = unqualifiedName.IndexOf('_') is 0;
+        var baseTypeName = isArray ? unqualifiedName.Slice(1) : unqualifiedName;
 
         var mappedBaseType = baseTypeName switch
         {
@@ -216,13 +258,18 @@ public readonly struct DataTypeName : IEquatable<DataTypeName>
             "timestamptz" => "timestamp with time zone",
             "varbit" => "bit varying",
             "varchar" => "character varying",
-            _ => baseTypeName
+            _ => null
         };
 
-        if (isArray)
-            return mappedBaseType + "[]";
-
-        return mappedBaseType;
+#if NETFRAMEWORK || NETSTANDARD
+        return isArray
+            ? string.Concat(mappedBaseType ?? baseTypeName.ToString(), "[]")
+            : mappedBaseType ?? baseTypeName.ToString();
+#else
+        return isArray
+            ? string.Concat(mappedBaseType ?? baseTypeName, "[]")
+            : mappedBaseType ?? baseTypeName.ToString();
+#endif
     }
 
     internal static bool IsFullyQualified(ReadOnlySpan<char> dataTypeName) => dataTypeName.Contains(".".AsSpan(), StringComparison.Ordinal);

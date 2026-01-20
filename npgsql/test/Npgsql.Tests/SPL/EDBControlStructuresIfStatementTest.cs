@@ -99,6 +99,8 @@ public class EDBControlStructuresIfStatementTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -168,11 +170,11 @@ public class EDBControlStructuresIfStatementTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(IF_THEN_RESULT.Length, notices.Count);
+            Assert.That(IF_THEN_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(IF_THEN_RESULT[i], notice.MessageText);
+                Assert.That(IF_THEN_RESULT[i], Is.EqualTo(notice.MessageText));
             }
         }
         finally
@@ -233,11 +235,11 @@ public class EDBControlStructuresIfStatementTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(IF_THEN_ELSE_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(IF_THEN_ELSE_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(IF_THEN_ELSE_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(IF_THEN_ELSE_RESULT[i]));
             }
         }
         finally
@@ -326,11 +328,11 @@ public class EDBControlStructuresIfStatementTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(IF_THEN_ELSE_IF_RESULT.Length, notices.Count);
+            Assert.That(IF_THEN_ELSE_IF_RESULT.Length, Is.EqualTo(notices.Count));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(IF_THEN_ELSE_IF_RESULT[i], notice.MessageText);
+                Assert.That(IF_THEN_ELSE_IF_RESULT[i], Is.EqualTo(notice.MessageText));
             }
         }
         finally
@@ -403,11 +405,11 @@ public class EDBControlStructuresIfStatementTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(IF_THEN_ELSIF_ELSE_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(IF_THEN_ELSIF_ELSE_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(IF_THEN_ELSIF_ELSE_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(IF_THEN_ELSIF_ELSE_RESULT[i]));
             }
         }
         finally

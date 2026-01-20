@@ -161,7 +161,7 @@ readonly struct PgArrayConverter(
         public required int[]? Lengths { get; init; }
     }
 
-    unsafe object ReadDimsAndCreateCollection(PgReader reader, int dimensions, out int lastDimLength)
+    object ReadDimsAndCreateCollection(PgReader reader, int dimensions, out int lastDimLength)
     {
         Debug.Assert(!reader.ShouldBuffer((sizeof(int) + sizeof(int)) * dimensions));
 
@@ -322,7 +322,7 @@ readonly struct PgArrayConverter(
     // The alternatives are:
     // 1. Add a virtual method and make AwaitTask call into it (bloating the vtable of all derived types).
     // 2. Using a delegate, meaning we add a static field + an alloc per T + metadata, slightly slower dispatch perf so overall strictly worse as well.
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
 #endif
     public static async ValueTask AwaitTask(Task task, Continuation continuation, object collection, Indices indices)

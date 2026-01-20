@@ -405,7 +405,9 @@ public class NpgsqlRelationalConnectionTest
                             TestServiceFactory.Instance.Create<RelationalTypeMappingSourceDependencies>(),
                             new NpgsqlSqlGenerationHelper(new RelationalSqlGenerationHelperDependencies()),
                             new NpgsqlSingletonOptions()),
-                        new ExceptionDetector()))),
+                        new ExceptionDetector(),
+                        new LoggingOptions())),
+                new ExceptionDetector()),
             new NpgsqlDataSourceManager([]),
             dbContextOptions);
     }

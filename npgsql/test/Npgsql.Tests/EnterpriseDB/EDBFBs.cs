@@ -52,6 +52,7 @@ public class EDBFBs : EPASTestBase
         Command.ExecuteNonQuery();
 
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     [Test, EDBExplicit("Needs to be fixed")]
@@ -101,8 +102,8 @@ public class EDBFBs : EPASTestBase
 
 
 
-            //      Assert.IsNotNull(edbFunctionCmd.Parameters[2].Value);
-            //    Assert.AreEqual("Chief Justice: Iftikhar Choudhry", edbFunctionCmd.Parameters[2].Value.ToString());
+            //      Assert.That(edbFunctionCmd.Parameters[2].Value, Is.Not.Null);
+            //    Assert.That(edbFunctionCmd.Parameters[2].Value.ToString(), Is.EqualTo("Chief Justice: Iftikhar Choudhry"));
             result.Close();
         });
 

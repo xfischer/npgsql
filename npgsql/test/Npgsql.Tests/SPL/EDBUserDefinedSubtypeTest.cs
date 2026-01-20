@@ -57,6 +57,7 @@ internal class EDBUserDefinedSubtypeTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -116,8 +117,8 @@ internal class EDBUserDefinedSubtypeTest : EPASTestBase
             var enameValue = cstmt.Parameters[0].Value.ToString();
             var empnoValue = double.Parse(cstmt.Parameters[1].Value.ToString());
 
-            Assert.AreEqual(enameValue, ename);
-            Assert.AreEqual(empnoValue, empno, 0.1);
+            Assert.That(ename, Is.EqualTo(enameValue));
+            Assert.That(empno, Is.EqualTo(empnoValue).Within(0.1));
         }
     }
 
@@ -154,7 +155,7 @@ internal class EDBUserDefinedSubtypeTest : EPASTestBase
 
             var enameValue = cstmt.Parameters[0].Value.ToString();
 
-            Assert.AreEqual(enameValue, ename);
+            Assert.That(enameValue, Is.EqualTo(ename));
         }
     }
 
@@ -191,7 +192,7 @@ internal class EDBUserDefinedSubtypeTest : EPASTestBase
 
             var enameValue = cstmt.Parameters[0].Value.ToString();
 
-            Assert.AreEqual(enameValue, ename);
+            Assert.That(enameValue, Is.EqualTo(ename));
         }
     }
 
@@ -227,7 +228,7 @@ internal class EDBUserDefinedSubtypeTest : EPASTestBase
 
             var enameValue = cstmt.Parameters[0].Value.ToString();
 
-            Assert.AreEqual(enameValue, ename);
+            Assert.That(enameValue, Is.EqualTo(ename));
         }
     }
 }

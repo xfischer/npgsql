@@ -122,6 +122,7 @@ struct PgTypeInfoResolverChainBuilder
         _addRangeResolvers?.Invoke(instance, resolvers);
         _addMultirangeResolvers?.Invoke(instance, resolvers);
         _addArrayResolvers?.Invoke(instance, resolvers);
+
         configure?.Invoke(resolvers);
         return new(
             resolvers,

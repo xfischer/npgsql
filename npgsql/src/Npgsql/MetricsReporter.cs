@@ -1,8 +1,7 @@
-using System;
-
 namespace EnterpriseDB.EDBClient;
 
-#if NET6_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
+using System;
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
@@ -31,8 +30,14 @@ sealed class MetricsReporter : IDisposable
 
     readonly EDBDataSource _dataSource;
     readonly KeyValuePair<string, object?> _poolNameTag;
+    readonly TagList _durationMetricTags;
 
     static readonly List<MetricsReporter> Reporters = [];
+
+    static readonly InstrumentAdvice<double> ShortHistogramAdvice = new()
+    {
+        HistogramBucketBoundaries = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]
+    };
 
     CommandCounters _commandCounters;
 
@@ -48,50 +53,17 @@ sealed class MetricsReporter : IDisposable
     {
         Meter = new("edb-dotnet", Version);
 
-        CommandsExecuting = Meter.CreateUpDownCounter<int>(
-            "db.client.commands.executing",
-            unit: "{command}",
-            description: "The number of currently executing database commands.");
-
-        CommandsFailed = Meter.CreateCounter<int>(
-            "db.client.commands.failed",
-            unit: "{command}",
-            description: "The number of database commands which have failed.");
-
+        // db.client.operation.duration is stable in the OpenTelemetry spec
         CommandDuration = Meter.CreateHistogram<double>(
-            "db.client.commands.duration",
+            "db.client.operation.duration",
             unit: "s",
-            description: "The duration of database commands, in seconds.");
+            description: "Duration of database client operations.",
+            advice: ShortHistogramAdvice);
 
-        BytesWritten = Meter.CreateCounter<long>(
-            "db.client.commands.bytes_written",
-            unit: "By",
-            description: "The number of bytes written.");
-
-        BytesRead = Meter.CreateCounter<long>(
-            "db.client.commands.bytes_read",
-            unit: "By",
-            description: "The number of bytes read.");
-
-        PendingConnectionRequests = Meter.CreateUpDownCounter<int>(
-            "db.client.connections.pending_requests",
-            unit: "{request}",
-            description: "The number of pending requests for an open connection, cumulative for the entire pool.");
-
-        ConnectionTimeouts = Meter.CreateCounter<int>(
-            "db.client.connections.timeouts",
-            unit: "{timeout}",
-            description: "The number of connection timeouts that have occurred trying to obtain a connection from the pool.");
-
-        ConnectionCreateTime = Meter.CreateHistogram<double>(
-            "db.client.connections.create_time",
-            unit: "s",
-            description: "The time it took to create a new connection.");
-
-        // Observable metrics; these are for values we already track internally (and efficiently) inside the connection pool implementation.
+        // From here, metrics have "development" status (not stable)
         Meter.CreateObservableUpDownCounter(
-            "db.client.connections.usage",
-            GetConnectionUsage,
+            "db.client.connection.count",
+            GetConnectionCount,
             unit: "{connection}",
             description: "The number of connections that are currently in state described by the state attribute.");
 
@@ -99,13 +71,50 @@ sealed class MetricsReporter : IDisposable
         // However, we can't simply report it once at startup, since clients who connect later wouldn't have it. And since reporting it
         // repeatedly isn't possible because we need to provide incremental figures, we just manage it as an observable counter.
         Meter.CreateObservableUpDownCounter(
-            "db.client.connections.max",
-            GetMaxConnections,
+            "db.client.connection.max",
+            GetConnectionMax,
             unit: "{connection}",
             description: "The maximum number of open connections allowed.");
 
+        // From here, metrics are entirely Npgsql-specific and not covered by the OpenTelemetry spec.
+        CommandsExecuting = Meter.CreateUpDownCounter<int>(
+            "db.client.operation.npgsql.executing",
+            unit: "{command}",
+            description: "The number of currently executing database commands.");
+
+        CommandsFailed = Meter.CreateCounter<int>(
+            "db.client.operation.failed",
+            unit: "{command}",
+            description: "The number of database commands which have failed.");
+
+        BytesWritten = Meter.CreateCounter<long>(
+            "db.client.operation.npgsql.bytes_written",
+            unit: "By",
+            description: "The number of bytes written.");
+
+        BytesRead = Meter.CreateCounter<long>(
+            "db.client.operation.npgsql.bytes_read",
+            unit: "By",
+            description: "The number of bytes read.");
+
+        PendingConnectionRequests = Meter.CreateUpDownCounter<int>(
+            "db.client.connection.npgsql.pending_requests",
+            unit: "{request}",
+            description: "The number of pending requests for an open connection, cumulative for the entire pool.");
+
+        ConnectionTimeouts = Meter.CreateCounter<int>(
+            "db.client.connection.npgsql.timeouts",
+            unit: "{timeout}",
+            description: "The number of connection timeouts that have occurred trying to obtain a connection from the pool.");
+
+        ConnectionCreateTime = Meter.CreateHistogram<double>(
+            "db.client.connection.npgsql.create_time",
+            unit: "s",
+            description: "The time it took to create a new connection.",
+            advice: ShortHistogramAdvice);
+
         PreparedRatio = Meter.CreateObservableGauge(
-            "db.client.commands.prepared_ratio",
+            "db.client.operation.npgsql.prepared_ratio",
             GetPreparedCommandsRatio,
             description: "The ratio of prepared command executions.");
     }
@@ -113,7 +122,16 @@ sealed class MetricsReporter : IDisposable
     public MetricsReporter(EDBDataSource dataSource)
     {
         _dataSource = dataSource;
-        _poolNameTag = new KeyValuePair<string, object?>("pool.name", dataSource.Name);
+        _poolNameTag = new KeyValuePair<string, object?>("db.client.connection.pool.name", dataSource.Name);
+
+        _durationMetricTags = new TagList
+        {
+            // TODO: Vary this for PG-like databases (e.g. CockroachDB)?
+            { "db.system.name", "postgresql" },
+            { "db.client.connection.pool.name", _dataSource.Name },
+            { "server.address", _dataSource.Settings.Host },
+            { "server.port", _dataSource.Settings.Port }
+        };
 
         lock (Reporters)
         {
@@ -137,12 +155,13 @@ sealed class MetricsReporter : IDisposable
 
         if (CommandDuration.Enabled && startTimestamp > 0)
         {
-#if NET7_0_OR_GREATER
-            var duration = Stopwatch.GetElapsedTime(startTimestamp);
+#if NET8_0_OR_GREATER
+            CommandDuration.Record(Stopwatch.GetElapsedTime(startTimestamp).TotalSeconds, _durationMetricTags);
 #else
             var duration = new TimeSpan((long)((Stopwatch.GetTimestamp() - startTimestamp) * StopWatchTickFrequency));
+            CommandDuration.Record(duration.TotalSeconds, _durationMetricTags);
 #endif
-            CommandDuration.Record(duration.TotalSeconds, _poolNameTag);
+
         }
     }
 
@@ -168,7 +187,7 @@ sealed class MetricsReporter : IDisposable
     internal void ReportConnectionCreateTime(TimeSpan duration)
         => ConnectionCreateTime.Record(duration.TotalSeconds, _poolNameTag);
 
-    static IEnumerable<Measurement<int>> GetConnectionUsage()
+    static IEnumerable<Measurement<int>> GetConnectionCount()
     {
         lock (Reporters)
         {
@@ -178,27 +197,23 @@ sealed class MetricsReporter : IDisposable
             {
                 var reporter = Reporters[i];
 
-                if (reporter._dataSource is PoolingDataSource poolingDataSource)
-                {
-                    var stats = poolingDataSource.Statistics;
+                var connectionStats = reporter._dataSource.Statistics;
+                measurements.Add(new Measurement<int>(
+                    connectionStats.Idle,
+                    reporter._poolNameTag,
+                    new KeyValuePair<string, object?>("db.client.connection.state", "idle")));
 
-                    measurements.Add(new Measurement<int>(
-                        stats.Idle,
-                        reporter._poolNameTag,
-                        new KeyValuePair<string, object?>("state", "idle")));
-
-                    measurements.Add(new Measurement<int>(
-                        stats.Busy,
-                        reporter._poolNameTag,
-                        new KeyValuePair<string, object?>("state", "used")));
-                }
+                measurements.Add(new Measurement<int>(
+                    connectionStats.Busy,
+                    reporter._poolNameTag,
+                    new KeyValuePair<string, object?>("db.client.connection.state", "used")));
             }
 
             return measurements;
         }
     }
 
-    static IEnumerable<Measurement<int>> GetMaxConnections()
+    static IEnumerable<Measurement<int>> GetConnectionMax()
     {
         lock (Reporters)
         {
@@ -233,8 +248,12 @@ sealed class MetricsReporter : IDisposable
 
                 var value = (double)counters.PreparedCommandsStarted / counters.CommandsStarted * 100;
 
+#if NETCOREAPP
                 if (double.IsFinite(value))
-                    measurements.Add(new Measurement<double>(value, reporter._poolNameTag));
+#else
+                if (!double.IsNaN(value) &&!double.IsInfinity(value))
+#endif
+                measurements.Add(new Measurement<double>(value, reporter._poolNameTag));
             }
 
             return measurements;
@@ -249,27 +268,10 @@ sealed class MetricsReporter : IDisposable
         }
     }
 
-#if !NET7_0_OR_GREATER
+#if !NET8_0_OR_GREATER
     const long TicksPerMicrosecond = 10;
     const long TicksPerMillisecond = TicksPerMicrosecond * 1000;
     const long TicksPerSecond = TicksPerMillisecond * 1000;   // 10,000,000
     static readonly double StopWatchTickFrequency = (double)TicksPerSecond / Stopwatch.Frequency;
 #endif
 }
-#else  // EnterpriseDB (NETFRAMWEWORK)
-sealed class MetricsReporter : IDisposable
-{
-    public MetricsReporter(EDBDataSource _) {}
-    internal long ReportCommandStart() => 0;
-    internal void ReportCommandStop(long startTimestamp) {}
-    internal void CommandStartPrepared() {}
-    internal void ReportCommandFailed() {}
-    internal void ReportBytesWritten(long bytesWritten) {}
-    internal void ReportBytesRead(long bytesRead) {}
-    internal void ReportConnectionPoolTimeout() {}
-    internal void ReportPendingConnectionRequestStart() {}
-    internal void ReportPendingConnectionRequestStop() {}
-    internal void ReportConnectionCreateTime(TimeSpan duration) {}
-    public void Dispose() {}
-}
-#endif

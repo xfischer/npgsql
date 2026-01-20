@@ -117,8 +117,9 @@ class PgServerMock : IDisposable
     internal async Task ExpectMessage(byte expectedCode)
     {
         CheckDisposed();
-
-        await _readBuffer.Ensure(5, async: true, readingNotifications: false, checkDataAvailable: true);
+		
+		await _readBuffer.EnsureAsync(5);
+//        await _readBuffer.Ensure(5, async: true, readingNotifications: false, checkDataAvailable: true);
         var actualCode = _readBuffer.ReadByte();
         Assert.That(actualCode, Is.EqualTo(expectedCode),
             $"Expected message of type '{(char)expectedCode}' but got '{(char)actualCode}'");

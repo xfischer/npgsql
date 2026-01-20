@@ -1,10 +1,30 @@
 ﻿#nullable enable
-abstract EnterpriseDB.EDBClient.NpgsqlDataSource.Clear() -> void
+abstract EnterpriseDB.EDBClient.EDBDataSource.Clear() -> void
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.EnableLegacyDateAndTime() -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.GssEncryptionMode
+EnterpriseDB.EDBClient.GssEncryptionMode.Disable = 0 -> EnterpriseDB.EDBClient.GssEncryptionMode
+EnterpriseDB.EDBClient.GssEncryptionMode.Prefer = 1 -> EnterpriseDB.EDBClient.GssEncryptionMode
+EnterpriseDB.EDBClient.GssEncryptionMode.Require = 2 -> EnterpriseDB.EDBClient.GssEncryptionMode
+EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper.AddDbTypeResolverFactory(EnterpriseDB.EDBClient.Internal.DbTypeResolverFactory! factory) -> void
+EnterpriseDB.EDBClient.EDBConnection.BeginTextExport(string! copyToCommand) -> EnterpriseDB.EDBClient.EDBCopyTextReader!
+EnterpriseDB.EDBClient.EDBConnection.BeginTextExportAsync(string! copyToCommand, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<EnterpriseDB.EDBClient.EDBCopyTextReader!>!
+EnterpriseDB.EDBClient.EDBConnection.BeginTextImport(string! copyFromCommand) -> EnterpriseDB.EDBClient.EDBCopyTextWriter!
+EnterpriseDB.EDBClient.EDBConnection.BeginTextImportAsync(string! copyFromCommand, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<EnterpriseDB.EDBClient.EDBCopyTextWriter!>!
 EnterpriseDB.EDBClient.EDBConnection.CloneWithAsync(string! connectionString, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<EnterpriseDB.EDBClient.EDBConnection!>
 EnterpriseDB.EDBClient.EDBConnection.SslClientAuthenticationOptionsCallback.get -> System.Action<System.Net.Security.SslClientAuthenticationOptions!>?
 EnterpriseDB.EDBClient.EDBConnection.SslClientAuthenticationOptionsCallback.set -> void
+EnterpriseDB.EDBClient.EDBConnectionStringBuilder.GssEncryptionMode.get -> EnterpriseDB.EDBClient.GssEncryptionMode
+EnterpriseDB.EDBClient.EDBConnectionStringBuilder.GssEncryptionMode.set -> void
+EnterpriseDB.EDBClient.EDBConnectionStringBuilder.IncludeFailedBatchedCommand.get -> bool
+EnterpriseDB.EDBClient.EDBConnectionStringBuilder.IncludeFailedBatchedCommand.set -> void
+EnterpriseDB.EDBClient.EDBConnectionStringBuilder.RequireAuth.get -> string?
+EnterpriseDB.EDBClient.EDBConnectionStringBuilder.RequireAuth.set -> void
 EnterpriseDB.EDBClient.EDBConnectionStringBuilder.SslNegotiation.get -> EnterpriseDB.EDBClient.SslNegotiation
 EnterpriseDB.EDBClient.EDBConnectionStringBuilder.SslNegotiation.set -> void
+EnterpriseDB.EDBClient.EDBCopyTextReader.Timeout.get -> int
+EnterpriseDB.EDBClient.EDBCopyTextReader.Timeout.set -> void
+EnterpriseDB.EDBClient.EDBCopyTextWriter.Timeout.get -> int
+EnterpriseDB.EDBClient.EDBCopyTextWriter.Timeout.set -> void
 EnterpriseDB.EDBClient.EDBDataSourceBuilder.ConfigureTypeLoading(System.Action<EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!>! configureAction) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapComposite(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapComposite<T>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
@@ -12,11 +32,14 @@ EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapEnum(System.Type! clrType, string
 EnterpriseDB.EDBClient.EDBDataSourceBuilder.MapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBDataSourceBuilder.ConfigureTracing(System.Action<EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!>! configureAction) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBDataSourceBuilder.UseNegotiateOptionsCallback(System.Action<System.Net.Security.NegotiateAuthenticationClientOptions!>? negotiateOptionsCallback) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.UseRootCertificates(System.Security.Cryptography.X509Certificates.X509Certificate2Collection? rootCertificates) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.UseRootCertificatesCallback(System.Func<System.Security.Cryptography.X509Certificates.X509Certificate2Collection!>? rootCertificateCallback) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBDataSourceBuilder.UseSslClientAuthenticationOptionsCallback(System.Action<System.Net.Security.SslClientAuthenticationOptions!>? sslClientAuthenticationOptionsCallback) -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBMetricsOptions
 EnterpriseDB.EDBClient.EDBMetricsOptions.EDBMetricsOptions() -> void
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.ConfigureTracing(System.Action<EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!>! configureAction) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.ConfigureTypeLoading(System.Action<EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!>! configureAction) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableCube() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableGeometricTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableJsonTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.EnableNetworkTypes() -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
@@ -25,6 +48,8 @@ EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapComposite<T>(string? pgName =
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseNegotiateOptionsCallback(System.Action<System.Net.Security.NegotiateAuthenticationClientOptions!>? negotiateOptionsCallback) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseRootCertificates(System.Security.Cryptography.X509Certificates.X509Certificate2Collection? rootCertificates) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
+EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseRootCertificatesCallback(System.Func<System.Security.Cryptography.X509Certificates.X509Certificate2Collection!>? rootCertificateCallback) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.UseSslClientAuthenticationOptionsCallback(System.Action<System.Net.Security.SslClientAuthenticationOptions!>? sslClientAuthenticationOptionsCallback) -> EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder!
 *REMOVED*EnterpriseDB.EDBClient.EDBTracingOptions
 *REMOVED*EnterpriseDB.EDBClient.EDBTracingOptions.EDBTracingOptions() -> void
@@ -35,7 +60,11 @@ EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureBatchSpanNameProvider(S
 EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCommandEnrichmentCallback(System.Action<System.Diagnostics.Activity!, EnterpriseDB.EDBClient.EDBCommand!>? commandEnrichmentCallback) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
 EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCommandFilter(System.Func<EnterpriseDB.EDBClient.EDBCommand!, bool>? commandFilter) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
 EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCommandSpanNameProvider(System.Func<EnterpriseDB.EDBClient.EDBCommand!, string?>? commandSpanNameProvider) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCopyOperationEnrichmentCallback(System.Action<System.Diagnostics.Activity!, string!>? copyOperationEnrichmentCallback) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCopyOperationFilter(System.Func<string!, bool>? copyOperationFilter) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.ConfigureCopyOperationSpanNameProvider(System.Func<string!, string?>? copyOperationSpanNameProvider) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
 EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.EnableFirstResponseEvent(bool enable = true) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
+EnterpriseDB.EDBClient.EDBTracingOptionsBuilder.EnablePhysicalOpenTracing(bool enable = true) -> EnterpriseDB.EDBClient.EDBTracingOptionsBuilder!
 EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder
 EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder.EnableTableCompositesLoading(bool enable = true) -> EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!
 EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder.EnableTypeLoading(bool enable = true) -> EnterpriseDB.EDBClient.EDBTypeLoadingOptionsBuilder!
@@ -75,4 +104,39 @@ EnterpriseDB.EDBClient.EDBConnection.ReloadTypesAsync(System.Threading.Cancellat
 *REMOVED*EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapComposite<T>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
 *REMOVED*EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum(System.Type! clrType, string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
 *REMOVED*EnterpriseDB.EDBClient.EDBSlimDataSourceBuilder.MapEnum<TEnum>(string? pgName = null, EnterpriseDB.EDBClient.IEDBNameTranslator? nameTranslator = null) -> EnterpriseDB.EDBClient.TypeMapping.IEDBTypeMapper!
+static EDBTypes.EDBInet.implicit operator EDBTypes.EDBInet(System.Net.IPNetwork cidr) -> EDBTypes.EDBInet
 static readonly EDBTypes.EDBTsVector.Empty -> EDBTypes.EDBTsVector!
+EDBTypes.EDBBox.Deconstruct(out double left, out double right, out double bottom, out double top) -> void
+EDBTypes.EDBBox.Deconstruct(out double left, out double right, out double bottom, out double top, out double width, out double height) -> void
+EDBTypes.EDBBox.Deconstruct(out EDBTypes.EDBPoint lowerLeft, out EDBTypes.EDBPoint upperRight) -> void
+EDBTypes.EDBCircle.Deconstruct(out double x, out double y, out double radius) -> void
+EDBTypes.EDBCircle.Deconstruct(out EDBTypes.EDBPoint center, out double radius) -> void
+EDBTypes.EDBCube
+EDBTypes.EDBCube.EDBCube() -> void
+EDBTypes.EDBCube.Dimensions.get -> int
+EDBTypes.EDBCube.Equals(EDBTypes.EDBCube other) -> bool
+EDBTypes.EDBCube.LowerLeft.get -> System.Collections.Generic.IReadOnlyList<double>!
+EDBTypes.EDBCube.EDBCube(double coord) -> void
+EDBTypes.EDBCube.EDBCube(double lowerLeft, double upperRight) -> void
+EDBTypes.EDBCube.EDBCube(EDBTypes.EDBCube cube, double coord) -> void
+EDBTypes.EDBCube.EDBCube(EDBTypes.EDBCube cube, double lowerLeft, double upperRight) -> void
+EDBTypes.EDBCube.EDBCube(System.Collections.Generic.IEnumerable<double>! coords) -> void
+EDBTypes.EDBCube.EDBCube(System.Collections.Generic.IEnumerable<double>! lowerLeft, System.Collections.Generic.IEnumerable<double>! upperRight) -> void
+EDBTypes.EDBCube.IsPoint.get -> bool
+EDBTypes.EDBCube.ToSubset(params int[]! indexes) -> EDBTypes.EDBCube
+EDBTypes.EDBCube.UpperRight.get -> System.Collections.Generic.IReadOnlyList<double>!
+EDBTypes.EDBDbType.Cube = 63 -> EDBTypes.EDBDbType
+override EDBTypes.EDBCube.Equals(object? obj) -> bool
+override EDBTypes.EDBCube.GetHashCode() -> int
+override EDBTypes.EDBCube.ToString() -> string!
+static EDBTypes.EDBCube.operator !=(EDBTypes.EDBCube x, EDBTypes.EDBCube y) -> bool
+static EDBTypes.EDBCube.operator ==(EDBTypes.EDBCube x, EDBTypes.EDBCube y) -> bool
+EDBTypes.EDBLine.Deconstruct(out double a, out double b, out double c) -> void
+EDBTypes.EDBLSeg.Deconstruct(out EDBTypes.EDBPoint start, out EDBTypes.EDBPoint end) -> void
+EDBTypes.EDBPoint.Deconstruct(out double x, out double y) -> void
+EDBTypes.EDBTid.Deconstruct(out uint blockNumber, out ushort offsetNumber) -> void
+*REMOVED*EnterpriseDB.EDBClient.EDBConnection.BeginTextExport(string! copyToCommand) -> System.IO.TextReader!
+*REMOVED*EnterpriseDB.EDBClient.EDBConnection.BeginTextExportAsync(string! copyToCommand, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.IO.TextReader!>!
+*REMOVED*EnterpriseDB.EDBClient.EDBConnection.BeginTextImport(string! copyFromCommand) -> System.IO.TextWriter!
+*REMOVED*EnterpriseDB.EDBClient.EDBConnection.BeginTextImportAsync(string! copyFromCommand, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.IO.TextWriter!>!
+*REMOVED*EnterpriseDB.EDBClient.EDBDataReader.GetColumnSchemaAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.ObjectModel.ReadOnlyCollection<EnterpriseDB.EDBClient.Schema.EDBDbColumn!>!>!

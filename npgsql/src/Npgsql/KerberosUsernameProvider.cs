@@ -46,7 +46,7 @@ static class KerberosUsernameProvider
 
         async ValueTask<string?> GetUsernameAsyncInternal()
         {
-#if NET5_0_OR_GREATER
+#if NET8_0_OR_GREATER
             if (async)
                 await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
             else
@@ -66,10 +66,8 @@ static class KerberosUsernameProvider
             var line = default(string);
             for (var i = 0; i < 2; i++)
                 // ReSharper disable once MethodHasAsyncOverload
-#if NET7_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER  // EnterpriseDB (NETFRAMWEWORK)
                 if ((line = async ? await process.StandardOutput.ReadLineAsync(cancellationToken).ConfigureAwait(false) : process.StandardOutput.ReadLine()) == null)
-#elif NET5_0_OR_GREATER
-                if ((line = async ? await process.StandardOutput.ReadLineAsync().ConfigureAwait(false) : process.StandardOutput.ReadLine()) == null)
 #else
                 if ((line = process.StandardOutput.ReadLine()) == null)
 #endif

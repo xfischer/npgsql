@@ -12,7 +12,7 @@ using EnterpriseDB.EDBClient.Replication.PgOutput.Messages;
 namespace EnterpriseDB.EDBClient.BackendMessages;
 
 readonly struct ColumnInfo(PgConverterInfo converterInfo, DataFormat dataFormat, bool asObject)
-    {
+{
 
     public PgConverterInfo ConverterInfo { get; } = converterInfo;
     public DataFormat DataFormat { get; } = dataFormat;
@@ -75,23 +75,23 @@ sealed class RowDescriptionMessage : IBackendMessage
 
         if (!isOutDescription) /* EnterpriseDB Team */
         {
-	        for (var i = 0; i < numFields; ++i)
-	        {
-	            var field = _fields[i] ??= new();
+            for (var i = 0; i < numFields; ++i)
+            {
+                var field = _fields[i] ??= new();
 
-	            field.Populate(
-	                options,
-	                name:                  buf.ReadNullTerminatedString(),
-	                tableOID:              buf.ReadUInt32(),
-	                columnAttributeNumber: buf.ReadInt16(),
-	                oid:                   buf.ReadUInt32(),
-	                typeSize:              buf.ReadInt16(),
-	                typeModifier:          buf.ReadInt32(),
-	                dataFormat:            DataFormatUtils.Create(buf.ReadInt16())
-	            );
+                field.Populate(
+                    options,
+                    name: buf.ReadNullTerminatedString(),
+                    tableOID: buf.ReadUInt32(),
+                    columnAttributeNumber: buf.ReadInt16(),
+                    oid: buf.ReadUInt32(),
+                    typeSize: buf.ReadInt16(),
+                    typeModifier: buf.ReadInt32(),
+                    dataFormat: DataFormatUtils.Create(buf.ReadInt16())
+                );
 
-	            _nameIndex.TryAdd(field.Name, i);
-	        }
+                _nameIndex.TryAdd(field.Name, i);
+            }
         }
         else /* EnterpriseDB Team */
         {
@@ -445,15 +445,22 @@ public sealed class FieldDescription
         [MethodImpl(MethodImplOptions.NoInlining)]
         void GetInfoSlow(Type? type, out ColumnInfo lastColumnInfo)
         {
-            if (AdoSerializerHelpers.TryGetTypeInfoForReading(type ?? typeof(object), _serializerOptions.ToCanonicalTypeId(PostgresType), _serializerOptions, out var typeInfo)
-                && typeInfo!.TryBind(Field, DataFormat, out var converterInfo))
+            PgConverterInfo converterInfo;
+            switch (DataFormat)
             {
-                lastColumnInfo = new(converterInfo, DataFormat, typeof(object) == type || converterInfo.IsBoxingConverter);
-            }
-            else if (DataFormat == DataFormat.Text && IsUnknownResultType())
+            case DataFormat.Text when IsUnknownResultType():
             {
+                // EnterpriseDB: EDB types support direct mapping even in unknown result type scenarios
+                if (AdoSerializerHelpers.TryGetTypeInfoForReading(type ?? typeof(object), _serializerOptions.ToCanonicalTypeId(PostgresType), _serializerOptions, out var typeInfoEdb)
+                    && typeInfoEdb!.PgTypeId?.Oid == PostgresType.OID // check if matching type also matches OID
+                    && typeInfoEdb.TryBind(Field, DataFormat, out converterInfo))
+                {
+                    lastColumnInfo = new(converterInfo, DataFormat, typeof(object) == type || converterInfo.IsBoxingConverter);
+                    break;
+                }
+
                 // Try to resolve some 'pg_catalog.text' type info for the expected clr type.
-                typeInfo = AdoSerializerHelpers.GetTypeInfoForReading(type ?? typeof(string), _serializerOptions.TextPgTypeId, _serializerOptions);
+                var typeInfo = AdoSerializerHelpers.GetTypeInfoForReading(type ?? typeof(string), _serializerOptions.TextPgTypeId, _serializerOptions);
 
                 // We start binding to DataFormat.Binary as it's the broadest supported format.
                 // The format however is irrelevant as 'pg_catalog.text' data is identical across either.
@@ -462,13 +469,22 @@ public sealed class FieldDescription
                     converterInfo = typeInfo.Bind(Field, DataFormat.Text);
 
                 lastColumnInfo = new(converterInfo, DataFormat, type != converterInfo.TypeToConvert || converterInfo.IsBoxingConverter);
-            }
-            else
-            {
-                AdoSerializerHelpers.GetTypeInfoForReading(type ?? typeof(object), _serializerOptions.ToCanonicalTypeId(PostgresType), _serializerOptions);
 
+                break;
+            }
+            case DataFormat.Binary or DataFormat.Text:
+            {
+                var typeInfo = AdoSerializerHelpers.GetTypeInfoForReading(type ?? typeof(object), _serializerOptions.ToCanonicalTypeId(PostgresType), _serializerOptions);
+
+                // If we don't support the DataFormat we'll just throw.
+                converterInfo = typeInfo.Bind(Field, DataFormat);
+                lastColumnInfo = new(converterInfo, DataFormat, typeof(object) == type || converterInfo.IsBoxingConverter);
+                break;
+            }
+            default:
                 ThrowHelper.ThrowUnreachableException("Unknown data format {0}", DataFormat);
                 lastColumnInfo = default;
+                break;
             }
 
             // We delay initializing ObjectOrDefaultInfo until after the first lookup (unless it is itself the first lookup).

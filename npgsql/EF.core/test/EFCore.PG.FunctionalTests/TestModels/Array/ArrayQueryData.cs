@@ -1,4 +1,4 @@
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestModels.Array;
+namespace Microsoft.EntityFrameworkCore.TestModels.Array;
 
 public class ArrayQueryData : ISetSource
 {

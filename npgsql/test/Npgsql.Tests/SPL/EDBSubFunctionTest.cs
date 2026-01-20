@@ -73,6 +73,7 @@ internal class EDBSubFunctionTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -141,14 +142,14 @@ internal class EDBSubFunctionTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(NUMBER_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(NUMBER_TOTAL));
             for (var i = 0; i < NUMBER_TOTAL; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
                 var result = notice.MessageText;
                 var arr = result.Split("=");
                 var value = arr[1].Trim();
-                Assert.AreEqual(numberValues[i].ToString(), value);
+                Assert.That(value, Is.EqualTo(numberValues[i].ToString()));
             }
         }
         finally
@@ -174,7 +175,7 @@ internal class EDBSubFunctionTest : EPASTestBase
         cstmt.Prepare();
         cstmt.ExecuteNonQuery();
         var value = double.Parse(cstmt.Parameters[0].Value.ToString());
-        Assert.AreEqual(FORWORD_DECLARE_RESULT, value, 0.1);
+        Assert.That(value, Is.EqualTo(FORWORD_DECLARE_RESULT).Within(0.1));
     }
 
     [Test]
@@ -255,7 +256,7 @@ internal class EDBSubFunctionTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(MSG_TOTAL, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(MSG_TOTAL));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
@@ -263,8 +264,8 @@ internal class EDBSubFunctionTest : EPASTestBase
                 var arr = value.Split(":");
                 var msg = arr[0].Trim();
                 var number = arr[1].Trim();
-                Assert.AreEqual(overloadMsgs[i], msg);
-                Assert.AreEqual(overloadNumbers[i], number);
+                Assert.That(msg, Is.EqualTo(overloadMsgs[i]));
+                Assert.That(number, Is.EqualTo(overloadNumbers[i]));
             }
         }
         finally

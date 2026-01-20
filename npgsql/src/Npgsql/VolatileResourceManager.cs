@@ -280,8 +280,8 @@ sealed class VolatileResourceManager : ISinglePhaseNotification
             // We're here for connections which were closed before their TransactionScope completes.
             // These need to be closed now.
             // We should return the connector to the pool only if we've successfully removed it from the pending list.
-            // Note that we remove it from the NpgsqlDataSource bound to connection and not to connector
-            // because of NpgsqlMultiHostDataSource which has its own list to which connection adds connectors.
+            // Note that we remove it from the EDBDataSource bound to connection and not to connector
+            // because of EDBMultiHostDataSource which has its own list to which connection adds connectors.
             if (_dataSource.TryRemovePendingEnlistedConnector(_connector, _transaction))
                 _connector.Return();
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,6 +8,7 @@ using EnterpriseDB.EDBClient.BackendMessages;
 using EnterpriseDB.EDBClient.Internal;
 using EnterpriseDB.EDBClient.Internal.Postgres;
 using EDBTypes;
+using InfiniteTimeout = System.Threading.Timeout;
 using static EnterpriseDB.EDBClient.Util.Statics;
 
 namespace EnterpriseDB.EDBClient;
@@ -25,7 +27,7 @@ public sealed class EDBBinaryImporter : ICancelable
     EDBConnector _connector;
     EDBWriteBuffer _buf;
 
-    ImporterState _state;
+    ImporterState _state = ImporterState.Uninitialized;
 
     /// <summary>
     /// The number of columns in the current (not-yet-written) row.
@@ -45,6 +47,8 @@ public sealed class EDBBinaryImporter : ICancelable
     readonly ILogger _copyLogger;
     PgWriter _pgWriter = null!; // Setup in Init
 
+    Activity? _activity;
+
     /// <summary>
     /// Current timeout
     /// </summary>
@@ -52,8 +56,9 @@ public sealed class EDBBinaryImporter : ICancelable
     {
         set
         {
-            _buf.Timeout = value;
-            _connector.ReadBuffer.Timeout = value;
+            var timeout = value > TimeSpan.Zero ? value : InfiniteTimeout.InfiniteTimeSpan;
+            _buf.Timeout = timeout;
+            _connector.ReadBuffer.Timeout = timeout;
         }
     }
 
@@ -72,39 +77,51 @@ public sealed class EDBBinaryImporter : ICancelable
 
     internal async Task Init(string copyFromCommand, bool async, CancellationToken cancellationToken = default)
     {
-        await _connector.WriteQuery(copyFromCommand, async, cancellationToken).ConfigureAwait(false);
-        await _connector.Flush(async, cancellationToken).ConfigureAwait(false);
+        Debug.Assert(_activity is null);
+        _activity = _connector.TraceCopyStart(copyFromCommand, "COPY FROM");
 
-        using var registration = _connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
+        try
+	    {
+	        await _connector.WriteQuery(copyFromCommand, async, cancellationToken).ConfigureAwait(false);
+	        await _connector.Flush(async, cancellationToken).ConfigureAwait(false);
 
-        CopyInResponseMessage copyInResponse;
-        var msg = await _connector.ReadMessage(async).ConfigureAwait(false);
-        switch (msg.Code)
-        {
-        case BackendMessageCode.CopyInResponse:
-            copyInResponse = (CopyInResponseMessage) msg;
-            if (!copyInResponse.IsBinary)
-            {
-                throw _connector.Break(
-                    new ArgumentException("copyFromCommand triggered a text transfer, only binary is allowed",
-                        nameof(copyFromCommand)));
-            }
-            break;
-        case BackendMessageCode.CommandComplete:
-            throw new InvalidOperationException(
-                "This API only supports import/export from the client, i.e. COPY commands containing TO/FROM STDIN. " +
-                "To import/export with files on your PostgreSQL machine, simply execute the command with ExecuteNonQuery. " +
-                "Note that your data has been successfully imported/exported.");
-        default:
-            throw _connector.UnexpectedMessageReceived(msg.Code);
+	        using var registration = _connector.StartNestedCancellableOperation(cancellationToken, attemptPgCancellation: false);
+
+	        CopyInResponseMessage copyInResponse;
+	        var msg = await _connector.ReadMessage(async).ConfigureAwait(false);
+	        switch (msg.Code)
+	        {
+	        case BackendMessageCode.CopyInResponse:
+	            copyInResponse = (CopyInResponseMessage) msg;
+	            if (!copyInResponse.IsBinary)
+	            {
+	                throw _connector.Break(
+	                    new ArgumentException("copyFromCommand triggered a text transfer, only binary is allowed",
+	                        nameof(copyFromCommand)));
+	            }
+	            break;
+	        case BackendMessageCode.CommandComplete:
+	            throw new InvalidOperationException(
+	                "This API only supports import/export from the client, i.e. COPY commands containing TO/FROM STDIN. " +
+	                "To import/export with files on your PostgreSQL machine, simply execute the command with ExecuteNonQuery. " +
+	                "Note that your data has been successfully imported/exported.");
+	        default:
+	            throw _connector.UnexpectedMessageReceived(msg.Code);
+	        }
+
+	            _state = ImporterState.Ready;
+	        _params = new EDBParameter[copyInResponse.NumColumns];
+	        _rowsImported = 0;
+	        _buf.StartCopyMode();
+	        WriteHeader();
+	        // Only init after header.
+	        _pgWriter = _buf.GetWriter(_connector.DatabaseInfo);
         }
-
-        _params = new EDBParameter[copyInResponse.NumColumns];
-        _rowsImported = 0;
-        _buf.StartCopyMode();
-        WriteHeader();
-        // Only init after header.
-        _pgWriter = _buf.GetWriter(_connector.DatabaseInfo);
+        catch (Exception e)
+        {
+            TraceSetException(e);
+            throw;
+        }
     }
 
     void WriteHeader()
@@ -259,7 +276,7 @@ public sealed class EDBBinaryImporter : ICancelable
             }
 
             // We only retrieve previous values if anything actually changed.
-            // For object typed parameters we must do so whenever setting NpgsqlParameter.Value would reset the type info.
+            // For object typed parameters we must do so whenever setting EDBParameter.Value would reset the type info.
             PgTypeInfo? previousTypeInfo = null;
             PgConverter? previousConverter = null;
             PgTypeId previousTypeId = default;
@@ -281,18 +298,18 @@ public sealed class EDBBinaryImporter : ICancelable
 
             // These actions can reset or change the type info, we'll check afterwards whether we're still consistent with the original values.
             param.TypedValue = value;
-            param.ResolveTypeInfo(_connector.SerializerOptions);
+            param.ResolveTypeInfo(_connector.SerializerOptions, _connector.DbTypeResolver);
 
             if (previousTypeInfo is not null && previousConverter is not null && param.PgTypeId != previousTypeId)
             {
                 var currentPgTypeId = param.PgTypeId;
                 // We should only rollback values when the stored instance was used. We'll throw before writing the new instance back anyway.
-                // Also always rolling back could set PgTypeInfos that were resolved for a type that doesn't match the T of the NpgsqlParameter.
+                // Also always rolling back could set PgTypeInfos that were resolved for a type that doesn't match the T of the EDBParameter.
                 if (!newParam)
                     param.SetResolutionInfo(previousTypeInfo, previousConverter, previousTypeId);
                 throw new InvalidOperationException($"Write for column {_column} resolves to a different PostgreSQL type: {currentPgTypeId} than the first row resolved to ({previousTypeId}). " +
                                                     $"Please make sure to use clr types that resolve to the same PostgreSQL type across rows. " +
-                                                    $"Alternatively pass the same NpgsqlDbType or DataTypeName to ensure the PostgreSQL type ends up to be identical." );
+                                                    $"Alternatively pass the same EDBDbType or DataTypeName to ensure the PostgreSQL type ends up to be identical." );
             }
 
             if (newParam)
@@ -307,6 +324,7 @@ public sealed class EDBBinaryImporter : ICancelable
             }
             catch (Exception ex)
             {
+                TraceSetException(ex);
                 _connector.Break(ex);
                 throw;
             }
@@ -425,8 +443,9 @@ public sealed class EDBBinaryImporter : ICancelable
             _state = ImporterState.Committed;
             return cmdComplete.Rows;
         }
-        catch
+        catch (Exception e)
         {
+            TraceSetException(e);
             Cleanup();
             throw;
         }
@@ -512,6 +531,7 @@ public sealed class EDBBinaryImporter : ICancelable
         case ImporterState.Ready:
             await Cancel(async, cancellationToken).ConfigureAwait(false);
             break;
+        case ImporterState.Uninitialized:
         case ImporterState.Cancelled:
         case ImporterState.Committed:
             break;
@@ -519,6 +539,7 @@ public sealed class EDBBinaryImporter : ICancelable
             throw new Exception("Invalid state: " + _state);
         }
 
+        TraceImportStop();
         Cleanup();
     }
 
@@ -553,6 +574,7 @@ public sealed class EDBBinaryImporter : ICancelable
         static void Throw(ImporterState state)
             => throw (state switch
             {
+                ImporterState.Uninitialized => throw new InvalidOperationException("The COPY operation has not been initialized."),
                 ImporterState.Disposed => new ObjectDisposedException(typeof(EDBBinaryImporter).FullName,
                     "The COPY operation has already ended."),
                 ImporterState.Cancelled => new InvalidOperationException("The COPY operation has already been cancelled."),
@@ -567,6 +589,7 @@ public sealed class EDBBinaryImporter : ICancelable
 
     enum ImporterState
     {
+        Uninitialized,
         Ready,
         Committed,
         Cancelled,
@@ -577,4 +600,38 @@ public sealed class EDBBinaryImporter : ICancelable
 
     void ThrowColumnMismatch()
         => throw new InvalidOperationException($"The binary import operation was started with {NumColumns} column(s), but {_column + 1} value(s) were provided.");
+
+    #region Tracing
+
+    void TraceImportStop()
+    {
+        if (_activity is not null)
+        {
+            switch (_state)
+            {
+            case ImporterState.Committed:
+                EDBActivitySource.CopyStop(_activity, _rowsImported);
+                break;
+            case ImporterState.Cancelled:
+                EDBActivitySource.CopyStop(_activity, rows: 0);
+                break;
+            default:
+                Debug.Fail("Invalid state: " + _state);
+                break;
+            }
+
+            _activity = null;
+        }
+    }
+
+    void TraceSetException(Exception exception)
+    {
+        if (_activity is not null)
+        {
+            EDBActivitySource.SetException(_activity, exception);
+            _activity = null;
+        }
+    }
+
+    #endregion Tracing
 }

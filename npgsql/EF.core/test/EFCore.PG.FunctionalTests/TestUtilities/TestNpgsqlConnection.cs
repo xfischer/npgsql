@@ -2,7 +2,7 @@
 using System.Data.Common;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+namespace Microsoft.EntityFrameworkCore.TestUtilities;
 
 public class TestEDBConnection(RelationalConnectionDependencies dependencies, DbDataSource dataSource = null)
     : NpgsqlRelationalConnection(dependencies, dataSource)

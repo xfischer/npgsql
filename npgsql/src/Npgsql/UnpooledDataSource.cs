@@ -7,7 +7,7 @@ using EnterpriseDB.EDBClient.Util;
 namespace EnterpriseDB.EDBClient;
 
 sealed class UnpooledDataSource(EDBConnectionStringBuilder settings, EDBDataSourceConfiguration dataSourceConfig)
-    : EDBDataSource(settings, dataSourceConfig)
+    : EDBDataSource(settings, dataSourceConfig, reportMetrics: true)
 {
     volatile int _numConnectors;
 

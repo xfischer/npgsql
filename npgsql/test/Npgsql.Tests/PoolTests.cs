@@ -276,7 +276,7 @@ class PoolTests : TestBase
         Assert.That(asyncOpenerThreadId, Is.Not.EqualTo(Environment.CurrentManagedThreadId));
     }
 
-    [Test, Timeout(15000)] //TODO: parallelize
+    [Test, CancelAfter(15000)] //TODO: parallelize
     public async Task Release_waiter_on_connection_failure()
     {
         await using var dataSource = CreateDataSource(csb =>
@@ -317,7 +317,7 @@ class PoolTests : TestBase
                 }
 
                 // Now have one connection in the pool
-                Assert.True(PoolManager.Pools.TryGetValue(connString, out var pool));
+                Assert.That(PoolManager.Pools.TryGetValue(connString, out var pool));
                 AssertPoolState(pool, open: 1, idle: 1);
 
                 EDBConnection.ClearPool(conn);
@@ -349,7 +349,7 @@ class PoolTests : TestBase
                 EDBConnection.ClearPool(conn);
                 // conn is still busy but should get closed when returned to the pool
 
-                Assert.True(PoolManager.Pools.TryGetValue(connString, out pool));
+                Assert.That(PoolManager.Pools.TryGetValue(connString, out pool));
                 AssertPoolState(pool, open: 1, idle: 0);
             }
 
@@ -448,7 +448,7 @@ class PoolTests : TestBase
 
     // With MaxPoolSize=1, opens many connections in parallel and executes a simple SELECT. Since there's only one
     // physical connection, all operations will be completely serialized
-    [Test, Timeout(30000)] // EnterpriseDB (added timeout)
+    [Test, CancelAfter(30000)] // EnterpriseDB (added timeout)
     public async Task OnePhysicalConnectionManyCommands()
     {
         const int numParallelCommands = 10000;

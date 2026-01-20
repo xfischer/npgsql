@@ -83,6 +83,65 @@ public class NpgsqlSqlTranslatingExpressionVisitor : RelationalSqlTranslatingExp
     ///     any release. You should only use it directly in your code with extreme caution and knowing that
     ///     doing so can result in application failures when updating to a new Entity Framework Core release.
     /// </summary>
+    protected override Expression VisitConditional(ConditionalExpression conditionalExpression)
+    {
+        var test = Visit(conditionalExpression.Test);
+        var ifTrue = Visit(conditionalExpression.IfTrue);
+        var ifFalse = Visit(conditionalExpression.IfFalse);
+
+        if (TranslationFailed(conditionalExpression.Test, test, out var sqlTest)
+            || TranslationFailed(conditionalExpression.IfTrue, ifTrue, out var sqlIfTrue)
+            || TranslationFailed(conditionalExpression.IfFalse, ifFalse, out var sqlIfFalse))
+        {
+            return QueryCompilationContext.NotTranslatedExpression;
+        }
+
+        // Translate:
+        // a == b ? null : a -> NULLIF(a, b)
+        // a != b ? a : null -> NULLIF(a, b)
+        if (sqlTest is SqlBinaryExpression binary && sqlIfTrue is not null && sqlIfFalse is not null)
+        {
+            switch (binary.OperatorType)
+            {
+                case ExpressionType.Equal
+                    when ifTrue is SqlConstantExpression { Value: null } && TryTranslateToNullIf(sqlIfFalse, out var nullIfTranslation):
+                case ExpressionType.NotEqual
+                    when ifFalse is SqlConstantExpression { Value: null } && TryTranslateToNullIf(sqlIfTrue, out nullIfTranslation):
+                    return nullIfTranslation;
+            }
+        }
+
+        return _sqlExpressionFactory.Case([new CaseWhenClause(sqlTest!, sqlIfTrue!)], sqlIfFalse);
+
+        bool TryTranslateToNullIf(SqlExpression conditionalResult, [NotNullWhen(true)] out Expression? nullIfTranslation)
+        {
+            var (left, right) = (binary.Left, binary.Right);
+
+            if (left.Equals(conditionalResult))
+            {
+                nullIfTranslation = _sqlExpressionFactory.Function(
+                    "NULLIF", [left, right], true, [false, false], left.Type, left.TypeMapping);
+                return true;
+            }
+
+            if (right.Equals(conditionalResult))
+            {
+                nullIfTranslation = _sqlExpressionFactory.Function(
+                    "NULLIF", [right, left], true, [false, false], right.Type, right.TypeMapping);
+                return true;
+            }
+
+            nullIfTranslation = null;
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     This is an internal API that supports the Entity Framework Core infrastructure and not subject to
+    ///     the same compatibility standards as public APIs. It may be changed or removed without notice in
+    ///     any release. You should only use it directly in your code with extreme caution and knowing that
+    ///     doing so can result in application failures when updating to a new Entity Framework Core release.
+    /// </summary>
     protected override Expression VisitUnary(UnaryExpression unaryExpression)
     {
         switch (unaryExpression.NodeType)
@@ -125,11 +184,15 @@ public class NpgsqlSqlTranslatingExpressionVisitor : RelationalSqlTranslatingExp
 
             // We map both IPAddress and NpgsqlInet to PG inet, and translate many methods accepting NpgsqlInet, so ignore casts from
             // IPAddress to NpgsqlInet.
-            // On the PostgreSQL side, cidr is also implicitly convertible to inet, and at the ADO.NET level NpgsqlCidr has a similar
+            // On the PostgreSQL side, cidr is also implicitly convertible to inet, and at the ADO.NET level EDBCidr has a similar
             // implicit conversion operator to NpgsqlInet. So remove that cast as well.
             case ExpressionType.Convert
                 when unaryExpression.Type == typeof(EDBInet)
-                && (unaryExpression.Operand.Type == typeof(IPAddress) || unaryExpression.Operand.Type == typeof(EDBCidr)):
+                && (unaryExpression.Operand.Type == typeof(IPAddress)
+                    || unaryExpression.Operand.Type == typeof(IPNetwork)
+#pragma warning disable CS0618 // EDBCidr is obsolete, replaced by .NET IPNetwork
+                    || unaryExpression.Operand.Type == typeof(EDBCidr)):
+#pragma warning restore CS0618
                 return Visit(unaryExpression.Operand);
         }
 
@@ -241,16 +304,40 @@ public class NpgsqlSqlTranslatingExpressionVisitor : RelationalSqlTranslatingExp
             // further JSON operations may need to be composed. However, when the value extracted is a JSON null, a non-NULL jsonb value is
             // returned, and comparing that to relational NULL returns false.
             // Pattern-match this and force the use of ->> by changing the mapping to be a scalar rather than an entity type.
-            case SqlUnaryExpression
+            case SqlBinaryExpression
             {
                 OperatorType: ExpressionType.Equal or ExpressionType.NotEqual,
-                Operand: JsonScalarExpression { TypeMapping: NpgsqlOwnedJsonTypeMapping } operand
-            } unary:
+                Left: JsonScalarExpression { TypeMapping: NpgsqlStructuralJsonTypeMapping } operand,
+                Right: SqlConstantExpression { Value: null }
+            } binary:
             {
-                return unary.Update(
+                return binary.Update(
+                    new JsonScalarExpression(
+                        operand.Json, operand.Path, operand.Type, _typeMappingSource.FindMapping("text"), operand.IsNullable),
+                    binary.Right);
+            }
+            case SqlBinaryExpression
+            {
+                OperatorType: ExpressionType.Equal or ExpressionType.NotEqual,
+                Left: SqlConstantExpression { Value: null },
+                Right: JsonScalarExpression { TypeMapping: NpgsqlStructuralJsonTypeMapping } operand
+            } binary:
+            {
+                return binary.Update(
+                    binary.Left,
                     new JsonScalarExpression(
                         operand.Json, operand.Path, operand.Type, _typeMappingSource.FindMapping("text"), operand.IsNullable));
             }
+            // Unfortunately EF isn't consistent in its representation of X IS NULL in the SQL tree - sometimes it's a SqlUnaryExpression with Equals,
+            // sometimes it's an X = NULL SqlBinaryExpression that later gets transformed to SqlUnaryExpression, in SqlNullabilityProcessor. We recognize
+            // both of these here.
+            case SqlUnaryExpression
+            {
+                Operand: JsonScalarExpression { TypeMapping: NpgsqlStructuralJsonTypeMapping } operand
+            } unary:
+                return unary.Update(
+                     new JsonScalarExpression(
+                         operand.Json, operand.Path, operand.Type, _typeMappingSource.FindMapping("text"), operand.IsNullable));
         }
 
         return translation;
@@ -265,6 +352,58 @@ public class NpgsqlSqlTranslatingExpressionVisitor : RelationalSqlTranslatingExp
     protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
     {
         var method = methodCallExpression.Method;
+
+        // Pattern-match: cube.LowerLeft[index] or cube.UpperRight[index]
+        // This appears as: get_Item method call on a MemberExpression of LowerLeft/UpperRight
+        if (methodCallExpression is
+            {
+                Method.Name: "get_Item",
+                Object: MemberExpression
+                {
+                    Member.Name: nameof(EDBCube.LowerLeft) or nameof(EDBCube.UpperRight)
+                } memberExpression
+            } && memberExpression.Member.DeclaringType == typeof(EDBCube))
+        {
+            // Translate the cube instance and index argument
+            if (Visit(memberExpression.Expression) is not SqlExpression sqlCubeInstance
+                || Visit(methodCallExpression.Arguments[0]) is not SqlExpression sqlIndex)
+            {
+                return QueryCompilationContext.NotTranslatedExpression;
+            }
+
+            // Convert zero-based to one-based index
+            // For constants, optimize at translation time; for parameters/columns, add at runtime
+            var pgIndex = sqlIndex is SqlConstantExpression { Value: int index }
+                ? _sqlExpressionFactory.Constant(index + 1)
+                : _sqlExpressionFactory.Add(sqlIndex, _sqlExpressionFactory.Constant(1));
+
+            // Determine which function to call
+            var functionName = memberExpression.Member.Name == nameof(EDBCube.LowerLeft)
+                ? "cube_ll_coord"
+                : "cube_ur_coord";
+
+            return _sqlExpressionFactory.Function(
+                functionName,
+                [sqlCubeInstance, pgIndex],
+                nullable: true,
+                argumentsPropagateNullability: TrueArrays[2],
+                typeof(double));
+        }
+
+        // Pattern-match: cube.ToSubset(indexes)
+        if (method.Name == nameof(EDBCube.ToSubset)
+            && method.DeclaringType == typeof(EDBCube)
+            && methodCallExpression.Object is not null)
+        {
+            // Translate cube instance and indexes array
+            if (Visit(methodCallExpression.Object) is not SqlExpression sqlCubeInstance
+                || Visit(methodCallExpression.Arguments[0]) is not SqlExpression sqlIndexes)
+            {
+                return QueryCompilationContext.NotTranslatedExpression;
+            }
+
+            return TranslateCubeToSubset(sqlCubeInstance, sqlIndexes) ?? QueryCompilationContext.NotTranslatedExpression;
+        }
 
         if (method == StringStartsWithMethod
             && TryTranslateStartsEndsWithContains(
@@ -288,6 +427,89 @@ public class NpgsqlSqlTranslatingExpressionVisitor : RelationalSqlTranslatingExp
         }
 
         return base.VisitMethodCall(methodCallExpression);
+    }
+
+    private SqlExpression? TranslateCubeToSubset(SqlExpression cubeExpression, SqlExpression indexesExpression)
+    {
+        SqlExpression convertedIndexes;
+
+        switch (indexesExpression)
+        {
+            // Parameters or columns - create subquery to convert 0-based to 1-based at runtime
+            case SqlParameterExpression or ColumnExpression:
+            {
+                // Apply type mapping to the indexes array
+                var intArrayTypeMapping = _typeMappingSource.FindMapping(typeof(int[]))!;
+                var typedIndexes = _sqlExpressionFactory.ApplyTypeMapping(indexesExpression, intArrayTypeMapping);
+
+                // Generate table alias and create unnest table
+                var tableAlias = ((RelationalQueryCompilationContext)_queryCompilationContext).SqlAliasManager.GenerateTableAlias("u");
+                var unnestTable = new PgUnnestExpression(tableAlias, typedIndexes, "x", withOrdinality: false);
+
+                // Create column reference for unnested value
+                var intTypeMapping = _typeMappingSource.FindMapping(typeof(int))!;
+                var xColumn = new ColumnExpression("x", tableAlias, typeof(int), intTypeMapping, nullable: false);
+
+                // Create increment expression: x + 1
+                var xPlusOne = _sqlExpressionFactory.Add(xColumn, _sqlExpressionFactory.Constant(1, intTypeMapping));
+
+                // Create array_agg(x + 1) function
+                var arrayAggFunction = _sqlExpressionFactory.Function(
+                    "array_agg",
+                    [xPlusOne],
+                    nullable: true,
+                    argumentsPropagateNullability: new[] { true },
+                    typeof(int[]),
+                    intArrayTypeMapping);
+
+                // Construct SelectExpression
+#pragma warning disable EF1001 // SelectExpression constructors are pubternal
+                var selectExpression = new SelectExpression(
+                    [unnestTable],
+                    arrayAggFunction,
+                    [],
+                    ((RelationalQueryCompilationContext)_queryCompilationContext).SqlAliasManager);
+#pragma warning restore EF1001
+
+                // Finalize and wrap in ScalarSubqueryExpression
+                selectExpression.ApplyProjection();
+                convertedIndexes = new ScalarSubqueryExpression(selectExpression);
+                break;
+            }
+
+            // Constant arrays - convert directly at compile time
+            case SqlConstantExpression { Value: int[] constantArray }:
+            {
+                var oneBasedValues = constantArray.Select(i => i + 1).ToArray();
+                convertedIndexes = _sqlExpressionFactory.Constant(oneBasedValues);
+                break;
+            }
+
+            // Inline arrays (new[] { ... }) - convert each element
+            case PgNewArrayExpression { Expressions: var expressions }:
+            {
+                var convertedExpressions = expressions
+                    .Select(e => e is SqlConstantExpression { Value: int index }
+                        ? _sqlExpressionFactory.Constant(index + 1)  // Constant element
+                        : _sqlExpressionFactory.Add(e, _sqlExpressionFactory.Constant(1)))  // Non-constant element
+                    .ToArray();
+                convertedIndexes = _sqlExpressionFactory.NewArray(convertedExpressions, typeof(int[]));
+                break;
+            }
+
+            default:
+                // Unexpected case - cannot translate
+                return null;
+        }
+
+        // Build final cube_subset function call
+        return _sqlExpressionFactory.Function(
+            "cube_subset",
+            [cubeExpression, convertedIndexes],
+            nullable: true,
+            argumentsPropagateNullability: TrueArrays[2],
+            typeof(EDBCube),
+            _typeMappingSource.FindMapping(typeof(EDBCube)));
     }
 
     /// <summary>
@@ -383,6 +605,50 @@ public class NpgsqlSqlTranslatingExpressionVisitor : RelationalSqlTranslatingExp
                 : QueryCompilationContext.NotTranslatedExpression;
         }
 
+        // Translate new EDBCube(...) -> cube(...)
+        if (newExpression.Constructor?.DeclaringType == typeof(EDBCube))
+        {
+            if (!TryTranslateArguments(out var sqlArguments))
+            {
+                return QueryCompilationContext.NotTranslatedExpression;
+            }
+
+            var cubeTypeMapping = _typeMappingSource.FindMapping(typeof(EDBCube));
+            var cubeParameters = newExpression.Constructor.GetParameters();
+
+            // Distinguish constructor overloads by parameter patterns
+            switch (cubeParameters)
+            {
+                case [var pCoords] when pCoords.ParameterType.IsAssignableFrom(typeof(double))
+                    || typeof(IEnumerable<double>).IsAssignableFrom(pCoords.ParameterType):
+                    // EDBCube(double coord) or EDBCube(IEnumerable<double> coords)
+                case [var pCoord1, var pCoord2] when pCoord1.ParameterType.IsAssignableFrom(typeof(double))
+                    && pCoord2.ParameterType.IsAssignableFrom(typeof(double)):
+                    // EDBCube(double coord1, double coord2)
+                case [var pLowerLeft, var pUpperRight]
+                    when typeof(IEnumerable<double>).IsAssignableFrom(pLowerLeft.ParameterType)
+                        && typeof(IEnumerable<double>).IsAssignableFrom(pUpperRight.ParameterType):
+                    // EDBCube(IEnumerable<double> lowerLeft, IEnumerable<double> upperRight)
+                case [var pCube, var pCoord] when pCube.ParameterType.IsAssignableFrom(typeof(EDBCube))
+                    && pCoord.ParameterType.IsAssignableFrom(typeof(double)):
+                    // EDBCube(EDBCube cube, double coord)
+                case [var pCube2, var pCoord12, var pCoord22]
+                    when pCube2.ParameterType.IsAssignableFrom(typeof(EDBCube))
+                        && pCoord12.ParameterType.IsAssignableFrom(typeof(double))
+                        && pCoord22.ParameterType.IsAssignableFrom(typeof(double)):
+                    // EDBCube(EDBCube cube, double coord1, double coord2)
+                    // All cases fallthrough to single cube() expression
+                    // cube() is a STRICT function - returns NULL if any argument is NULL
+                    return _sqlExpressionFactory.Function(
+                        "cube",
+                        sqlArguments,
+                        nullable: true,
+                        argumentsPropagateNullability: TrueArrays[sqlArguments.Length],
+                        typeof(EDBCube),
+                        cubeTypeMapping);
+            }
+        }
+
         return QueryCompilationContext.NotTranslatedExpression;
 
         bool TryTranslateArguments(out SqlExpression[] sqlArguments)
@@ -459,8 +725,7 @@ public class NpgsqlSqlTranslatingExpressionVisitor : RelationalSqlTranslatingExp
                 return true;
             }
 
-            case SqlParameterExpression patternParameter
-                when patternParameter.Name.StartsWith(QueryCompilationContext.QueryParameterPrefix, StringComparison.Ordinal):
+            case SqlParameterExpression patternParameter:
             {
                 // The pattern is a parameter, register a runtime parameter that will contain the rewritten LIKE pattern, where
                 // all special characters have been escaped.
@@ -553,7 +818,7 @@ public class NpgsqlSqlTranslatingExpressionVisitor : RelationalSqlTranslatingExp
         QueryContext queryContext,
         string baseParameterName,
         StartsEndsWithContains methodType)
-        => queryContext.ParameterValues[baseParameterName] switch
+        => queryContext.Parameters[baseParameterName] switch
         {
             null => null,
 

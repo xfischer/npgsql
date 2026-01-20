@@ -168,7 +168,7 @@ sealed partial class AdoTypeInfoResolverFactory
                 static (options, mapping, _) =>
                     mapping.CreateInfo(options, CreateListMultirangeConverter(
                         CreateRangeConverter(new DateTimeDateConverter(options.EnableDateTimeInfinityConversions), options), options)));
-    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+    #if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
                 mappings.AddType<EDBRange<DateOnly>[]>(DataTypeNames.DateMultirange,
                     static (options, mapping, _) =>
                         mapping.CreateInfo(options, CreateArrayMultirangeConverter(
@@ -243,7 +243,7 @@ sealed partial class AdoTypeInfoResolverFactory
             // datemultirange
             mappings.AddArrayType<EDBRange<DateTime>[]>(DataTypeNames.DateMultirange);
             mappings.AddArrayType<List<EDBRange<DateTime>>>(DataTypeNames.DateMultirange);
-    #if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+    #if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
                 mappings.AddArrayType<EDBRange<DateOnly>[]>(DataTypeNames.DateMultirange);
                 mappings.AddArrayType<List<EDBRange<DateOnly>>>(DataTypeNames.DateMultirange);
     #endif

@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.NameTranslation;
 using EnterpriseDB.EDBClient.PostgresTypes;
+using EnterpriseDB.EDBClient.Properties;
 using EDBTypes;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient.Properties;
 using static EnterpriseDB.EDBClient.Tests.TestUtil;
-using System.Data;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
 
@@ -43,7 +42,7 @@ public class EnumTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase
         var isUnmapSuccessful = dataSourceBuilder.UnmapEnum<Mood>(type);
         await using var dataSource = dataSourceBuilder.Build();
 
-        Assert.IsTrue(isUnmapSuccessful);
+        Assert.That(isUnmapSuccessful);
         Assert.ThrowsAsync<InvalidCastException>(() => AssertType(dataSource, Mood.Happy, "happy", type, npgsqlDbType: null));
     }
 
@@ -73,7 +72,7 @@ public class EnumTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase
         var isUnmapSuccessful = dataSourceBuilder.UnmapEnum(typeof(Mood), type);
         await using var dataSource = dataSourceBuilder.Build();
 
-        Assert.IsTrue(isUnmapSuccessful);
+        Assert.That(isUnmapSuccessful);
         Assert.ThrowsAsync<InvalidCastException>(() => AssertType(dataSource, Mood.Happy, "happy", type, npgsqlDbType: null));
     }
 
@@ -175,11 +174,11 @@ CREATE TYPE {type2} AS ENUM ('value1', 'value2');");
             nameof(EDBDataSourceBuilder));
 
         var exception = await AssertTypeUnsupportedWrite(Mood.Happy, enumType, dataSource: dataSource); // EnterpriseDB: force datasource without opt-ins
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedRead<Mood>("happy", enumType, dataSource: dataSource); // EnterpriseDB: force datasource without opt-ins
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
     }
 

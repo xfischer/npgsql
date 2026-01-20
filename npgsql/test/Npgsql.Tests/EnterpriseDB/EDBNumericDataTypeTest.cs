@@ -29,6 +29,8 @@ public class EDBNumericDataTypeTest : EPASTestBase
         TestUtil.dropTable(con, "NumericTAB");
 
         TestUtil.closeDB(con);
+
+        con?.Dispose();
     }
 
 

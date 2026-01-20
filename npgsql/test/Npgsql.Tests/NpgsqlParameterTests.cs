@@ -133,7 +133,7 @@ public class EDBParameterTest : TestBase
     [Test]
     public void Setting_value_does_not_change_DbType()
     {
-        var p = new EDBParameter { DbType = DbType.String, EDBDbType = EDBDbType.Bytea };
+        var p = new EDBParameter { DbType = DbType.Binary, EDBDbType = EDBDbType.Bytea };
         p.Value = 8;
         Assert.That(p.DbType, Is.EqualTo(DbType.Binary));
         Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Bytea));
@@ -147,17 +147,17 @@ public class EDBParameterTest : TestBase
     public void Constructor1()
     {
         var p = new EDBParameter();
-        Assert.AreEqual(DbType.Object, p.DbType, "DbType");
-        Assert.AreEqual(ParameterDirection.Input, p.Direction, "Direction");
-        Assert.IsFalse(p.IsNullable, "IsNullable");
-        Assert.AreEqual(string.Empty, p.ParameterName, "ParameterName");
-        Assert.AreEqual(0, p.Precision, "Precision");
-        Assert.AreEqual(0, p.Scale, "Scale");
-        Assert.AreEqual(0, p.Size, "Size");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "SourceColumn");
-        Assert.AreEqual(DataRowVersion.Current, p.SourceVersion, "SourceVersion");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "EDBDbType");
-        Assert.IsNull(p.Value, "Value");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "DbType");
+        Assert.That(p.Direction, Is.EqualTo(ParameterDirection.Input), "Direction");
+        Assert.That(p.IsNullable, Is.False, "IsNullable");
+        Assert.That(p.ParameterName, Is.Empty, "ParameterName");
+        Assert.That(p.Precision, Is.EqualTo(0), "Precision");
+        Assert.That(p.Scale, Is.EqualTo(0), "Scale");
+        Assert.That(p.Size, Is.EqualTo(0), "Size");
+        Assert.That(p.SourceColumn, Is.Empty, "SourceColumn");
+        Assert.That(p.SourceVersion, Is.EqualTo(DataRowVersion.Current), "SourceVersion");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "EDBDbType");
+        Assert.That(p.Value, Is.Null, "Value");
     }
 
     [Test]
@@ -166,51 +166,51 @@ public class EDBParameterTest : TestBase
         var value = new DateTime(2004, 8, 24);
 
         var p = new EDBParameter("address", value);
-        Assert.AreEqual(DbType.DateTime2, p.DbType, "B:DbType");
-        Assert.AreEqual(ParameterDirection.Input, p.Direction, "B:Direction");
-        Assert.IsFalse(p.IsNullable, "B:IsNullable");
-        Assert.AreEqual("address", p.ParameterName, "B:ParameterName");
-        Assert.AreEqual(0, p.Precision, "B:Precision");
-        Assert.AreEqual(0, p.Scale, "B:Scale");
+        Assert.That(p.DbType, Is.EqualTo(DbType.DateTime2), "B:DbType");
+        Assert.That(p.Direction, Is.EqualTo(ParameterDirection.Input), "B:Direction");
+        Assert.That(p.IsNullable, Is.False, "B:IsNullable");
+        Assert.That(p.ParameterName, Is.EqualTo("address"), "B:ParameterName");
+        Assert.That(p.Precision, Is.EqualTo(0), "B:Precision");
+        Assert.That(p.Scale, Is.EqualTo(0), "B:Scale");
         //Assert.AreEqual (0, p.Size, "B:Size");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "B:SourceColumn");
-        Assert.AreEqual(DataRowVersion.Current, p.SourceVersion, "B:SourceVersion");
-        Assert.AreEqual(EDBDbType.Timestamp, p.EDBDbType, "B:EDBDbType");
-        Assert.AreEqual(value, p.Value, "B:Value");
+        Assert.That(p.SourceColumn, Is.Empty, "B:SourceColumn");
+        Assert.That(p.SourceVersion, Is.EqualTo(DataRowVersion.Current), "B:SourceVersion");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Timestamp), "B:EDBDbType");
+        Assert.That(p.Value, Is.EqualTo(value), "B:Value");
     }
 
     [Test]
     public void Constructor2_Value_DBNull()
     {
         var p = new EDBParameter("address", DBNull.Value);
-        Assert.AreEqual(DbType.Object, p.DbType, "B:DbType");
-        Assert.AreEqual(ParameterDirection.Input, p.Direction, "B:Direction");
-        Assert.IsFalse(p.IsNullable, "B:IsNullable");
-        Assert.AreEqual("address", p.ParameterName, "B:ParameterName");
-        Assert.AreEqual(0, p.Precision, "B:Precision");
-        Assert.AreEqual(0, p.Scale, "B:Scale");
-        Assert.AreEqual(0, p.Size, "B:Size");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "B:SourceColumn");
-        Assert.AreEqual(DataRowVersion.Current, p.SourceVersion, "B:SourceVersion");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "B:EDBDbType");
-        Assert.AreEqual(DBNull.Value, p.Value, "B:Value");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "B:DbType");
+        Assert.That(p.Direction, Is.EqualTo(ParameterDirection.Input), "B:Direction");
+        Assert.That(p.IsNullable, Is.False, "B:IsNullable");
+        Assert.That(p.ParameterName, Is.EqualTo("address"), "B:ParameterName");
+        Assert.That(p.Precision, Is.EqualTo(0), "B:Precision");
+        Assert.That(p.Scale, Is.EqualTo(0), "B:Scale");
+        Assert.That(p.Size, Is.EqualTo(0), "B:Size");
+        Assert.That(p.SourceColumn, Is.Empty, "B:SourceColumn");
+        Assert.That(p.SourceVersion, Is.EqualTo(DataRowVersion.Current), "B:SourceVersion");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "B:EDBDbType");
+        Assert.That(p.Value, Is.EqualTo(DBNull.Value), "B:Value");
     }
 
     [Test]
     public void Constructor2_Value_null()
     {
         var p = new EDBParameter("address", null);
-        Assert.AreEqual(DbType.Object, p.DbType, "A:DbType");
-        Assert.AreEqual(ParameterDirection.Input, p.Direction, "A:Direction");
-        Assert.IsFalse(p.IsNullable, "A:IsNullable");
-        Assert.AreEqual("address", p.ParameterName, "A:ParameterName");
-        Assert.AreEqual(0, p.Precision, "A:Precision");
-        Assert.AreEqual(0, p.Scale, "A:Scale");
-        Assert.AreEqual(0, p.Size, "A:Size");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "A:SourceColumn");
-        Assert.AreEqual(DataRowVersion.Current, p.SourceVersion, "A:SourceVersion");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "A:EDBDbType");
-        Assert.IsNull(p.Value, "A:Value");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "A:DbType");
+        Assert.That(p.Direction, Is.EqualTo(ParameterDirection.Input), "A:Direction");
+        Assert.That(p.IsNullable, Is.False, "A:IsNullable");
+        Assert.That(p.ParameterName, Is.EqualTo("address"), "A:ParameterName");
+        Assert.That(p.Precision, Is.EqualTo(0), "A:Precision");
+        Assert.That(p.Scale, Is.EqualTo(0), "A:Scale");
+        Assert.That(p.Size, Is.EqualTo(0), "A:Size");
+        Assert.That(p.SourceColumn, Is.Empty, "A:SourceColumn");
+        Assert.That(p.SourceVersion, Is.EqualTo(DataRowVersion.Current), "A:SourceVersion");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "A:EDBDbType");
+        Assert.That(p.Value, Is.Null, "A:Value");
     }
 
     [Test]
@@ -220,20 +220,20 @@ public class EDBParameterTest : TestBase
         var p1 = new EDBParameter("p1Name", EDBDbType.Varchar, 20,
             "srcCol", ParameterDirection.InputOutput, false, 0, 0,
             DataRowVersion.Original, "foo");
-        Assert.AreEqual(DbType.String, p1.DbType, "DbType");
-        Assert.AreEqual(ParameterDirection.InputOutput, p1.Direction, "Direction");
-        Assert.IsFalse( p1.IsNullable, "IsNullable");
+        Assert.That(p1.DbType, Is.EqualTo(DbType.String), "DbType");
+        Assert.That(p1.Direction, Is.EqualTo(ParameterDirection.InputOutput), "Direction");
+        Assert.That(p1.IsNullable, Is.EqualTo(false), "IsNullable");
         //Assert.AreEqual (999, p1.LocaleId, "#");
-        Assert.AreEqual("p1Name", p1.ParameterName, "ParameterName");
-        Assert.AreEqual(0, p1.Precision, "Precision");
-        Assert.AreEqual(0, p1.Scale, "Scale");
-        Assert.AreEqual(20, p1.Size, "Size");
-        Assert.AreEqual("srcCol", p1.SourceColumn, "SourceColumn");
-        Assert.IsFalse( p1.SourceColumnNullMapping, "SourceColumnNullMapping");
-        Assert.AreEqual(DataRowVersion.Original, p1.SourceVersion, "SourceVersion");
-        Assert.AreEqual(EDBDbType.Varchar, p1.EDBDbType, "EDBDbType");
+        Assert.That(p1.ParameterName, Is.EqualTo("p1Name"), "ParameterName");
+        Assert.That(p1.Precision, Is.EqualTo(0), "Precision");
+        Assert.That(p1.Scale, Is.EqualTo(0), "Scale");
+        Assert.That(p1.Size, Is.EqualTo(20), "Size");
+        Assert.That(p1.SourceColumn, Is.EqualTo("srcCol"), "SourceColumn");
+        Assert.That(p1.SourceColumnNullMapping, Is.EqualTo(false), "SourceColumnNullMapping");
+        Assert.That(p1.SourceVersion, Is.EqualTo(DataRowVersion.Original), "SourceVersion");
+        Assert.That(p1.EDBDbType, Is.EqualTo(EDBDbType.Varchar), "EDBDbType");
         //Assert.AreEqual (3210, p1.EDBValue, "#");
-        Assert.AreEqual("foo", p1.Value, "Value");
+        Assert.That(p1.Value, Is.EqualTo("foo"), "Value");
         //Assert.AreEqual ("database", p1.XmlSchemaCollectionDatabase, "XmlSchemaCollectionDatabase");
         //Assert.AreEqual ("name", p1.XmlSchemaCollectionName, "XmlSchemaCollectionName");
         //Assert.AreEqual ("schema", p1.XmlSchemaCollectionOwningSchema, "XmlSchemaCollectionOwningSchema");
@@ -263,22 +263,22 @@ public class EDBParameterTest : TestBase
         };
         var actual = expected.Clone();
 
-        Assert.AreEqual(expected.Value, actual.Value);
-        Assert.AreEqual(expected.ParameterName, actual.ParameterName);
+        Assert.That(actual.Value, Is.EqualTo(expected.Value));
+        Assert.That(actual.ParameterName, Is.EqualTo(expected.ParameterName));
 
-        Assert.AreEqual(expected.DbType, actual.DbType);
-        Assert.AreEqual(expected.EDBDbType, actual.EDBDbType);
-        Assert.AreEqual(expected.DataTypeName, actual.DataTypeName);
+        Assert.That(actual.DbType, Is.EqualTo(expected.DbType));
+        Assert.That(actual.EDBDbType, Is.EqualTo(expected.EDBDbType));
+        Assert.That(actual.DataTypeName, Is.EqualTo(expected.DataTypeName));
 
-        Assert.AreEqual(expected.Direction, actual.Direction);
-        Assert.AreEqual(expected.IsNullable, actual.IsNullable);
-        Assert.AreEqual(expected.Precision, actual.Precision);
-        Assert.AreEqual(expected.Scale, actual.Scale);
-        Assert.AreEqual(expected.Size, actual.Size);
+        Assert.That(actual.Direction, Is.EqualTo(expected.Direction));
+        Assert.That(actual.IsNullable, Is.EqualTo(expected.IsNullable));
+        Assert.That(actual.Precision, Is.EqualTo(expected.Precision));
+        Assert.That(actual.Scale, Is.EqualTo(expected.Scale));
+        Assert.That(actual.Size, Is.EqualTo(expected.Size));
 
-        Assert.AreEqual(expected.SourceVersion, actual.SourceVersion);
-        Assert.AreEqual(expected.SourceColumn, actual.SourceColumn);
-        Assert.AreEqual(expected.SourceColumnNullMapping, actual.SourceColumnNullMapping);
+        Assert.That(actual.SourceVersion, Is.EqualTo(expected.SourceVersion));
+        Assert.That(actual.SourceColumn, Is.EqualTo(expected.SourceColumn));
+        Assert.That(actual.SourceColumnNullMapping, Is.EqualTo(expected.SourceColumnNullMapping));
     }
 
     [Test]
@@ -305,81 +305,42 @@ public class EDBParameterTest : TestBase
         };
         var actual = (EDBParameter<int>)expected.Clone();
 
-        Assert.AreEqual(expected.Value, actual.Value);
-        Assert.AreEqual(expected.TypedValue, actual.TypedValue);
-        Assert.AreEqual(expected.ParameterName, actual.ParameterName);
+        Assert.That(actual.Value, Is.EqualTo(expected.Value));
+        Assert.That(actual.TypedValue, Is.EqualTo(expected.TypedValue));
+        Assert.That(actual.ParameterName, Is.EqualTo(expected.ParameterName));
 
-        Assert.AreEqual(expected.DbType, actual.DbType);
-        Assert.AreEqual(expected.EDBDbType, actual.EDBDbType);
-        Assert.AreEqual(expected.DataTypeName, actual.DataTypeName);
+        Assert.That(actual.DbType, Is.EqualTo(expected.DbType));
+        Assert.That(actual.EDBDbType, Is.EqualTo(expected.EDBDbType));
+        Assert.That(actual.DataTypeName, Is.EqualTo(expected.DataTypeName));
 
-        Assert.AreEqual(expected.Direction, actual.Direction);
-        Assert.AreEqual(expected.IsNullable, actual.IsNullable);
-        Assert.AreEqual(expected.Precision, actual.Precision);
-        Assert.AreEqual(expected.Scale, actual.Scale);
-        Assert.AreEqual(expected.Size, actual.Size);
+        Assert.That(actual.Direction, Is.EqualTo(expected.Direction));
+        Assert.That(actual.IsNullable, Is.EqualTo(expected.IsNullable));
+        Assert.That(actual.Precision, Is.EqualTo(expected.Precision));
+        Assert.That(actual.Scale, Is.EqualTo(expected.Scale));
+        Assert.That(actual.Size, Is.EqualTo(expected.Size));
 
-        Assert.AreEqual(expected.SourceVersion, actual.SourceVersion);
-        Assert.AreEqual(expected.SourceColumn, actual.SourceColumn);
-        Assert.AreEqual(expected.SourceColumnNullMapping, actual.SourceColumnNullMapping);
+        Assert.That(actual.SourceVersion, Is.EqualTo(expected.SourceVersion));
+        Assert.That(actual.SourceColumn, Is.EqualTo(expected.SourceColumn));
+        Assert.That(actual.SourceColumnNullMapping, Is.EqualTo(expected.SourceColumnNullMapping));
     }
 
     #endregion
-
-    [Test]
-    [Ignore("Ignored in community")]
-    public void InferType_invalid_throws()
-    {
-        var notsupported = new object[]
-        {
-            ushort.MaxValue,
-            uint.MaxValue,
-            ulong.MaxValue,
-            sbyte.MaxValue,
-            new EDBParameter()
-        };
-
-        var param = new EDBParameter();
-
-        for (var i = 0; i < notsupported.Length; i++)
-        {
-            try
-            {
-                param.Value = notsupported[i];
-                Assert.Fail("#A1:" + i);
-            }
-            catch (FormatException)
-            {
-                // appears to be bug in .NET 1.1 while
-                // constructing exception message
-            }
-            catch (ArgumentException ex)
-            {
-                // The parameter data type of ... is invalid
-                Assert.AreEqual(typeof(ArgumentException), ex.GetType(), "#A2");
-                Assert.IsNull(ex.InnerException, "#A3");
-                Assert.IsNotNull(ex.Message, "#A4");
-                Assert.IsNull(ex.ParamName, "#A5");
-            }
-        }
-    }
 
     [Test] // bug #320196
     public void Parameter_null()
     {
         var param = new EDBParameter("param", EDBDbType.Numeric);
-        Assert.AreEqual(0, param.Scale, "#A1");
+        Assert.That(param.Scale, Is.EqualTo(0), "#A1");
         param.Value = DBNull.Value;
-        Assert.AreEqual(0, param.Scale, "#A2");
+        Assert.That(param.Scale, Is.EqualTo(0), "#A2");
 
         param = new EDBParameter("param", EDBDbType.Integer);
-        Assert.AreEqual(0, param.Scale, "#B1");
+        Assert.That(param.Scale, Is.EqualTo(0), "#B1");
         param.Value = DBNull.Value;
-        Assert.AreEqual(0, param.Scale, "#B2");
+        Assert.That(param.Scale, Is.EqualTo(0), "#B2");
     }
 
     [Test]
-    [Ignore("Ignored in community")]
     public void Parameter_type()
     {
         EDBParameter p;
@@ -387,54 +348,54 @@ public class EDBParameterTest : TestBase
         // If Type is not set, then type is inferred from the value
         // assigned. The Type should be inferred everytime Value is assigned
         // If value is null or DBNull, then the current Type should be reset to Text.
-        p = new EDBParameter();
-        Assert.AreEqual(DbType.String, p.DbType, "#A1");
-        Assert.AreEqual(EDBDbType.Text, p.EDBDbType, "#A2");
+        p = new EDBParameter { Value = "" };
+        Assert.That(p.DbType, Is.EqualTo(DbType.String), "#A1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Text), "#A2");
         p.Value = DBNull.Value;
-        Assert.AreEqual(DbType.String, p.DbType, "#B1");
-        Assert.AreEqual(EDBDbType.Text, p.EDBDbType, "#B2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#B1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#B2");
         p.Value = 1;
-        Assert.AreEqual(DbType.Int32, p.DbType, "#C1");
-        Assert.AreEqual(EDBDbType.Integer, p.EDBDbType, "#C2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Int32), "#C1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Integer), "#C2");
         p.Value = DBNull.Value;
-        Assert.AreEqual(DbType.String, p.DbType, "#D1");
-        Assert.AreEqual(EDBDbType.Text, p.EDBDbType, "#D2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#D1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#D2");
         p.Value = new byte[] { 0x0a };
-        Assert.AreEqual(DbType.Binary, p.DbType, "#E1");
-        Assert.AreEqual(EDBDbType.Bytea, p.EDBDbType, "#E2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Binary), "#E1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Bytea), "#E2");
         p.Value = null;
-        Assert.AreEqual(DbType.String, p.DbType, "#F1");
-        Assert.AreEqual(EDBDbType.Text, p.EDBDbType, "#F2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#F1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#F2");
         p.Value = DateTime.Now;
-        Assert.AreEqual(DbType.DateTime, p.DbType, "#G1");
-        Assert.AreEqual(EDBDbType.Timestamp, p.EDBDbType, "#G2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.DateTime2), "#G1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Timestamp), "#G2");
         p.Value = null;
-        Assert.AreEqual(DbType.String, p.DbType, "#H1");
-        Assert.AreEqual(EDBDbType.Text, p.EDBDbType, "#H2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#H1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#H2");
 
         // If DbType is set, then the EDBDbType should not be
         // inferred from the value assigned.
         p = new EDBParameter();
         p.DbType = DbType.DateTime;
-        Assert.AreEqual(EDBDbType.Timestamp, p.EDBDbType, "#I1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.TimestampTz), "#I1");
         p.Value = 1;
-        Assert.AreEqual(EDBDbType.Timestamp, p.EDBDbType, "#I2");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.TimestampTz), "#I2");
         p.Value = null;
-        Assert.AreEqual(EDBDbType.Timestamp, p.EDBDbType, "#I3");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.TimestampTz), "#I3");
         p.Value = DBNull.Value;
-        Assert.AreEqual(EDBDbType.Timestamp, p.EDBDbType, "#I4");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.TimestampTz), "#I4");
 
         // If EDBDbType is set, then the DbType should not be
         // inferred from the value assigned.
         p = new EDBParameter();
         p.EDBDbType = EDBDbType.Bytea;
-        Assert.AreEqual(EDBDbType.Bytea, p.EDBDbType, "#J1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Bytea), "#J1");
         p.Value = 1;
-        Assert.AreEqual(EDBDbType.Bytea, p.EDBDbType, "#J2");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Bytea), "#J2");
         p.Value = null;
-        Assert.AreEqual(EDBDbType.Bytea, p.EDBDbType, "#J3");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Bytea), "#J3");
         p.Value = DBNull.Value;
-        Assert.AreEqual(EDBDbType.Bytea, p.EDBDbType, "#J4");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Bytea), "#J4");
     }
 
     [Test, IssueLink("https://github.com/npgsql/npgsql/issues/5428")]
@@ -447,29 +408,28 @@ public class EDBParameterTest : TestBase
     }
 
     [Test]
-    [Ignore("Ignored in community")]
     public void ParameterName()
     {
         var p = new EDBParameter();
         p.ParameterName = "name";
-        Assert.AreEqual("name", p.ParameterName, "#A:ParameterName");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "#A:SourceColumn");
+        Assert.That(p.ParameterName, Is.EqualTo("name"), "#A:ParameterName");
+        Assert.That(p.SourceColumn, Is.Empty, "#A:SourceColumn");
 
         p.ParameterName = null;
-        Assert.AreEqual(string.Empty, p.ParameterName, "#B:ParameterName");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "#B:SourceColumn");
+        Assert.That(p.ParameterName, Is.Empty, "#B:ParameterName");
+        Assert.That(p.SourceColumn, Is.Empty, "#B:SourceColumn");
 
         p.ParameterName = " ";
-        Assert.AreEqual(" ", p.ParameterName, "#C:ParameterName");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "#C:SourceColumn");
+        Assert.That(p.ParameterName, Is.EqualTo(" "), "#C:ParameterName");
+        Assert.That(p.SourceColumn, Is.Empty, "#C:SourceColumn");
 
         p.ParameterName = " name ";
-        Assert.AreEqual(" name ", p.ParameterName, "#D:ParameterName");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "#D:SourceColumn");
+        Assert.That(p.ParameterName, Is.EqualTo(" name "), "#D:ParameterName");
+        Assert.That(p.SourceColumn, Is.Empty, "#D:SourceColumn");
 
         p.ParameterName = string.Empty;
-        Assert.AreEqual(string.Empty, p.ParameterName, "#E:ParameterName");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "#E:SourceColumn");
+        Assert.That(p.ParameterName, Is.Empty, "#E:ParameterName");
+        Assert.That(p.SourceColumn, Is.Empty, "#E:SourceColumn");
     }
 
     [Test]
@@ -480,59 +440,59 @@ public class EDBParameterTest : TestBase
         //Parameter with an assigned value but no DbType specified
         p = new EDBParameter("foo", 42);
         p.ResetDbType();
-        Assert.AreEqual(DbType.Int32, p.DbType, "#A:DbType");
-        Assert.AreEqual(EDBDbType.Integer, p.EDBDbType, "#A:EDBDbType");
-        Assert.AreEqual(42, p.Value, "#A:Value");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Int32), "#A:DbType");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Integer), "#A:EDBDbType");
+        Assert.That(p.Value, Is.EqualTo(42), "#A:Value");
 
         p.DbType = DbType.DateTime; //assigning a DbType
-        Assert.AreEqual(DbType.DateTime, p.DbType, "#B:DbType1");
-        Assert.AreEqual(EDBDbType.TimestampTz, p.EDBDbType, "#B:SqlDbType1");
+        Assert.That(p.DbType, Is.EqualTo(DbType.DateTime), "#B:DbType1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.TimestampTz), "#B:SqlDbType1");
         p.ResetDbType();
-        Assert.AreEqual(DbType.Int32, p.DbType, "#B:DbType2");
-        Assert.AreEqual(EDBDbType.Integer, p.EDBDbType, "#B:SqlDbtype2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Int32), "#B:DbType2");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Integer), "#B:SqlDbtype2");
 
         //Parameter with an assigned EDBDbType but no specified value
         p = new EDBParameter("foo", EDBDbType.Integer);
         p.ResetDbType();
-        Assert.AreEqual(DbType.Object, p.DbType, "#C:DbType");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "#C:EDBDbType");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#C:DbType");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#C:EDBDbType");
 
         p.EDBDbType = EDBDbType.TimestampTz; //assigning a EDBDbType
-        Assert.AreEqual(DbType.DateTime, p.DbType, "#D:DbType1");
-        Assert.AreEqual(EDBDbType.TimestampTz, p.EDBDbType, "#D:SqlDbType1");
+        Assert.That(p.DbType, Is.EqualTo(DbType.DateTime), "#D:DbType1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.TimestampTz), "#D:SqlDbType1");
         p.ResetDbType();
-        Assert.AreEqual(DbType.Object, p.DbType, "#D:DbType2");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "#D:SqlDbType2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#D:DbType2");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#D:SqlDbType2");
 
         p = new EDBParameter();
         p.Value = DateTime.MaxValue;
-        Assert.AreEqual(DbType.DateTime2, p.DbType, "#E:DbType1");
-        Assert.AreEqual(EDBDbType.Timestamp, p.EDBDbType, "#E:SqlDbType1");
+        Assert.That(p.DbType, Is.EqualTo(DbType.DateTime2), "#E:DbType1");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Timestamp), "#E:SqlDbType1");
         p.Value = null;
         p.ResetDbType();
-        Assert.AreEqual(DbType.Object, p.DbType, "#E:DbType2");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "#E:SqlDbType2");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#E:DbType2");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#E:SqlDbType2");
 
         p = new EDBParameter("foo", EDBDbType.Varchar);
         p.Value = DateTime.MaxValue;
         p.ResetDbType();
-        Assert.AreEqual(DbType.DateTime2, p.DbType, "#F:DbType");
-        Assert.AreEqual(EDBDbType.Timestamp, p.EDBDbType, "#F:EDBDbType");
-        Assert.AreEqual(DateTime.MaxValue, p.Value, "#F:Value");
+        Assert.That(p.DbType, Is.EqualTo(DbType.DateTime2), "#F:DbType");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Timestamp), "#F:EDBDbType");
+        Assert.That(p.Value, Is.EqualTo(DateTime.MaxValue), "#F:Value");
 
         p = new EDBParameter("foo", EDBDbType.Varchar);
         p.Value = DBNull.Value;
         p.ResetDbType();
-        Assert.AreEqual(DbType.Object, p.DbType, "#G:DbType");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "#G:EDBDbType");
-        Assert.AreEqual(DBNull.Value, p.Value, "#G:Value");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#G:DbType");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#G:EDBDbType");
+        Assert.That(p.Value, Is.EqualTo(DBNull.Value), "#G:Value");
 
         p = new EDBParameter("foo", EDBDbType.Varchar);
         p.Value = null;
         p.ResetDbType();
-        Assert.AreEqual(DbType.Object, p.DbType, "#G:DbType");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "#G:EDBDbType");
-        Assert.IsNull(p.Value, "#G:Value");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#G:DbType");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#G:EDBDbType");
+        Assert.That(p.Value, Is.Null, "#G:Value");
     }
 
     [Test]
@@ -540,29 +500,28 @@ public class EDBParameterTest : TestBase
         => Assert.That(new EDBParameter("@p", DbType.String).ParameterName, Is.EqualTo("@p"));
 
     [Test]
-    [Ignore("Ignored in community")]
     public void SourceColumn()
     {
         var p = new EDBParameter();
         p.SourceColumn = "name";
-        Assert.AreEqual(string.Empty, p.ParameterName, "#A:ParameterName");
-        Assert.AreEqual("name", p.SourceColumn, "#A:SourceColumn");
+        Assert.That(p.ParameterName, Is.Empty, "#A:ParameterName");
+        Assert.That(p.SourceColumn, Is.EqualTo("name"), "#A:SourceColumn");
 
         p.SourceColumn = null;
-        Assert.AreEqual(string.Empty, p.ParameterName, "#B:ParameterName");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "#B:SourceColumn");
+        Assert.That(p.ParameterName, Is.Empty, "#B:ParameterName");
+        Assert.That(p.SourceColumn, Is.Empty, "#B:SourceColumn");
 
         p.SourceColumn = " ";
-        Assert.AreEqual(string.Empty, p.ParameterName, "#C:ParameterName");
-        Assert.AreEqual(" ", p.SourceColumn, "#C:SourceColumn");
+        Assert.That(p.ParameterName, Is.Empty, "#C:ParameterName");
+        Assert.That(p.SourceColumn, Is.EqualTo(" "), "#C:SourceColumn");
 
         p.SourceColumn = " name ";
-        Assert.AreEqual(string.Empty, p.ParameterName, "#D:ParameterName");
-        Assert.AreEqual(" name ", p.SourceColumn, "#D:SourceColumn");
+        Assert.That(p.ParameterName, Is.Empty, "#D:ParameterName");
+        Assert.That(p.SourceColumn, Is.EqualTo(" name "), "#D:SourceColumn");
 
         p.SourceColumn = string.Empty;
-        Assert.AreEqual(string.Empty, p.ParameterName, "#E:ParameterName");
-        Assert.AreEqual(string.Empty, p.SourceColumn, "#E:SourceColumn");
+        Assert.That(p.ParameterName, Is.Empty, "#E:ParameterName");
+        Assert.That(p.SourceColumn, Is.Empty, "#E:SourceColumn");
     }
 
     [Test]
@@ -570,8 +529,8 @@ public class EDBParameterTest : TestBase
     {
         var p = new EDBParameter();
         p.Value = DBNull.Value;
-        Assert.AreEqual(DbType.Object, p.DbType, "#A:DbType");
-        Assert.AreEqual(EDBDbType.Unknown, p.EDBDbType, "#A:EDBDbType");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Object), "#A:DbType");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Unknown), "#A:EDBDbType");
 
         // Now change parameter value.
         // Note that as we didn't explicitly specified a dbtype, the dbtype property should change when
@@ -579,14 +538,14 @@ public class EDBParameterTest : TestBase
 
         p.Value = 8;
 
-        Assert.AreEqual(DbType.Int32, p.DbType, "#A:DbType");
-        Assert.AreEqual(EDBDbType.Integer, p.EDBDbType, "#A:EDBDbType");
+        Assert.That(p.DbType, Is.EqualTo(DbType.Int32), "#A:DbType");
+        Assert.That(p.EDBDbType, Is.EqualTo(EDBDbType.Integer), "#A:EDBDbType");
 
-        //Assert.AreEqual(3510, p.Value, "#A:Value");
+        //Assert.That(3510, p.Value, "#A:Value");
         //p.EDBDbType = EDBDbType.Varchar;
-        //Assert.AreEqual(DbType.String, p.DbType, "#B:DbType");
-        //Assert.AreEqual(EDBDbType.Varchar, p.EDBDbType, "#B:EDBDbType");
-        //Assert.AreEqual(3510, p.Value, "#B:Value");
+        //Assert.That(DbType.String, p.DbType, "#B:DbType");
+        //Assert.That(EDBDbType.Varchar, p.EDBDbType, "#B:EDBDbType");
+        //Assert.That(3510, p.Value, "#B:Value");
     }
 
     [Test]
@@ -608,19 +567,19 @@ public class EDBParameterTest : TestBase
 
         var newParam = param.Clone();
 
-        Assert.AreEqual(param.Value, newParam.Value);
-        Assert.AreEqual(param.Precision, newParam.Precision);
-        Assert.AreEqual(param.Scale, newParam.Scale);
-        Assert.AreEqual(param.Size, newParam.Size);
-        Assert.AreEqual(param.Direction, newParam.Direction);
-        Assert.AreEqual(param.IsNullable, newParam.IsNullable);
-        Assert.AreEqual(param.ParameterName, newParam.ParameterName);
-        Assert.AreEqual(param.TrimmedName, newParam.TrimmedName);
-        Assert.AreEqual(param.SourceColumn, newParam.SourceColumn);
-        Assert.AreEqual(param.SourceVersion, newParam.SourceVersion);
-        Assert.AreEqual(param.EDBValue, newParam.EDBValue);
-        Assert.AreEqual(param.SourceColumnNullMapping, newParam.SourceColumnNullMapping);
-        Assert.AreEqual(param.EDBValue, newParam.EDBValue);
+        Assert.That(newParam.Value, Is.EqualTo(param.Value));
+        Assert.That(newParam.Precision, Is.EqualTo(param.Precision));
+        Assert.That(newParam.Scale, Is.EqualTo(param.Scale));
+        Assert.That(newParam.Size, Is.EqualTo(param.Size));
+        Assert.That(newParam.Direction, Is.EqualTo(param.Direction));
+        Assert.That(newParam.IsNullable, Is.EqualTo(param.IsNullable));
+        Assert.That(newParam.ParameterName, Is.EqualTo(param.ParameterName));
+        Assert.That(newParam.TrimmedName, Is.EqualTo(param.TrimmedName));
+        Assert.That(newParam.SourceColumn, Is.EqualTo(param.SourceColumn));
+        Assert.That(newParam.SourceVersion, Is.EqualTo(param.SourceVersion));
+        Assert.That(newParam.EDBValue, Is.EqualTo(param.EDBValue));
+        Assert.That(newParam.SourceColumnNullMapping, Is.EqualTo(param.SourceColumnNullMapping));
+        Assert.That(newParam.EDBValue, Is.EqualTo(param.EDBValue));
 
     }
 
@@ -632,7 +591,7 @@ public class EDBParameterTest : TestBase
 
         paramIface.Precision = 42;
 
-        Assert.AreEqual((byte)42, paramIface.Precision);
+        Assert.That(paramIface.Precision, Is.EqualTo((byte)42));
     }
 
     [Test]
@@ -643,7 +602,7 @@ public class EDBParameterTest : TestBase
 
         paramBase.Precision = 42;
 
-        Assert.AreEqual((byte)42, paramBase.Precision);
+        Assert.That(paramBase.Precision, Is.EqualTo((byte)42));
     }
 
     [Test]
@@ -654,7 +613,7 @@ public class EDBParameterTest : TestBase
 
         paramIface.Scale = 42;
 
-        Assert.AreEqual((byte)42, paramIface.Scale);
+        Assert.That(paramIface.Scale, Is.EqualTo((byte)42));
     }
 
     [Test]
@@ -665,7 +624,7 @@ public class EDBParameterTest : TestBase
 
         paramBase.Scale = 42;
 
-        Assert.AreEqual((byte)42, paramBase.Scale);
+        Assert.That(paramBase.Scale, Is.EqualTo((byte)42));
     }
 
     [Test]
@@ -698,7 +657,7 @@ public class EDBParameterTest : TestBase
     public void DBNull_reuses_type_info([Values]bool generic)
     {
         var param = generic ? new EDBParameter<object> { Value = "value" } : new EDBParameter { Value = "value" };
-        param.ResolveTypeInfo(DataSource.SerializerOptions);
+        param.ResolveTypeInfo(DataSource.CurrentReloadableState.SerializerOptions, null);
         param.GetResolutionInfo(out var typeInfo, out _, out _);
         Assert.That(typeInfo, Is.Not.Null);
 
@@ -708,7 +667,7 @@ public class EDBParameterTest : TestBase
         Assert.That(secondTypeInfo, Is.SameAs(typeInfo));
 
         // Make sure we don't resolve a different type info either.
-        param.ResolveTypeInfo(DataSource.SerializerOptions);
+        param.ResolveTypeInfo(DataSource.CurrentReloadableState.SerializerOptions, null);
         param.GetResolutionInfo(out var thirdTypeInfo, out _, out _);
         Assert.That(thirdTypeInfo, Is.SameAs(secondTypeInfo));
     }
@@ -717,7 +676,7 @@ public class EDBParameterTest : TestBase
     public void DBNull_followed_by_non_null_reresolves([Values]bool generic)
     {
         var param = generic ? new EDBParameter<object> { Value = DBNull.Value } : new EDBParameter { Value = DBNull.Value };
-        param.ResolveTypeInfo(DataSource.SerializerOptions);
+        param.ResolveTypeInfo(DataSource.CurrentReloadableState.SerializerOptions, null);
         param.GetResolutionInfo(out var typeInfo, out _, out var pgTypeId);
         Assert.That(typeInfo, Is.Not.Null);
         Assert.That(pgTypeId.IsUnspecified, Is.True);
@@ -727,7 +686,7 @@ public class EDBParameterTest : TestBase
         Assert.That(secondTypeInfo, Is.Null);
 
         // Make sure we don't resolve the same type info either.
-        param.ResolveTypeInfo(DataSource.SerializerOptions);
+        param.ResolveTypeInfo(DataSource.CurrentReloadableState.SerializerOptions, null);
         param.GetResolutionInfo(out var thirdTypeInfo, out _, out _);
         Assert.That(thirdTypeInfo, Is.Not.SameAs(typeInfo));
     }
@@ -736,7 +695,7 @@ public class EDBParameterTest : TestBase
     public void Changing_value_type_reresolves([Values]bool generic)
     {
 		var param = generic ? new EDBParameter<object> { Value = "value" } : new EDBParameter { Value = "value" };
-        param.ResolveTypeInfo(DataSource.SerializerOptions);
+        param.ResolveTypeInfo(DataSource.CurrentReloadableState.SerializerOptions, null);
         param.GetResolutionInfo(out var typeInfo, out _, out _);
         Assert.That(typeInfo, Is.Not.Null);
 
@@ -745,9 +704,29 @@ public class EDBParameterTest : TestBase
         Assert.That(secondTypeInfo, Is.Null);
 
         // Make sure we don't resolve a different type info either.
-        param.ResolveTypeInfo(DataSource.SerializerOptions);
+        param.ResolveTypeInfo(DataSource.CurrentReloadableState.SerializerOptions, null);
         param.GetResolutionInfo(out var thirdTypeInfo, out _, out _);
         Assert.That(thirdTypeInfo, Is.Not.SameAs(typeInfo));
+    }
+
+    [Test]
+    public void DataTypeName_prioritized_over_NpgsqlDbType([Values]bool generic)
+    {
+        var param = generic ? new EDBParameter<object>
+        {
+            EDBDbType = EDBDbType.Integer,
+            DataTypeName = "text",
+            Value = "value"
+        } : new EDBParameter
+        {
+            EDBDbType = EDBDbType.Integer,
+            DataTypeName = "text",
+            Value = "value"
+        };
+        param.ResolveTypeInfo(DataSource.CurrentReloadableState.SerializerOptions, null);
+        param.GetResolutionInfo(out var typeInfo, out _, out _);
+        Assert.That(typeInfo, Is.Not.Null);
+        Assert.That(typeInfo.PgTypeId, Is.EqualTo(DataSource.CurrentReloadableState.SerializerOptions.TextPgTypeId));
     }
 
 #if NeedsPorting
@@ -849,8 +828,8 @@ public class EDBParameterTest : TestBase
 
         EDBParameter param = new EDBParameter();
         param.Value = value;
-        Assert.AreEqual(EDBDbType.Variant, param.EDBDbType, "#1");
-        Assert.AreEqual(DbType.Object, param.DbType, "#2");
+        Assert.That(EDBDbType.Variant, param.EDBDbType, "#1");
+        Assert.That(DbType.Object, param.DbType, "#2");
     }
 
     [Test]
@@ -859,7 +838,7 @@ public class EDBParameterTest : TestBase
         EDBParameter parameter = new EDBParameter ();
         Assert.AreEqual (0, parameter.LocaleId, "#1");
         parameter.LocaleId = 15;
-        Assert.AreEqual(15, parameter.LocaleId, "#2");
+        Assert.That(15, parameter.LocaleId, "#2");
     }
 #endif
 

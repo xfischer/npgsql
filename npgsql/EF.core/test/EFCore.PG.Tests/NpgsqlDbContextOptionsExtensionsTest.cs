@@ -122,7 +122,7 @@ public class NpgsqlDbContextOptionsExtensionsTest
         for (var i = 0; i < 21; i++)
         {
             var optionsBuilder = new DbContextOptionsBuilder<DbContext>();
-            var dataSource = NpgsqlDataSource.Create($"Host=localhost;Database={i};Include Error Detail=true;Username=admin;Password=admin");
+            var dataSource = EDBDataSource.Create($"Host=localhost;Database={i};Include Error Detail=true;Username=admin;Password=admin");
             optionsBuilder.UseNpgsql(dataSource);
 
             using var context = new ApplicationDbContext(optionsBuilder.Options);

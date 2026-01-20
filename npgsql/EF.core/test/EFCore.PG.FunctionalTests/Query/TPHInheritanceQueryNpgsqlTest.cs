@@ -1,4 +1,4 @@
-﻿namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Query;
+﻿namespace Microsoft.EntityFrameworkCore.Query;
 
 public class TPHInheritanceQueryNpgsqlTest(TPHInheritanceQueryNpgsqlFixture fixture, ITestOutputHelper testOutputHelper)
     : TPHInheritanceQueryTestBase<TPHInheritanceQueryNpgsqlFixture>(fixture, testOutputHelper);

@@ -317,7 +317,7 @@ internal class EDBRefCursorTest : EPASTestBase
         return 0;
     }
 
-    [Test, Timeout(2000)]
+    [Test, CancelAfter(2000)]
     public void ClosingCursorVariableTest()
     {
         using var conn = OpenConnection();
@@ -342,11 +342,11 @@ internal class EDBRefCursorTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(CLOSING_CUSOR_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(CLOSING_CUSOR_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(CLOSING_CUSOR_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(CLOSING_CUSOR_RESULT[i]));
             }
         }
         finally
@@ -356,7 +356,7 @@ internal class EDBRefCursorTest : EPASTestBase
         mre.Close();
     }
 
-    [Test, Timeout(2000)]
+    [Test, CancelAfter(2000)]
     public void ReturningRefCursorFromFunctionTest()
     {
         using var conn = OpenConnection();
@@ -385,7 +385,7 @@ internal class EDBRefCursorTest : EPASTestBase
         cstmt.CommandType = CommandType.Text;
         var rst = cstmt.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
+        Assert.That(rst, Is.Not.Null);
 
         var index = 0;
         while (rst.Read())
@@ -393,7 +393,7 @@ internal class EDBRefCursorTest : EPASTestBase
             var empno = int.Parse(rst.GetValue(0).ToString());
             var name = rst.GetValue(1).ToString();
             var result = empno.ToString() + " " + name;
-            Assert.AreEqual(CURSOR_FUNCTION_RESULT[index], result);
+            Assert.That(result, Is.EqualTo(CURSOR_FUNCTION_RESULT[index]));
             index++;
         }
         rst.Close();
@@ -450,11 +450,11 @@ internal class EDBRefCursorTest : EPASTestBase
                 }
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(MODULARIZING_CURSOR_OPERATIONS_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(MODULARIZING_CURSOR_OPERATIONS_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(MODULARIZING_CURSOR_OPERATIONS_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(MODULARIZING_CURSOR_OPERATIONS_RESULT[i]));
             }
         }
         finally
@@ -464,7 +464,7 @@ internal class EDBRefCursorTest : EPASTestBase
         mre.Close();
     }
 
-    [Test, Timeout(2000)]
+    [Test, CancelAfter(2000)]
     public void DynamicQueriesTest()
     {
         using var conn = OpenConnection();
@@ -489,7 +489,7 @@ internal class EDBRefCursorTest : EPASTestBase
         cstmt.CommandType = CommandType.Text;
         var rst = cstmt.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
+        Assert.That(rst, Is.Not.Null);
 
         var index = 0;
         while (rst.Read())
@@ -497,14 +497,14 @@ internal class EDBRefCursorTest : EPASTestBase
             var empno = int.Parse(rst.GetValue(0).ToString());
             var name = rst.GetValue(1).ToString();
             var result = empno.ToString() + " " + name;
-            Assert.AreEqual(DYNAMIC_QUERIES_RESULT[index], result);
+            Assert.That(result, Is.EqualTo(DYNAMIC_QUERIES_RESULT[index]));
             index++;
         }
         rst.Close();
         tran.Commit();
     }
 
-    [Test, Timeout(2000)]
+    [Test, CancelAfter(2000)]
     public void DynamicQueriesWithParametersTest()
     {
         using var conn = OpenConnection();
@@ -533,11 +533,11 @@ internal class EDBRefCursorTest : EPASTestBase
                 }
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(DYNAMIC_QUERIES_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DYNAMIC_QUERIES_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(DYNAMIC_QUERIES_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(DYNAMIC_QUERIES_RESULT[i]));
             }
         }
         finally
@@ -547,7 +547,7 @@ internal class EDBRefCursorTest : EPASTestBase
         mre.Close();
     }
 
-    [Test, Timeout(2000)]
+    [Test, CancelAfter(2000)]
     public void DynamicQueriesFromStringTest()
     {
         using var conn = OpenConnection();
@@ -576,11 +576,11 @@ internal class EDBRefCursorTest : EPASTestBase
                 }
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(DYNAMIC_QUERIES_FROM_STRING_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DYNAMIC_QUERIES_FROM_STRING_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(DYNAMIC_QUERIES_FROM_STRING_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(DYNAMIC_QUERIES_FROM_STRING_RESULT[i]));
             }
         }
         finally

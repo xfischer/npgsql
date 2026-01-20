@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore.TestModels.ConcurrencyModel;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
+
+#nullable disable
 
 public class OptimisticConcurrencyBytesNpgsqlTest(F1BytesNpgsqlFixture fixture)
     : OptimisticConcurrencyNpgsqlTestBase<F1BytesNpgsqlFixture, byte[]>(fixture);
@@ -116,14 +118,14 @@ public abstract class OptimisticConcurrencyNpgsqlTestBase<TFixture, TRowVersion>
         base.Property_entry_original_value_is_set();
 
         AssertSql(
-"""
+            """
 SELECT e."Id", e."EngineSupplierId", e."Name", e."StorageLocation_Latitude", e."StorageLocation_Longitude"
 FROM "Engines" AS e
 ORDER BY e."Id" NULLS FIRST
 LIMIT 1
 """,
             //
-"""
+            """
 @p1='1'
 @p2='Mercedes'
 @p0='FO 108X'

@@ -1,8 +1,8 @@
 using System.Data;
 using System.Data.Common;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
+using System.Diagnostics.CodeAnalysis;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public abstract class ConnectionInterceptionNpgsqlTestBase(ConnectionInterceptionNpgsqlTestBase.InterceptionNpgsqlFixtureBase fixture)
     : ConnectionInterceptionTestBase(fixture)
@@ -45,6 +45,7 @@ public abstract class ConnectionInterceptionNpgsqlTestBase(ConnectionInterceptio
 
     public class FakeDbConnection : DbConnection
     {
+        [AllowNull]
         public override string ConnectionString { get; set; }
 
         public override string Database

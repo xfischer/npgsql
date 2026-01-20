@@ -367,6 +367,7 @@ public class EDBMiscProcTest : EPASTestBase
         //Command.ExecuteNonQuery();
 
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
     #endregion
 
@@ -389,9 +390,9 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
         rst.Close();
         tran.Commit();
 
@@ -417,13 +418,13 @@ public class EDBMiscProcTest : EPASTestBase
             command.CommandType = CommandType.Text;
             var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            Assert.IsNotNull(rst);
-            Assert.IsTrue(rst.Read());
-            Assert.AreEqual("V1", rst.GetValue(0).ToString());
-            Assert.IsTrue(rst.Read());
+            Assert.That(rst, Is.Not.Null);
+            Assert.That(rst.Read());
+            Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+            Assert.That(rst.Read());
 
             var value = rst.GetValue(1).ToString();
-            Assert.AreEqual(2, value);
+            Assert.That(value, Is.EqualTo("2"));
 
             rst.Close();
         }
@@ -458,13 +459,13 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
+        Assert.That(rst, Is.Not.Null);
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
-        Assert.IsNotNull(rst1);
+        Assert.That(rst1, Is.Not.Null);
 
         rst1.Close();
         tran.Commit();
@@ -495,10 +496,10 @@ public class EDBMiscProcTest : EPASTestBase
             command.CommandType = CommandType.Text;
             var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            Assert.IsNotNull(rst);
-            Assert.IsTrue(rst.Read());
-            Assert.AreEqual("1", rst.GetValue(0).ToString());
-            Assert.IsNotNull(rst);
+            Assert.That(rst, Is.Not.Null);
+            Assert.That(rst.Read());
+            Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("1"));
+            Assert.That(rst, Is.Not.Null);
             rst.GetValue(2);
             rst.Close();
 
@@ -506,9 +507,9 @@ public class EDBMiscProcTest : EPASTestBase
             command.CommandType = CommandType.Text;
             var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            Assert.IsNotNull(rst1);
-            Assert.IsTrue(rst1.Read());
-            Assert.IsNotNull(rst1);
+            Assert.That(rst1, Is.Not.Null);
+            Assert.That(rst1.Read());
+            Assert.That(rst1, Is.Not.Null);
             rst1.Close();
 
         }
@@ -541,13 +542,13 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
 
-        Assert.IsTrue(rst.Read());
+        Assert.That(rst.Read());
         var value = int.Parse(rst.GetValue(1).ToString());
-        Assert.AreEqual(2, value);
+        Assert.That(value, Is.EqualTo(2));
         
         rst.Close();
         tran.Commit();
@@ -577,13 +578,13 @@ public class EDBMiscProcTest : EPASTestBase
             command.CommandType = CommandType.Text;
             var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            Assert.IsNotNull(rst);
-            Assert.IsTrue(rst.Read());
-            Assert.AreEqual("V1", rst.GetValue(0).ToString());
+            Assert.That(rst, Is.Not.Null);
+            Assert.That(rst.Read());
+            Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
 
-            Assert.IsTrue(rst.Read());
+            Assert.That(rst.Read());
             var value = int.Parse(rst.GetValue(1).ToString());
-            Assert.AreEqual(2, value);
+            Assert.That(value, Is.EqualTo(2));
 
             rst.Close();
         }
@@ -617,23 +618,23 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
-        Assert.IsTrue(rst.Read());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst.Read());
         var value = int.Parse(rst.GetValue(1).ToString());
-        Assert.AreEqual(2, value);
+        Assert.That(value, Is.EqualTo(2));
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
-        Assert.IsNotNull(rst1);
-        Assert.IsTrue(rst1.Read());
-        Assert.AreEqual("V1", rst1.GetValue(0).ToString());
-        Assert.IsTrue(rst1.Read());
+        Assert.That(rst1, Is.Not.Null);
+        Assert.That(rst1.Read());
+        Assert.That(rst1.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst1.Read());
         value = int.Parse(rst1.GetValue(1).ToString());
-        Assert.AreEqual(2, value);
+        Assert.That(value, Is.EqualTo(2));
 
         rst1.Close();
         tran.Commit();
@@ -660,17 +661,17 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandText = "FETCH ALL IN \"" + cursorName + "\"";
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.IsTrue(rst.Read());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.Read());
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsFalse(rst.Read());
-        Assert.IsFalse(rst1.Read());
+        Assert.That(rst.Read(), Is.False);
+        Assert.That(rst1.Read(), Is.False);
 
         rst1.Close();
         tran.Commit();
@@ -690,7 +691,7 @@ public class EDBMiscProcTest : EPASTestBase
         command.Prepare();
         command.ExecuteReader();
         var a = int.Parse(command.Parameters[0].Value.ToString());
-        Assert.AreEqual(29, a);
+        Assert.That(a, Is.EqualTo(29));
     }
 
     //	[Test]
@@ -709,7 +710,7 @@ public class EDBMiscProcTest : EPASTestBase
         var Reader = command.ExecuteReader();
         var a = int.Parse(command.Parameters[0].Value.ToString());
 
-        Assert.AreEqual(29, a);
+        Assert.That(a, Is.EqualTo(29));
 
         Reader.Close();
     }
@@ -734,9 +735,9 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
         rst.Close();
         tran.Commit();
 
@@ -761,12 +762,12 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
 
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(rst.Read());
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
 
         rst.Close();
         tran.Commit();
@@ -794,17 +795,17 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.IsTrue(rst.Read());
-        Assert.IsFalse(rst.Read());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.Read());
+        Assert.That(rst.Read(), Is.False);
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsFalse(rst1.Read());
+        Assert.That(rst1.Read(), Is.False);
 
         rst1.Close();
         tran.Commit();
@@ -832,21 +833,21 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst.Read());
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
-        Assert.IsNotNull(rst1);
-        Assert.IsTrue(rst1.Read());
-        Assert.AreEqual("V1", rst1.GetValue(0).ToString());
-        Assert.IsTrue(rst1.Read());
-        Assert.AreEqual(2, int.Parse(rst1.GetValue(1).ToString()));
+        Assert.That(rst1, Is.Not.Null);
+        Assert.That(rst1.Read());
+        Assert.That(rst1.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst1.Read());
+        Assert.That(int.Parse(rst1.GetValue(1).ToString()), Is.EqualTo(2));
 
         rst1.Close();
         tran.Commit();
@@ -874,14 +875,14 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
+        Assert.That(rst, Is.Not.Null);
 
         rst.Close();
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst1);
+        Assert.That(rst1, Is.Not.Null);
 
         rst1.Close();
         tran.Commit();
@@ -908,9 +909,9 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
         rst.Close();
         tran.Commit();
 
@@ -935,12 +936,12 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
 
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(rst.Read());
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
 
         rst.Close();
         tran.Commit();
@@ -968,13 +969,13 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
+        Assert.That(rst, Is.Not.Null);
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
-        Assert.IsNotNull(rst1);
+        Assert.That(rst1, Is.Not.Null);
 
         rst1.Close();
         tran.Commit();
@@ -1002,22 +1003,22 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst.Read());
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst1);
-        Assert.IsTrue(rst1.Read());
-        Assert.AreEqual("V1", rst1.GetValue(0).ToString());
-        Assert.IsTrue(rst1.Read());
-        Assert.AreEqual(2, int.Parse(rst1.GetValue(1).ToString()));
+        Assert.That(rst1, Is.Not.Null);
+        Assert.That(rst1.Read());
+        Assert.That(rst1.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst1.Read());
+        Assert.That(int.Parse(rst1.GetValue(1).ToString()), Is.EqualTo(2));
 
         rst1.Close();
         tran.Commit();
@@ -1045,17 +1046,17 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.IsTrue(rst.Read());
-        Assert.IsFalse(rst.Read());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.Read());
+        Assert.That(rst.Read(), Is.False);
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsFalse(rst1.Read());
+        Assert.That(rst1.Read(), Is.False);
 
         rst1.Close();
         tran.Commit();
@@ -1077,7 +1078,7 @@ public class EDBMiscProcTest : EPASTestBase
 
         command.ExecuteNonQuery();
         var a = int.Parse(command.Parameters[0].Value.ToString());
-        Assert.AreEqual(29, a);
+        Assert.That(a, Is.EqualTo(29));
     }
 
     [Test]
@@ -1095,7 +1096,7 @@ public class EDBMiscProcTest : EPASTestBase
 
         var reader = command.ExecuteReader();
         var a = int.Parse(command.Parameters[0].Value.ToString());
-        Assert.AreEqual(29, a);
+        Assert.That(a, Is.EqualTo(29));
         reader.Close();
 
     }
@@ -1120,9 +1121,9 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
         rst.Close();
         tran.Commit();
 
@@ -1147,12 +1148,12 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
 
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(rst.Read());
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
 
         rst.Close();
         rst.Close();
@@ -1181,16 +1182,16 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.IsTrue(rst.Read());
-        Assert.IsFalse(rst.Read());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.Read());
+        Assert.That(rst.Read(), Is.False);
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
-        Assert.IsFalse(rst1.Read());
+        Assert.That(rst1.Read(), Is.False);
 
         rst1.Close();
         tran.Commit();
@@ -1218,21 +1219,21 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst.Read());
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
-        Assert.IsNotNull(rst1);
-        Assert.IsTrue(rst1.Read());
-        Assert.AreEqual("V1", rst1.GetValue(0).ToString());
-        Assert.IsTrue(rst1.Read());
-        Assert.AreEqual(2, int.Parse(rst1.GetValue(1).ToString()));
+        Assert.That(rst1, Is.Not.Null);
+        Assert.That(rst1.Read());
+        Assert.That(rst1.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst1.Read());
+        Assert.That(int.Parse(rst1.GetValue(1).ToString()), Is.EqualTo(2));
 
         rst1.Close();
         tran.Commit();
@@ -1260,13 +1261,13 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
+        Assert.That(rst, Is.Not.Null);
         rst.Close();
 
         command.CommandText = "FETCH ALL IN \"" + cursorName2 + "\"";
         command.CommandType = CommandType.Text;
         var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
-        Assert.IsNotNull(rst1);
+        Assert.That(rst1, Is.Not.Null);
 
         rst1.Close();
         tran.Commit();
@@ -1295,12 +1296,12 @@ public class EDBMiscProcTest : EPASTestBase
             command.CommandType = CommandType.Text;
             var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            Assert.IsNotNull(rst);
-            Assert.IsTrue(rst.Read());
-            Assert.AreEqual("V1", rst.GetValue(0).ToString());
+            Assert.That(rst, Is.Not.Null);
+            Assert.That(rst.Read());
+            Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
 
-            Assert.IsTrue(rst.Read());
-            Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+            Assert.That(rst.Read());
+            Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
 
             rst.Close();
         }
@@ -1338,10 +1339,10 @@ public class EDBMiscProcTest : EPASTestBase
             command.CommandType = CommandType.Text;
             var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            Assert.IsNotNull(rst);
-            Assert.IsTrue(rst.Read());
-            Assert.AreEqual("1", rst.GetValue(0).ToString());
-            Assert.IsNotNull(rst);
+            Assert.That(rst, Is.Not.Null);
+            Assert.That(rst.Read());
+            Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("1"));
+            Assert.That(rst, Is.Not.Null);
             rst.GetValue(2);
 
             rst.Close();
@@ -1350,9 +1351,9 @@ public class EDBMiscProcTest : EPASTestBase
             command.CommandType = CommandType.Text;
             var rst1 = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-            Assert.IsNotNull(rst1);
-            Assert.IsTrue(rst1.Read());
-            Assert.IsNotNull(rst1);
+            Assert.That(rst1, Is.Not.Null);
+            Assert.That(rst1.Read());
+            Assert.That(rst1, Is.Not.Null);
 
             rst1.Close();
 
@@ -1383,7 +1384,7 @@ public class EDBMiscProcTest : EPASTestBase
 
         Console.WriteLine(command.Parameters[1].Value.ToString());
         var a = int.Parse(command.Parameters[1].Value.ToString());
-        Assert.AreEqual(55, a);
+        Assert.That(a, Is.EqualTo(55));
     }
 
     [Test]
@@ -1402,7 +1403,7 @@ public class EDBMiscProcTest : EPASTestBase
 
         var reader = command.ExecuteReader();
         var a = int.Parse(command.Parameters[0].Value.ToString());
-        Assert.AreEqual(33, a);
+        Assert.That(a, Is.EqualTo(33));
 
         reader.Close();
     }
@@ -1423,7 +1424,7 @@ public class EDBMiscProcTest : EPASTestBase
 
         Console.WriteLine(command.Parameters[1].Value.ToString());
         var a = int.Parse(command.Parameters[1].Value.ToString());
-        Assert.AreEqual(55, a);
+        Assert.That(a, Is.EqualTo(55));
     }
 
     [Test]
@@ -1442,7 +1443,7 @@ public class EDBMiscProcTest : EPASTestBase
 
         var reader = command.ExecuteReader();
         var a = int.Parse(command.Parameters[0].Value.ToString());
-        Assert.AreEqual(33, a);
+        Assert.That(a, Is.EqualTo(33));
         reader.Close();
     }
     [Test]
@@ -1466,14 +1467,14 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst.Read());
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
         rst.Close();
 
-        Assert.AreEqual("", cursorName2);
+        Assert.That(cursorName2, Is.EqualTo(""));
 
         tran.Commit();
 
@@ -1496,8 +1497,8 @@ public class EDBMiscProcTest : EPASTestBase
         var cursorName1 = command.Parameters[0].Value.ToString();
         var cursorName2 = command.Parameters[1].Value.ToString();
 
-        Assert.AreEqual("", cursorName2);
-        Assert.AreEqual("", cursorName2);
+        Assert.That(cursorName2, Is.EqualTo(""));
+        Assert.That(cursorName2, Is.EqualTo(""));
         tran.Commit();
 
     }
@@ -1523,18 +1524,18 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
-        Assert.IsTrue(rst.Read());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst.Read());
 
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
 
         rst.Close();
 
         tran.Commit();
 
-        Assert.AreEqual("", cursorName2);
+        Assert.That(cursorName2, Is.EqualTo(""));
         Console.WriteLine(cursorName2);
 
     }
@@ -1556,8 +1557,8 @@ public class EDBMiscProcTest : EPASTestBase
         var rst = command.Parameters[0].Value.ToString();
         var rst1 = command.Parameters[1].Value.ToString();
 
-        Assert.AreEqual("", rst);
-        Assert.AreEqual("", rst1);
+        Assert.That(rst, Is.EqualTo(""));
+        Assert.That(rst1, Is.EqualTo(""));
         tran.Commit();
 
     }
@@ -1583,14 +1584,14 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst.Read());
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
         rst.Close();
 
-        Assert.AreEqual("", cursorName2);
+        Assert.That(cursorName2, Is.EqualTo(""));
 
         Console.WriteLine(cursorName2);
 
@@ -1616,8 +1617,8 @@ public class EDBMiscProcTest : EPASTestBase
         var rst = command.Parameters[0].Value.ToString();
         var rst1 = command.Parameters[1].Value.ToString();
 
-        Assert.AreEqual("", rst);
-        Assert.AreEqual("", rst1);
+        Assert.That(rst, Is.EqualTo(""));
+        Assert.That(rst1, Is.EqualTo(""));
         tran.Commit();
 
     }
@@ -1643,18 +1644,18 @@ public class EDBMiscProcTest : EPASTestBase
         command.CommandType = CommandType.Text;
         var rst = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
-        Assert.IsNotNull(rst);
-        Assert.IsTrue(rst.Read());
-        Assert.AreEqual("V1", rst.GetValue(0).ToString());
-        Assert.IsTrue(rst.Read());
+        Assert.That(rst, Is.Not.Null);
+        Assert.That(rst.Read());
+        Assert.That(rst.GetValue(0).ToString(), Is.EqualTo("V1"));
+        Assert.That(rst.Read());
 
-        Assert.AreEqual(2, int.Parse(rst.GetValue(1).ToString()));
+        Assert.That(int.Parse(rst.GetValue(1).ToString()), Is.EqualTo(2));
 
         rst.Close();
         tran.Commit();
 
         Console.WriteLine(cursorName2);
-        Assert.AreEqual("", cursorName2);
+        Assert.That(cursorName2, Is.EqualTo(""));
 
     }
 
@@ -1676,8 +1677,8 @@ public class EDBMiscProcTest : EPASTestBase
         var rst = command.Parameters[0].Value.ToString();
         var rst1 = command.Parameters[1].Value.ToString();
 
-        Assert.AreEqual("", rst);
-        Assert.AreEqual("", rst1);
+        Assert.That(rst, Is.EqualTo(""));
+        Assert.That(rst1, Is.EqualTo(""));
         tran.Commit();
 
     }

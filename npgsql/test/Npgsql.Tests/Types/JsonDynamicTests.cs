@@ -1,6 +1,5 @@
 using System;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Properties;
@@ -15,66 +14,6 @@ namespace EnterpriseDB.EDBClient.Tests.Types;
 [TestFixture(MultiplexingMode.Multiplexing, EDBDbType.Jsonb)]
 public class JsonDynamicTests : MultiplexingTestBase
 {
-#if NET6_0_OR_GREATER
-    [Test]
-    public Task Roundtrip_JsonObject()
-        => AssertType(
-            new JsonObject { ["Bar"] = 8 },
-            IsJsonb ? """{"Bar": 8}""" : """{"Bar":8}""",
-            PostgresType,
-            EDBDbType,
-            // By default we map JsonObject to jsonb
-            isDefaultForWriting: IsJsonb,
-            isDefaultForReading: false,
-            isEDBDbTypeInferredFromClrType: false,
-            comparer: (x, y) => x.ToString() == y.ToString());
-
-    [Test]
-    public Task Roundtrip_JsonArray()
-        => AssertType(
-            new JsonArray { 1, 2, 3 },
-            IsJsonb ? "[1, 2, 3]" : "[1,2,3]",
-            PostgresType,
-            EDBDbType,
-            // By default we map JsonArray to jsonb
-            isDefaultForWriting: IsJsonb,
-            isDefaultForReading: false,
-            isEDBDbTypeInferredFromClrType: false,
-            comparer: (x, y) => x.ToString() == y.ToString());
-
-    [Test]
-    [IssueLink("https://github.com/npgsql/npgsql/issues/4537")]
-    public async Task Write_jsonobject_array_without_npgsqldbtype()
-    {
-        // By default we map JsonObject to jsonb
-        if (!IsJsonb)
-            return;
-
-        await using var conn = await OpenConnectionAsync();
-        var tableName = await TestUtil.CreateTempTable(conn, "key SERIAL PRIMARY KEY, ingredients json[]");
-
-        await using var cmd = new EDBCommand { Connection = conn };
-
-        var jsonObject1 = new JsonObject
-        {
-            { "name", "value1" },
-            { "amount", 1 },
-            { "unit", "ml" }
-        };
-
-        var jsonObject2 = new JsonObject
-        {
-            { "name", "value2" },
-            { "amount", 2 },
-            { "unit", "g" }
-        };
-
-        cmd.CommandText = $"INSERT INTO {tableName} (ingredients) VALUES (@p)";
-        cmd.Parameters.Add(new("p", new[] { jsonObject1, jsonObject2 }));
-        await cmd.ExecuteNonQueryAsync();
-    }
-#endif
-
     [Test]
     public async Task As_poco()
         => await AssertType(
@@ -137,7 +76,7 @@ public class JsonDynamicTests : MultiplexingTestBase
                 PostgresType,
                 dataSource); // EnterpriseDB force datasource without opt-ins
 
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedRead<WeatherForecast>(
@@ -147,7 +86,7 @@ public class JsonDynamicTests : MultiplexingTestBase
             PostgresType,
             dataSource);  // EnterpriseDB force datasource without opt-ins
 
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
         Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
     }
 
@@ -524,6 +463,12 @@ public class JsonDynamicTests : MultiplexingTestBase
     }
 
     protected override EDBDataSource DataSource { get; }
+
+    [OneTimeTearDown]
+    protected void CleanUpDataSource()
+    {
+        DataSource.Dispose();
+    }
 
     bool IsJsonb => EDBDbType == EDBDbType.Jsonb;
     string PostgresType => IsJsonb ? "jsonb" : "json";

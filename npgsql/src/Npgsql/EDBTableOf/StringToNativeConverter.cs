@@ -46,7 +46,7 @@ namespace EnterpriseDB.EDBClient
             }
         }
 
-        private static object? ConvertDomainTypeTextToNative(PgSerializerOptions options, string token, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicParameterlessConstructor)] PostgresType pgBaseType)
+        private static object? ConvertDomainTypeTextToNative(PgSerializerOptions options, string token, PostgresType pgBaseType)
         {
             var pgTypeId = options.ToCanonicalTypeId(pgBaseType);
             var typeInfo = options.GetDefaultTypeInfo(pgTypeId)
@@ -77,7 +77,12 @@ namespace EnterpriseDB.EDBClient
                     if (typeInfo.Type == typeof(Guid)) return Guid.Empty;
                     if (typeInfo.Type == typeof(DateTime)) return DateTime.MinValue;
                     if (typeInfo.Type == typeof(DateTimeOffset)) return DateTimeOffset.MinValue;
+#pragma warning disable CS0618 // Type or member is obsolete
                     if (typeInfo.Type == typeof(EDBCidr)) return new EDBCidr();
+#if NET8_0_OR_GREATER
+                    if (typeInfo.Type == typeof(IPNetwork)) return new IPNetwork();
+
+#endif
                     if (typeInfo.Type == typeof(PhysicalAddress)) return default(PhysicalAddress);
 
                     nativeValue = Activator.CreateInstance(typeInfo.Type);
@@ -106,18 +111,21 @@ namespace EnterpriseDB.EDBClient
                 if (typeInfo.Type == typeof(Guid)) return Guid.Parse(token);
                 if (typeInfo.Type == typeof(DateTime)) return DateTime.Parse(token, CultureInfo.InvariantCulture);
                 if (typeInfo.Type == typeof(DateTimeOffset)) return DateTimeOffset.Parse(token, CultureInfo.InvariantCulture);
-                if (typeInfo.Type == typeof(EDBCidr)) return new EDBCidr(token);
                 if (typeInfo.Type == typeof(IPAddress)) return new EDBInet(token);
                 if (typeInfo.Type == typeof(EDBInterval)) return EDBIntervalExtensions.Parse(token);
                 if (typeInfo.Type == typeof(TimeSpan)) return TimeSpan.Parse(token, CultureInfo.InvariantCulture);
-#if NET5_0_OR_GREATER
+                if (typeInfo.Type == typeof(EDBCidr)) return new EDBCidr(token);
+#if NET8_0_OR_GREATER
                 if (typeInfo.Type == typeof(PhysicalAddress)) return PhysicalAddress.Parse(token);
+                if (typeInfo.Type == typeof(IPNetwork)) return IPNetwork.Parse(token);
+                if (typeInfo.Type == typeof(TimeOnly)) return TimeOnly.Parse(token);
 #else
                 // see https://learn.microsoft.com/en-us/dotnet/api/system.net.networkinformation.physicaladdress.parse?view=netframework-4.7.2#system-net-networkinformation-physicaladdress-parse(system-string)
                 if (typeInfo.Type == typeof(PhysicalAddress)) return PhysicalAddress.Parse(token.ToUpper().Replace(':', '-'));
 #endif
                 if (typeInfo.Type == typeof(EDBTsQuery)) return EDBTsQuery.Parse(token);
                 if (typeInfo.Type == typeof(EDBTsVector)) return EDBTsVector.Parse(token);
+#pragma warning restore CS0618 // Type or member is obsolete
                 if (typeInfo.Type == typeof(EDBPoint)) return EDBPoint.Parse(token);
                 if (typeInfo.Type == typeof(EDBLSeg)) return EDBLSeg.Parse(token);
                 if (typeInfo.Type == typeof(EDBPath)) return EDBPath.Parse(token);
@@ -144,7 +152,14 @@ namespace EnterpriseDB.EDBClient
                 }
 
                 // fallback
-                nativeValue = Convert.ChangeType(token, typeInfo.Type);
+                try
+                {
+                    nativeValue = Convert.ChangeType(token, typeInfo.Type);
+                }
+                catch (Exception ex)
+                {
+                    throw new EDBException($"EnterpriseDB: Nested table type conversion is not implemented for {typeInfo.Type}.", ex);
+                }
 
             }
 

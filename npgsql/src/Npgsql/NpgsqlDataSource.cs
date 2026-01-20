@@ -32,16 +32,27 @@ public abstract class EDBDataSource : DbDataSource
     internal EDBLoggingConfiguration LoggingConfiguration { get; }
 
     readonly PgTypeInfoResolverChain _resolverChain;
-    internal PgSerializerOptions SerializerOptions { get; private set; } = null!; // Initialized at bootstrapping
+    readonly IEnumerable<DbTypeResolverFactory> _dbTypeResolverFactories;
 
-    /// <summary>
-    /// Information about PostgreSQL and PostgreSQL-like databases (e.g. type definitions, capabilities...).
-    /// </summary>
-    internal EDBDatabaseInfo DatabaseInfo { get; private set; } = null!; // Initialized at bootstrapping
+    internal ReloadableState CurrentReloadableState = null!; // Initialized during bootstrapping.
+
+    // Initialized at bootstrapping
+    internal sealed class ReloadableState(EDBDatabaseInfo databaseInfo, PgSerializerOptions serializerOptions, IDbTypeResolver? dbTypeResolver)
+    {
+        /// <summary>
+        /// Information about PostgreSQL and PostgreSQL-like databases (e.g. type definitions, capabilities...).
+        /// </summary>
+        public EDBDatabaseInfo DatabaseInfo { get; } = databaseInfo;
+
+        public PgSerializerOptions SerializerOptions { get; } = serializerOptions;
+
+        public IDbTypeResolver? DbTypeResolver { get; } = dbTypeResolver;
+    }
+
 
     internal TransportSecurityHandler TransportSecurityHandler { get; }
 
-#if NET7_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
     internal Action<SslClientAuthenticationOptions>? SslClientAuthenticationOptionsCallback { get; }
 #else
     internal RemoteCertificateValidationCallback? UserCertificateValidationCallback { get; }
@@ -87,12 +98,11 @@ public abstract class EDBDataSource : DbDataSource
     readonly SemaphoreSlim _setupMappingsSemaphore = new(1);
 
     readonly IEDBNameTranslator _defaultNameTranslator;
-
-    internal List<HackyEnumTypeMapping>? _hackyEnumTypeMappings;
+    readonly IDisposable? _eventSourceEvents;
 
     internal EDBDataSource(
         EDBConnectionStringBuilder settings,
-        EDBDataSourceConfiguration dataSourceConfig)
+        EDBDataSourceConfiguration dataSourceConfig, bool reportMetrics)
     {
         Settings = settings;
         ConnectionString = settings.PersistSecurityInfo
@@ -107,7 +117,7 @@ public abstract class EDBDataSource : DbDataSource
                 _,
                 TransportSecurityHandler,
                 IntegratedSecurityHandler,
-#if NET7_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
                 SslClientAuthenticationOptionsCallback,
 #else
                 UserCertificateValidationCallback,
@@ -118,12 +128,12 @@ public abstract class EDBDataSource : DbDataSource
                 _periodicPasswordProvider,
                 _periodicPasswordSuccessRefreshInterval,
                 _periodicPasswordFailureRefreshInterval,
-                var resolverChain,
-                _hackyEnumTypeMappings,
+                _resolverChain,
+                _dbTypeResolverFactories,
                 _defaultNameTranslator,
                 ConnectionInitializer,
                 ConnectionInitializerAsync
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
                 ,_
 #endif
                 )
@@ -132,7 +142,6 @@ public abstract class EDBDataSource : DbDataSource
 
         Debug.Assert(_passwordProvider is null || _passwordProviderAsync is not null);
 
-        _resolverChain = resolverChain;
         _password = settings.Password;
 
         if (_periodicPasswordSuccessRefreshInterval != default)
@@ -142,6 +151,7 @@ public abstract class EDBDataSource : DbDataSource
             _timerPasswordProviderCancellationTokenSource = new();
 
             // Create the timer, but don't start it; the manual run below will will schedule the first refresh.
+            using (ExecutionContext.SuppressFlow()) // Don't capture the current ExecutionContext and its AsyncLocals onto the timer causing them to live forever
             _periodicPasswordProviderTimer = new Timer(state => _ = RefreshPassword(), null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             // Trigger the first refresh attempt right now, outside the timer; this allows us to capture the Task so it can be observed
             // in GetPasswordAsync.
@@ -149,7 +159,21 @@ public abstract class EDBDataSource : DbDataSource
         }
 
         Name = name ?? ConnectionString;
-        MetricsReporter = new MetricsReporter(this);
+
+        // TODO this needs a rework, but for now we just avoid tracking multi-host data sources directly.
+        if (reportMetrics)
+        {
+            MetricsReporter = new MetricsReporter(this);
+            if (!EDBEventSource.Log.TryTrackDataSource(Name, this, out _eventSourceEvents))
+                _connectionLogger.LogDebug("EDBEventSource could not start tracking a DataSource, " +
+                                           "this can happen if more than one data source uses the same connection string.");
+        }
+        else
+        {
+            // This is not accessed anywhere currently for multi-host data sources.
+            // Connectors which handle the metrics always access their nonpooling/pooling data source instead.
+            MetricsReporter = null!;
+        }
     }
 
     /// <inheritdoc cref="DbDataSource.CreateConnection" />
@@ -292,27 +316,36 @@ public abstract class EDBDataSource : DbDataSource
 
             // The type loading below will need to send queries to the database, and that depends on a type mapper being set up (even if its
             // empty). So we set up a minimal version here, and then later inject the actual DatabaseInfo.
-            connector.SerializerOptions =
-                new(PostgresMinimalDatabaseInfo.DefaultTypeCatalog)
+            connector.ReloadableState = new(
+                databaseInfo: PostgresMinimalDatabaseInfo.DefaultTypeCatalog,
+                serializerOptions: new(PostgresMinimalDatabaseInfo.DefaultTypeCatalog)
                 {
                     TextEncoding = connector.TextEncoding,
                     TypeInfoResolver = AdoTypeInfoResolverFactory.Instance.CreateResolver(),
-                };
+                },
+                dbTypeResolver: null);
 
             EDBDatabaseInfo databaseInfo;
 
             using (connector.StartUserAction(ConnectorState.Executing, cancellationToken))
                 databaseInfo = await EDBDatabaseInfo.Load(connector, timeout, async).ConfigureAwait(false);
 
-            connector.DatabaseInfo = DatabaseInfo = databaseInfo;
-            connector.SerializerOptions = SerializerOptions =
-                new(databaseInfo, _resolverChain, CreateTimeZoneProvider(connector.Timezone))
-                {
-                    ArrayNullabilityMode = Settings.ArrayNullabilityMode,
-                    EnableDateTimeInfinityConversions = !Statics.DisableDateTimeInfinityConversions,
-                    TextEncoding = connector.TextEncoding,
-                    DefaultNameTranslator = _defaultNameTranslator
-                };
+            var serializerOptions = new PgSerializerOptions(databaseInfo, _resolverChain, CreateTimeZoneProvider(connector.Timezone))
+            {
+                ArrayNullabilityMode = Settings.ArrayNullabilityMode,
+                EnableDateTimeInfinityConversions = !Statics.DisableDateTimeInfinityConversions,
+                TextEncoding = connector.TextEncoding,
+                DefaultNameTranslator = _defaultNameTranslator
+            };
+
+            var resolvers = new List<IDbTypeResolver>();
+            foreach (var dbTypeResolverFactory in _dbTypeResolverFactories)
+                resolvers.Add(dbTypeResolverFactory.CreateDbTypeResolver(databaseInfo));
+
+            connector.ReloadableState = CurrentReloadableState = new ReloadableState(
+                databaseInfo: databaseInfo,
+                serializerOptions: serializerOptions,
+                dbTypeResolver: new ChainDbTypeResolver(resolvers));
 
             IsBootstrapped = true;
         }
@@ -444,7 +477,7 @@ public abstract class EDBDataSource : DbDataSource
         var databaseStateInfo = _databaseStateInfo;
 
         if (!ignoreTimeStamp && timeStamp <= databaseStateInfo.TimeStamp)
-            return _databaseStateInfo.State;
+            return databaseStateInfo.State;
 
         _databaseStateInfo = new(newState, new EDBTimeout(stateExpiration), timeStamp);
 
@@ -518,7 +551,12 @@ public abstract class EDBDataSource : DbDataSource
         }
 
         _periodicPasswordProviderTimer?.Dispose();
-        MetricsReporter.Dispose();
+        if (MetricsReporter is not null)
+        {
+            MetricsReporter.Dispose();
+            _eventSourceEvents?.Dispose();
+        }
+
         // We do not dispose _setupMappingsSemaphore explicitly, leaving it to finalizer
         // Due to possible concurrent access, which might lead to deadlock
         // See issue #6115
@@ -547,14 +585,18 @@ public abstract class EDBDataSource : DbDataSource
 
         if (_periodicPasswordProviderTimer is not null)
         {
-#if NET5_0_OR_GREATER // EnterpriseDB 
+#if NET8_0_OR_GREATER // EnterpriseDB 
             await _periodicPasswordProviderTimer.DisposeAsync().ConfigureAwait(false);
 #else
             _periodicPasswordProviderTimer.Dispose();
 #endif
         }
 
-        MetricsReporter.Dispose();
+        if (MetricsReporter is not null)
+        {
+            MetricsReporter.Dispose();
+            _eventSourceEvents?.Dispose();
+        }
         // We do not dispose _setupMappingsSemaphore explicitly, leaving it to finalizer
         // Due to possible concurrent access, which might lead to deadlock
         // See issue #6115

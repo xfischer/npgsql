@@ -16,12 +16,14 @@ namespace EDBSample
         static string connectionString = "Server=localhost;Port=5446;User Id=enterprisedb;Password=edb;Database=edb";
         //static string connectionString = "port=5433;Server=localhost;Username=npgsql_tests;Password=npgsql_tests;Database=npgsql_tests;Timeout=0;Command Timeout=0;SSL Mode=Disable";
 
-        static ILoggerFactory _loggerFactory;
-        static ILogger _logger;
+        static ILoggerFactory? _loggerFactory;
+        static ILogger? _logger;
 
         static async Task Main(string[] args)
         {
             InitLogging(LogLevel.Trace);
+            if (_logger is null || _loggerFactory is null)
+                throw new ArgumentNullException("Logger");
 
             try
             {
@@ -291,9 +293,9 @@ namespace EDBSample
                     callable_command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
                     callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
                     callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
-                    callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                    callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                    callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                    callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                    callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
                     await callable_command.PrepareAsync();
 
                     callable_command.Parameters[0].Value = 20;
@@ -343,11 +345,11 @@ namespace EDBSample
                 catch (PostgresException pe)
                     when (pe.SqlState == PostgresErrorCodes.InvalidCatalogName)
                 {
-                    _logger.LogInformation("OK got PostgresException with InvalidCatalogName");
+                    _logger?.LogInformation("OK got PostgresException with InvalidCatalogName");
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError($"Unexpected exception : {e.GetType().Name}");
+                    _logger?.LogError($"Unexpected exception : {e.GetType().Name}");
                 }
             }
 
@@ -361,22 +363,22 @@ namespace EDBSample
 
             try
             {
-                command.Connection.Open();
+                command!.Connection!.Open();
             }
-            catch (PostgresException pe)
+            catch (PostgresException)
             {
-                _logger.LogInformation("OK got PostgresException");
+                _logger?.LogInformation("OK got PostgresException");
             }
             catch (Exception e)
             {
-                _logger.LogError($"Unexpected exception : {e.GetType().Name}");
+                _logger?.LogError($"Unexpected exception : {e.GetType().Name}");
             }
 
         }
         private static async Task WaitAsync_CancellationSample()
         {
             var notify = TestUtil.GetUniqueIdentifier(nameof(Program));
-            await using var dataSource = TestUtil.BuildDataSource(connectionString, _loggerFactory);
+            await using var dataSource = TestUtil.BuildDataSource(connectionString, _loggerFactory!);
 
             //using (var conn = await dataSource.OpenConnectionAsync())
             //{
@@ -412,12 +414,12 @@ namespace EDBSample
                 {
                     await conn.WaitAsync(cts.Token);
                 }
-                catch (OperationCanceledException ex)
+                catch (OperationCanceledException)
                 {
                     // ok
                     _logger.LogDebug("OK (got OperationCanceledException)");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // problem
                     _logger.LogError("Bad (got other exception)");

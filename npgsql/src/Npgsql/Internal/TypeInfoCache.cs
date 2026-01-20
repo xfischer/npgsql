@@ -125,7 +125,7 @@ sealed class TypeInfoCache<TPgTypeId>(PgSerializerOptions options, bool validate
             if (type is not null && info.Type != type)
             {
                 // Types were not equal, throw for IsBoxing = false, otherwise we throw when the returned type isn't assignable to the requested type (after unboxing).
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
                 if (!info.IsBoxing || !info.Type.IsAssignableTo(type))
 #else
                 if (!info.IsBoxing || !type.IsAssignableFrom(info.Type))

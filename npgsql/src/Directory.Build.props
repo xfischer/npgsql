@@ -2,9 +2,8 @@
   <Import Project="../Directory.Build.props" />
 
   <PropertyGroup>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- Compatible from net6.0 onwards (we get warnings otherwise). This implies IsTrimmable as well -->
-    <IsAotCompatible Condition=" $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0')) ">true</IsAotCompatible>
   </PropertyGroup>
 
   <ItemGroup>

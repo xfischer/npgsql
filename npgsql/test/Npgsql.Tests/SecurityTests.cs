@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Properties;
@@ -13,27 +15,27 @@ namespace EnterpriseDB.EDBClient.Tests;
 public class SecurityTests : TestBase
 {
     [Test, Description("Establishes an SSL connection, assuming a self-signed server certificate")]
-    public void Basic_ssl()
+    public async Task Basic_ssl()
     {
-        using var dataSource = CreateDataSource(csb =>
+        await using var dataSource = CreateDataSource(csb =>
         {
             csb.SslMode = SslMode.Require;
         });
-        using var conn = dataSource.OpenConnection();
-        Assert.That(conn.IsSecure, Is.True);
+        await using var conn = await dataSource.OpenConnectionAsync();
+        Assert.That(conn.IsSslEncrypted, Is.True);
     }
 
     [Test, Description("Default user must run with md5 password encryption")]
-    public void Default_user_uses_md5_password()
+    public async Task Default_user_uses_md5_password()
     {
         if (!IsOnBuildServer)
             Assert.Ignore("Only executed in CI");
 
-        using var dataSource = CreateDataSource(csb =>
+        await using var dataSource = CreateDataSource(csb =>
         {
             csb.SslMode = SslMode.Require;
         });
-        using var conn = dataSource.OpenConnection();
+        await using var conn = await dataSource.OpenConnectionAsync();
         Assert.That(conn.IsScram, Is.False);
         Assert.That(conn.IsScramPlus, Is.False);
     }
@@ -72,7 +74,7 @@ public class SecurityTests : TestBase
     {
         using var dataSource = CreateDataSource(csb => csb.SslMode = SslMode.Disable);
         using var conn = dataSource.OpenConnection();
-        Assert.That(conn.IsSecure, Is.False);
+        Assert.That(conn.IsSslEncrypted, Is.False);
     }
 
     [Test, Explicit("Needs to be set up (and run with with Kerberos credentials on Linux)")]
@@ -172,8 +174,8 @@ public class SecurityTests : TestBase
             using var dataSource = CreateDataSource(csb =>
             {
                 csb.SslMode = SslMode.Require;
-                csb.Username = "npgsql_tests_scram";
-                csb.Password = "npgsql_tests_scram";
+                csb.Username = "enterprisedb";
+                csb.Password = "edb";
             });
             using var conn = dataSource.OpenConnection();
             // scram-sha-256-plus only works beginning from PostgreSQL 11
@@ -203,8 +205,8 @@ public class SecurityTests : TestBase
             using var dataSource = CreateDataSource(csb =>
             {
                 csb.SslMode = SslMode.Require;
-                csb.Username = "npgsql_tests_scram";
-                csb.Password = "npgsql_tests_scram";
+                csb.Username = "enterprisedb";
+                csb.Password = "edb";
                 csb.ChannelBinding = channelBinding;
             });
             // scram-sha-256-plus only works beginning from PostgreSQL 11
@@ -242,13 +244,13 @@ public class SecurityTests : TestBase
             await using var dataSource = CreateDataSource(csb =>
             {
                 csb.SslMode = SslMode.Allow;
-                csb.Username = "npgsql_tests_ssl";
-                csb.Password = "npgsql_tests_ssl";
+                csb.Username = "enterprisedb";
+                csb.Password = "edb";
                 csb.Multiplexing = multiplexing;
                 csb.KeepAlive = keepAlive ? 10 : 0;
             });
             await using var conn = await dataSource.OpenConnectionAsync();
-            Assert.IsTrue(conn.IsSecure);
+            Assert.That(conn.IsSslEncrypted);
         }
         catch (Exception e) when (!IsOnBuildServer)
         {
@@ -277,7 +279,7 @@ public class SecurityTests : TestBase
                 csb.KeepAlive = keepAlive ? 10 : 0;
             });
             await using var conn = await dataSource.OpenConnectionAsync();
-            Assert.IsFalse(conn.IsSecure);
+            Assert.That(conn.IsSslEncrypted, Is.False);
         }
         catch (EDBException ex) when (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && ex.InnerException is IOException)
         {
@@ -293,7 +295,88 @@ public class SecurityTests : TestBase
         }
     }
 
-#if NET6_0_OR_GREATER
+#if !NET9_0_OR_GREATER // EnterpriseDB: Maintained for .NET Framework
+    [Test]
+    public async Task DataSource_UserCertificateValidationCallback_is_invoked([Values] bool acceptCertificate)
+    {
+        var callbackWasInvoked = false;
+
+        var dataSourceBuilder = CreateDataSourceBuilder();
+        dataSourceBuilder.ConnectionStringBuilder.SslMode = SslMode.Require;
+        dataSourceBuilder.UseUserCertificateValidationCallback((_, _, _, _) =>
+        {
+            callbackWasInvoked = true;
+            return acceptCertificate;
+        });
+        await using var dataSource = dataSourceBuilder.Build();
+        await using var connection = dataSource.CreateConnection();
+
+        if (acceptCertificate)
+            Assert.DoesNotThrowAsync(async () => await connection.OpenAsync());
+        else
+        {
+            var ex = Assert.ThrowsAsync<EDBException>(async () => await connection.OpenAsync())!;
+            Assert.That(ex.InnerException, Is.TypeOf<AuthenticationException>());
+        }
+
+        Assert.That(callbackWasInvoked);
+    }
+
+    [Test]
+    public async Task Connection_UserCertificateValidationCallback_is_invoked([Values] bool acceptCertificate)
+    {
+        var callbackWasInvoked = false;
+
+        var dataSourceBuilder = CreateDataSourceBuilder();
+        dataSourceBuilder.ConnectionStringBuilder.SslMode = SslMode.Require;
+        await using var dataSource = dataSourceBuilder.Build();
+        await using var connection = dataSource.CreateConnection();
+        connection.UserCertificateValidationCallback = (_, _, _, _) =>
+        {
+            callbackWasInvoked = true;
+            return acceptCertificate;
+        };
+
+        if (acceptCertificate)
+            Assert.DoesNotThrowAsync(async () => await connection.OpenAsync());
+        else
+        {
+            var ex = Assert.ThrowsAsync<EDBException>(async () => await connection.OpenAsync())!;
+            Assert.That(ex.InnerException, Is.TypeOf<AuthenticationException>());
+        }
+
+        Assert.That(callbackWasInvoked);
+    }
+
+    [Test]
+    public void Connect_with_Verify_and_callback_throws_netframework([Values(SslMode.VerifyCA, SslMode.VerifyFull)] SslMode sslMode)
+    {
+        using var dataSource = CreateDataSource(csb => csb.SslMode = sslMode);
+        using var connection = dataSource.CreateConnection();
+        connection.UserCertificateValidationCallback = (_, _, _, _) => true;
+
+        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await connection.OpenAsync())!;
+        Assert.That(ex.Message, Is.EqualTo(string.Format(EDBStrings.CannotUseSslVerifyWithCustomValidationCallback, sslMode)));
+    }
+
+    [Test]
+    public void Connect_with_RootCertificate_and_callback_throws_netframework()
+    {
+        using var dataSource = CreateDataSource(csb =>
+        {
+            csb.SslMode = SslMode.Require;
+            csb.RootCertificate = "foo";
+        });
+        using var connection = dataSource.CreateConnection();
+        connection.UserCertificateValidationCallback = (_, _, _, _) => true;
+
+        var ex = Assert.ThrowsAsync<ArgumentException>(async () => await connection.OpenAsync())!;
+        Assert.That(ex.Message, Is.EqualTo(string.Format(EDBStrings.CannotUseSslRootCertificateWithUserCallback)));
+    }
+#endif
+
+
+#if NET8_0_OR_GREATER
     [Test]
     public async Task DataSource_SslClientAuthenticationOptionsCallback_is_invoked([Values] bool acceptCertificate)
     {
@@ -320,7 +403,7 @@ public class SecurityTests : TestBase
             Assert.That(ex.InnerException, Is.TypeOf<AuthenticationException>());
         }
 
-        Assert.IsTrue(callbackWasInvoked);
+        Assert.That(callbackWasInvoked);
     }
 
     [Test]
@@ -349,7 +432,7 @@ public class SecurityTests : TestBase
             Assert.That(ex.InnerException, Is.TypeOf<AuthenticationException>());
         }
 
-        Assert.IsTrue(callbackWasInvoked);
+        Assert.That(callbackWasInvoked);
     }
 
     [Test]
@@ -392,8 +475,8 @@ public class SecurityTests : TestBase
         await using var dataSource = CreateDataSource(csb =>
         {
             csb.SslMode = SslMode.Require;
-            csb.Username = "npgsql_tests_ssl";
-            csb.Password = "npgsql_tests_ssl";
+            csb.Username = "enterprisedb";
+            csb.Password = "edb";
             csb.MaxPoolSize = 1;
         });
 
@@ -402,7 +485,7 @@ public class SecurityTests : TestBase
         try
         {
             conn = await dataSource.OpenConnectionAsync();
-            Assert.IsTrue(conn.IsSecure);
+            Assert.That(conn.IsSslEncrypted);
         }
         catch (Exception e) when (!IsOnBuildServer)
         {
@@ -426,7 +509,7 @@ public class SecurityTests : TestBase
             await conn.CloseAsync();
             await conn.OpenAsync();
 
-            Assert.AreSame(originalConnector, conn.Connector);
+            Assert.That(conn.Connector, Is.SameAs(originalConnector));
         }
 
         cmd.CommandText = "SELECT 1";
@@ -443,8 +526,8 @@ public class SecurityTests : TestBase
         await using var dataSource = CreateDataSource(csb =>
         {
             csb.SslMode = SslMode.Disable;
-            csb.Username = "npgsql_tests_nossl";
-            csb.Password = "npgsql_tests_nossl";
+            csb.Username = "enterprisedb";
+            csb.Password = "edb";
             csb.MaxPoolSize = 1;
         });
 
@@ -453,7 +536,7 @@ public class SecurityTests : TestBase
         try
         {
             conn = await dataSource.OpenConnectionAsync();
-            Assert.IsFalse(conn.IsSecure);
+            Assert.That(conn.IsSslEncrypted, Is.False);
         }
         catch (Exception e) when (!IsOnBuildServer)
         {
@@ -475,7 +558,7 @@ public class SecurityTests : TestBase
         await conn.CloseAsync();
         await conn.OpenAsync();
 
-        Assert.AreSame(originalConnector, conn.Connector);
+        Assert.That(conn.Connector, Is.SameAs(originalConnector));
 
         cmd.CommandText = "SELECT 1";
         if (async)
@@ -496,7 +579,7 @@ public class SecurityTests : TestBase
             csb.SslNegotiation = SslNegotiation.Direct;
         });
         await using var conn = await dataSource.OpenConnectionAsync();
-        Assert.IsTrue(conn.IsSecure);
+        Assert.That(conn.IsSslEncrypted);
     }
 
     [Test]
@@ -563,6 +646,45 @@ public class SecurityTests : TestBase
             var ex = Assert.ThrowsAsync<EDBException>(async () => await dataSource.OpenConnectionAsync())!;
             Assert.That(ex.InnerException, Is.TypeOf<AuthenticationException>());
         }
+    }
+
+    [Test]
+    [Platform(Exclude = "MacOsX", Reason = "Mac requires explicit opt-in to receive CA certificate in TLS handshake")]
+    public async Task Connect_with_verify_and_multiple_ca_cert([Values(SslMode.VerifyCA, SslMode.VerifyFull)] SslMode sslMode, [Values] bool realCaFirst)
+    {
+        if (!IsOnBuildServer)
+            Assert.Ignore("Only executed in CI");
+
+        var certificates = new X509Certificate2Collection();
+
+#if NET9_0_OR_GREATER
+        using var realCaCert = X509CertificateLoader.LoadCertificateFromFile("ca.crt");
+#else
+        using var realCaCert = new X509Certificate2("ca.crt");
+#endif
+
+        using var ecdsa = ECDsa.Create();
+        var req = new CertificateRequest("cn=localhost", ecdsa, HashAlgorithmName.SHA256);
+        using var unrelatedCaCert = req.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+
+        if (realCaFirst)
+        {
+            certificates.Add(realCaCert);
+            certificates.Add(unrelatedCaCert);
+        }
+        else
+        {
+            certificates.Add(unrelatedCaCert);
+            certificates.Add(realCaCert);
+        }
+
+        var dataSourceBuilder = CreateDataSourceBuilder();
+        dataSourceBuilder.ConnectionStringBuilder.SslMode = sslMode;
+        dataSourceBuilder.UseRootCertificates(certificates);
+
+        await using var dataSource = dataSourceBuilder.Build();
+
+        await using var _ = await dataSource.OpenConnectionAsync();
     }
 
     [Test]

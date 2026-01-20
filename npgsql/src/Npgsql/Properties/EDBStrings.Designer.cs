@@ -19,7 +19,7 @@ namespace EnterpriseDB.EDBClient.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class EDBStrings {
@@ -176,7 +176,16 @@ namespace EnterpriseDB.EDBClient.Properties {
                 return ResourceManager.GetString("CannotUseValidationRootCertificateCallbackWithUserCallback", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cube isn&apos;t enabled; please call {0} on {1} to enable Cube..
+        /// </summary>
+        internal static string CubeNotEnabled {
+            get {
+                return ResourceManager.GetString("CubeNotEnabled", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; required dynamic JSON serialization, which requires an explicit opt-in; call &apos;{1}&apos; on &apos;{2}&apos; or EDBConnection.GlobalTypeMapper (see https://www.npgsql.org/doc/types/json.html and the 8.0 release notes for more details). Alternatively, if you meant to use Newtonsoft JSON.NET instead of System.Text.Json, call UseJsonNet() instead.
         ///.

@@ -75,7 +75,7 @@ internal static class EDBIntervalExtensions
     {
         if (str == null)
         {
-#if NET6_0_OR_GREATER
+#if NET8_0_OR_GREATER
             ArgumentNullException.ThrowIfNull(str, nameof(str));
 #else
             throw new ArgumentNullException(nameof(str));
@@ -84,13 +84,13 @@ internal static class EDBIntervalExtensions
         str = str.Replace('s', ' '); //Quick and easy way to catch plurals.
         try
         {
-            int years = 0;
-            int months = 0;
-            int days = 0;
-            int hours = 0;
-            int minutes = 0;
-            decimal seconds = 0m;
-            int idx = str.IndexOf("year", StringComparison.OrdinalIgnoreCase);
+            var years = 0;
+            var months = 0;
+            var days = 0;
+            var hours = 0;
+            var minutes = 0;
+            var seconds = 0m;
+            var idx = str.IndexOf("year", StringComparison.OrdinalIgnoreCase);
             if (idx > 0)
             {
                 years = int.Parse(str.Substring(0, idx));
@@ -110,8 +110,8 @@ internal static class EDBIntervalExtensions
             }
             if (str.Length > 0)
             {
-                bool isNegative = str[0] == '-';
-                string[] parts = str.Split(':');
+                var isNegative = str[0] == '-';
+                var parts = str.Split(':');
                 switch (parts.Length) //One of those times that fall-through would actually be good.
                 {
                 case 1:
@@ -133,7 +133,7 @@ internal static class EDBIntervalExtensions
                     seconds *= -1;
                 }
             }
-            long ticks = hours * TicksPerHour + minutes * TicksPerMinute + (long)(seconds * TicksPerSecond);
+            var ticks = hours * TicksPerHour + minutes * TicksPerMinute + (long)(seconds * TicksPerSecond);
             return new EDBInterval(years * MonthsPerYear + months, days, ticks);
         }
         catch (OverflowException)
@@ -155,7 +155,7 @@ internal static class EDBIntervalExtensions
     {
         var ts = TimeSpan.FromDays(DaysPerMonth * interval.Months + interval.Days);
 
-#if NET7_0_OR_GREATER
+#if NET8_0_OR_GREATER
         ts += TimeSpan.FromMicroseconds(interval.Time);
 #else
         ts += TimeSpan.FromMilliseconds(interval.Time / 1_000d);

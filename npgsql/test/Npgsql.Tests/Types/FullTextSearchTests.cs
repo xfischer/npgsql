@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 using EnterpriseDB.EDBClient.Properties;
 using EDBTypes;
 using NUnit.Framework;
-using EnterpriseDB.EDBClient.Tests;
-using EnterpriseDB.EDBClient;
 
 #pragma warning disable CS0618 // EDBTsVector.Parse is obsolete
 
@@ -69,20 +67,20 @@ public class FullTextSearchTests(MultiplexingMode multiplexingMode) : Multiplexi
         await using var dataSource = dataSourceBuilder.Build();
 
         var exception = await AssertTypeUnsupportedRead<EDBTsQuery, InvalidCastException>("a", "tsquery", dataSource);
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
-        Assert.AreEqual(errorMessage, exception.InnerException!.Message);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedWrite<EDBTsQuery, InvalidCastException>(new EDBTsQueryLexeme("a"), pgTypeName: null, dataSource);
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
-        Assert.AreEqual(errorMessage, exception.InnerException!.Message);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedRead<EDBTsVector, InvalidCastException>("1", "tsvector", dataSource);
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
-        Assert.AreEqual(errorMessage, exception.InnerException!.Message);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
 
         exception = await AssertTypeUnsupportedWrite<EDBTsVector, InvalidCastException>(EDBTsVector.Parse("'1'"), pgTypeName: null, dataSource);
-        Assert.IsInstanceOf<NotSupportedException>(exception.InnerException);
-        Assert.AreEqual(errorMessage, exception.InnerException!.Message);
+        Assert.That(exception.InnerException, Is.InstanceOf<NotSupportedException>());
+        Assert.That(exception.InnerException!.Message, Is.EqualTo(errorMessage));
     }
 
     [Test]

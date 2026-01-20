@@ -1,8 +1,7 @@
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Infrastructure;
 using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.Storage.Internal;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 public abstract class CommandInterceptionNpgsqlTestBase(CommandInterceptionNpgsqlTestBase.InterceptionNpgsqlFixtureBase fixture)
     : CommandInterceptionTestBase(fixture)

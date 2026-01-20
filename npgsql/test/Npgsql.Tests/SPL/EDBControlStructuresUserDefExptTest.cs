@@ -113,6 +113,7 @@ public class EDBControlStructuresUserDefExptTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -179,8 +180,8 @@ public class EDBControlStructuresUserDefExptTest : EPASTestBase
             cstmt.ExecuteNonQuery();
         }
 
-        Assert.AreEqual(4000, getCustomerStmtAmount("customer3", 1001), 0.00);
-        Assert.AreEqual(17000, getCustomerBalance("customer3", 1001), 0.00);
+        Assert.That(getCustomerStmtAmount("customer3", 1001), Is.EqualTo(4000.0).Within(0.00));
+        Assert.That(getCustomerBalance("customer3", 1001), Is.EqualTo(17000.0).Within(0.00));
     }
 
     [Test]
@@ -206,8 +207,8 @@ public class EDBControlStructuresUserDefExptTest : EPASTestBase
 
         }
 
-        Assert.AreEqual(1000, getCustomerStmtAmount("customer4", 1002), 0.00);
-        Assert.AreEqual(45000, getCustomerBalance("customer4", 1002), 0.00);
+        Assert.That(getCustomerStmtAmount("customer4", 1002), Is.EqualTo(1000.0).Within(0.00));
+        Assert.That(getCustomerBalance("customer4", 1002), Is.EqualTo(45000.0).Within(0.00));
     }
 }
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.

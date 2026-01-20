@@ -219,20 +219,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         _cloningInstantiator = s => new EDBConnection(s);
 
         _dataSource = PoolManager.Pools.GetOrAdd(canonical, newDataSource);
-        if (_dataSource == newDataSource)
-        {
-            Debug.Assert(_dataSource is not MultiHostDataSourceWrapper);
-            // If the pool we created was the one that ended up being stored we need to increment the appropriate counter.
-            // Avoids a race condition where multiple threads will create a pool but only one will be stored.
-            if (_dataSource is EDBMultiHostDataSource multiHostConnectorPool)
-                foreach (var hostPool in multiHostConnectorPool.Pools)
-                    EDBEventSource.Log.DataSourceCreated(hostPool);
-            else
-            {
-                EDBEventSource.Log.DataSourceCreated(newDataSource);
-            }
-        }
-        else
+        if (_dataSource != newDataSource)
             newDataSource.Dispose();
 
         // If this is a multi-host data source and the user specified a TargetSessionAttributes, create a wrapper in front of the
@@ -578,7 +565,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// </summary>
     internal EDBBatch? CachedBatch { get; set; }
 
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     /// <inheritdoc/>
     public override bool CanCreateBatch => true;
 
@@ -1016,7 +1003,12 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <summary>
     /// Returns whether SSL is being used for the connection.
     /// </summary>
-    internal bool IsSecure => CheckOpenAndRunInTemporaryScope(c => c.IsSecure);
+    internal bool IsSslEncrypted => CheckOpenAndRunInTemporaryScope(c => c.IsSslEncrypted);
+
+    /// <summary>
+    /// Returns whether GSS encryption is being used for the connection.
+    /// </summary>
+    internal bool IsGssEncrypted => CheckOpenAndRunInTemporaryScope(c => c.IsGssEncrypted);
 
     /// <summary>
     /// Returns whether SCRAM-SHA256 is being user for the connection
@@ -1053,7 +1045,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     [Obsolete("Use UseSslClientAuthenticationOptionsCallback")]
     public RemoteCertificateValidationCallback? UserCertificateValidationCallback { get; set; }
 
-#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     /// <summary>
     /// When using SSL/TLS, this is a callback that allows customizing SslStream's authentication options.
     /// </summary>
@@ -1065,7 +1057,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     public Action<SslClientAuthenticationOptions>? SslClientAuthenticationOptionsCallback { get; set; }
 #endif
 
-#endregion SSL
+    #endregion SSL
 
     #region Backend version, capabilities, settings
 
@@ -1135,6 +1127,10 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     public IReadOnlyDictionary<string, string> PostgresParameters
         => CheckOpenAndRunInTemporaryScope(c => c.PostgresParameters);
 
+    [Browsable(false)]
+    public bool SupportsRedwoodDialect
+        => CheckOpenAndRunInTemporaryScope(c => c.DatabaseInfo.SupportsRedwoodDialect); 
+
     #endregion Backend version, capabilities, settings
 
     #region Copy
@@ -1175,17 +1171,26 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         LogMessages.StartingBinaryImport(connector.LoggingConfiguration.CopyLogger, connector.Id);
         // no point in passing a cancellationToken here, as we register the cancellation in the Init method
         connector.StartUserAction(ConnectorState.Copy, attemptPgCancellation: false);
+        var importer = new EDBBinaryImporter(connector);
         try
         {
-            var importer = new EDBBinaryImporter(connector);
             await importer.Init(copyFromCommand, async, cancellationToken).ConfigureAwait(false);
             connector.CurrentCopyOperation = importer;
             return importer;
         }
         catch
         {
-            connector.EndUserAction();
-            EndBindingScope(ConnectorBindingScope.Copy);
+            try
+            {
+                if (async)
+                    await importer.DisposeAsync().ConfigureAwait(false);
+                else
+                    importer.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
             throw;
         }
     }
@@ -1226,17 +1231,26 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         LogMessages.StartingBinaryExport(connector.LoggingConfiguration.CopyLogger, connector.Id);
         // no point in passing a cancellationToken here, as we register the cancellation in the Init method
         connector.StartUserAction(ConnectorState.Copy, attemptPgCancellation: false);
+        var exporter = new EDBBinaryExporter(connector);
         try
         {
-            var exporter = new EDBBinaryExporter(connector);
             await exporter.Init(copyToCommand, async, cancellationToken).ConfigureAwait(false);
             connector.CurrentCopyOperation = exporter;
             return exporter;
         }
         catch
         {
-            connector.EndUserAction();
-            EndBindingScope(ConnectorBindingScope.Copy);
+            try
+            {
+                if (async)
+                    await exporter.DisposeAsync().ConfigureAwait(false);
+                else
+                    exporter.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
             throw;
         }
     }
@@ -1252,7 +1266,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/static/sql-copy.html.
     /// </remarks>
-    public TextWriter BeginTextImport(string copyFromCommand)
+    public EDBCopyTextWriter BeginTextImport(string copyFromCommand)
         => BeginTextImport(async: false, copyFromCommand, CancellationToken.None).GetAwaiter().GetResult();
 
     /// <summary>
@@ -1267,10 +1281,10 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/static/sql-copy.html.
     /// </remarks>
-    public Task<TextWriter> BeginTextImportAsync(string copyFromCommand, CancellationToken cancellationToken = default)
+    public Task<EDBCopyTextWriter> BeginTextImportAsync(string copyFromCommand, CancellationToken cancellationToken = default)
         => BeginTextImport(async: true, copyFromCommand, cancellationToken);
 
-    async Task<TextWriter> BeginTextImport(bool async, string copyFromCommand, CancellationToken cancellationToken = default)
+    async Task<EDBCopyTextWriter> BeginTextImport(bool async, string copyFromCommand, CancellationToken cancellationToken = default)
     {
         if (copyFromCommand == null)
             throw new ArgumentNullException(nameof(copyFromCommand));
@@ -1283,18 +1297,27 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         LogMessages.StartingTextImport(connector.LoggingConfiguration.CopyLogger, connector.Id);
         // no point in passing a cancellationToken here, as we register the cancellation in the Init method
         connector.StartUserAction(ConnectorState.Copy, attemptPgCancellation: false);
+        var copyStream = new EDBRawCopyStream(connector);
         try
         {
-            var copyStream = new EDBRawCopyStream(connector);
-            await copyStream.Init(copyFromCommand, async, cancellationToken).ConfigureAwait(false);
+            await copyStream.Init(copyFromCommand, async, forExport: false, cancellationToken).ConfigureAwait(false);
             var writer = new EDBCopyTextWriter(connector, copyStream);
             connector.CurrentCopyOperation = writer;
             return writer;
         }
         catch
         {
-            connector.EndUserAction();
-            EndBindingScope(ConnectorBindingScope.Copy);
+            try
+            {
+                if (async)
+                    await copyStream.DisposeAsync().ConfigureAwait(false);
+                else
+                    copyStream.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
             throw;
         }
     }
@@ -1310,7 +1333,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/static/sql-copy.html.
     /// </remarks>
-    public TextReader BeginTextExport(string copyToCommand)
+    public EDBCopyTextReader BeginTextExport(string copyToCommand)
         => BeginTextExport(async: false, copyToCommand, CancellationToken.None).GetAwaiter().GetResult();
 
     /// <summary>
@@ -1325,10 +1348,10 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// <remarks>
     /// See https://www.postgresql.org/docs/current/static/sql-copy.html.
     /// </remarks>
-    public Task<TextReader> BeginTextExportAsync(string copyToCommand, CancellationToken cancellationToken = default)
+    public Task<EDBCopyTextReader> BeginTextExportAsync(string copyToCommand, CancellationToken cancellationToken = default)
         => BeginTextExport(async: true, copyToCommand, cancellationToken);
 
-    async Task<TextReader> BeginTextExport(bool async, string copyToCommand, CancellationToken cancellationToken = default)
+    async Task<EDBCopyTextReader> BeginTextExport(bool async, string copyToCommand, CancellationToken cancellationToken = default)
     {
         if (copyToCommand == null)
             throw new ArgumentNullException(nameof(copyToCommand));
@@ -1341,18 +1364,27 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         LogMessages.StartingTextExport(connector.LoggingConfiguration.CopyLogger, connector.Id);
         // no point in passing a cancellationToken here, as we register the cancellation in the Init method
         connector.StartUserAction(ConnectorState.Copy, attemptPgCancellation: false);
+        var copyStream = new EDBRawCopyStream(connector);
         try
         {
-            var copyStream = new EDBRawCopyStream(connector);
-            await copyStream.Init(copyToCommand, async, cancellationToken).ConfigureAwait(false);
+            await copyStream.Init(copyToCommand, async, forExport: true, cancellationToken).ConfigureAwait(false);
             var reader = new EDBCopyTextReader(connector, copyStream);
             connector.CurrentCopyOperation = reader;
             return reader;
         }
         catch
         {
-            connector.EndUserAction();
-            EndBindingScope(ConnectorBindingScope.Copy);
+            try
+            {
+                if (async)
+                    await copyStream.DisposeAsync().ConfigureAwait(false);
+                else
+                    copyStream.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
             throw;
         }
     }
@@ -1399,10 +1431,10 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         LogMessages.StartingRawCopy(connector.LoggingConfiguration.CopyLogger, connector.Id);
         // no point in passing a cancellationToken here, as we register the cancellation in the Init method
         connector.StartUserAction(ConnectorState.Copy, attemptPgCancellation: false);
+        var stream = new EDBRawCopyStream(connector);
         try
         {
-            var stream = new EDBRawCopyStream(connector);
-            await stream.Init(copyCommand, async, cancellationToken).ConfigureAwait(false);
+            await stream.Init(copyCommand, async, forExport: null, cancellationToken).ConfigureAwait(false);
             if (!stream.IsBinary)
             {
                 // TODO: Stop the COPY operation gracefully, no breaking
@@ -1414,15 +1446,24 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
         }
         catch
         {
-            connector.EndUserAction();
-            EndBindingScope(ConnectorBindingScope.Copy);
+            try
+            {
+                if (async)
+                    await stream.DisposeAsync().ConfigureAwait(false);
+                else
+                    stream.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
             throw;
         }
     }
 
     static bool IsValidCopyCommand(string copyCommand)
     {
-#if NET6_0_OR_GREATER || NETSTANDARD2_1
+#if NET8_0_OR_GREATER || NETSTANDARD2_1
         return copyCommand.AsSpan().TrimStart().StartsWith("COPY", StringComparison.OrdinalIgnoreCase);
 #else
         return copyCommand.TrimStart().StartsWith("COPY", StringComparison.OrdinalIgnoreCase);
@@ -1732,7 +1773,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     public override Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(CancellationToken cancellationToken = default)
@@ -1747,7 +1788,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     public override Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(string collectionName, CancellationToken cancellationToken = default)
@@ -1766,7 +1807,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     /// An optional token to cancel the asynchronous operation. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>The collection specified.</returns>
-#if NET6_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
     public override Task<DataTable> GetSchemaAsync(string collectionName, string?[]? restrictions, CancellationToken cancellationToken = default)
 #else
     public Task<DataTable> GetSchemaAsync(string collectionName, string?[]? restrictions, CancellationToken cancellationToken = default)
@@ -1796,7 +1837,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
             ? _cloningInstantiator!(_connectionString)
             : _dataSource.CreateConnection();
 
-#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
         conn.SslClientAuthenticationOptionsCallback = SslClientAuthenticationOptionsCallback;
 #endif
 #pragma warning disable CS0618 // Obsolete
@@ -1825,7 +1866,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
 
         return new EDBConnection(csb.ToString())
         {
-#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
             SslClientAuthenticationOptionsCallback = SslClientAuthenticationOptionsCallback ?? _dataSource?.SslClientAuthenticationOptionsCallback,
 #pragma warning disable CS0618 // Obsolete
             ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,
@@ -1862,7 +1903,7 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
 
         return new EDBConnection(csb.ToString())
         {
-#if NET7_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMWEWORK)
             SslClientAuthenticationOptionsCallback = SslClientAuthenticationOptionsCallback ?? _dataSource?.SslClientAuthenticationOptionsCallback,
 #pragma warning disable CS0618 // Obsolete
             ProvideClientCertificatesCallback = ProvideClientCertificatesCallback,

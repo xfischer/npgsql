@@ -212,7 +212,11 @@ public sealed class EDBCommandBuilder : DbCommandBuilder
     protected override void ApplyParameterInfo(DbParameter p, DataRow row, System.Data.StatementType statementType, bool whereClause)
     {
         var param = (EDBParameter)p;
-        param.EDBDbType = (EDBDbType)row[SchemaTableColumn.ProviderType];
+        // DbCommandBuilder is going to set DbType.Int32 onto an existing parameter, reset other db type fields.
+        if (param.SourceColumnNullMapping)
+            param.ResetDbType();
+        else
+        	param.EDBDbType = (EDBDbType)row[SchemaTableColumn.ProviderType];
     }
 
     /// <summary>

@@ -30,6 +30,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
 
     internal EDBDbType? _npgsqlDbType;
     internal string? _dataTypeName;
+    internal DbType? _dbType;
 
     private protected string _name = string.Empty;
     object? _value;
@@ -40,6 +41,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
     internal string TrimmedName { get; private protected set; } = PositionalName;
     internal const string PositionalName = "";
 
+    IDbTypeResolver? _dbTypeResolver;
     internal protected PgTypeInfo? TypeInfo { get; private set; } // EnterpriseDB (private => internal)
 
     internal PgTypeId PgTypeId { get; private set; }
@@ -315,26 +317,32 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
     {
         get
         {
+            if (_dbType is { } dbType)
+                return dbType;
+
+            if (_dataTypeName is not null)
+            {
+                var dataTypeName = Internal.Postgres.DataTypeName.FromDisplayName(_dataTypeName);
+                if (TryResolveDbType(dataTypeName, out var resolvedDbType))
+                    return resolvedDbType;
+
+                return dataTypeName.ToEDBDbType()?.ToDbType() ?? DbType.Object;
+            }
+
             if (_npgsqlDbType is { } npgsqlDbType)
                 return npgsqlDbType.ToDbType();
 
-            if (_dataTypeName is not null)
-                return Internal.Postgres.DataTypeName.FromDisplayName(_dataTypeName).ToEDBDbType()?.ToDbType() ?? DbType.Object;
-
             // Infer from value but don't cache
-            if (Value is not null)
-                // We pass ValueType here for the generic derived type, where we should respect T and not the runtime type.
-                return GlobalTypeMapper.Instance.FindDataTypeName(GetValueType(StaticValueType)!, Value)?.ToEDBDbType()?.ToDbType() ?? DbType.Object;
+            // We pass ValueType here for the generic derived type, where we should respect T and not the runtime type.
+            if (GetValueType(StaticValueType) is { } valueType)
+                return GlobalTypeMapper.Instance.FindDataTypeName(valueType, Value)?.ToEDBDbType()?.ToDbType() ?? DbType.Object;
 
             return DbType.Object;
         }
         set
         {
             ResetTypeInfo();
-            _npgsqlDbType = value == DbType.Object
-                ? null
-                : value.ToEDBDbType()
-                  ?? throw new NotSupportedException($"The parameter type DbType.{value} isn't supported by PostgreSQL or EnterpriseDB.EDBClient");
+            _dbType = value;
         }
     }
 
@@ -355,19 +363,28 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
             if (_dataTypeName is not null)
                 return Internal.Postgres.DataTypeName.FromDisplayName(_dataTypeName).ToEDBDbType() ?? EDBDbType.Unknown;
 
+            var valueType = GetValueType(StaticValueType);
+            if (_dbType is { } dbType)
+            {
+                if (TryResolveDbTypeDataTypeName(dbType, valueType, out var dataTypeName))
+                    return EDBDbTypeExtensions.ToEDBDbType(dataTypeName) ?? EDBDbType.Unknown;
+
+                return dbType.ToEDBDbType() ?? EDBDbType.Unknown;
+            }
+
             // Infer from value but don't cache
-            if (Value is not null)
-                // We pass ValueType here for the generic derived type (EDBParameter<T>) where we should respect T and not the runtime type.
-                return GlobalTypeMapper.Instance.FindDataTypeName(GetValueType(StaticValueType)!, Value)?.ToEDBDbType() ?? EDBDbType.Unknown;
+            // We pass ValueType here for the generic derived type, where we should respect T and not the runtime type.
+            if (valueType is not null)
+                return GlobalTypeMapper.Instance.FindDataTypeName(valueType, Value)?.ToEDBDbType() ?? EDBDbType.Unknown;
 
             return EDBDbType.Unknown;
         }
         set
         {
             if (value == EDBDbType.Array)
-                throw new ArgumentOutOfRangeException(nameof(value), "Cannot set EDBDbType to just Array, Binary-Or with the element type (e.g. Array of Box is EDBDbType.Array | EDBDbType.Box).");
+                ThrowHelper.ThrowArgumentOutOfRangeException(nameof(value), "Cannot set EDBDbType to just Array, Binary-Or with the element type (e.g. Array of Box is EDBDbType.Array | EDBDbType.Box).");
             if (value == EDBDbType.Range)
-                throw new ArgumentOutOfRangeException(nameof(value), "Cannot set EDBDbType to just Range, Binary-Or with the element type (e.g. Range of integer is EDBDbType.Range | EDBDbType.Integer)");
+                ThrowHelper.ThrowArgumentOutOfRangeException(nameof(value), "Cannot set EDBDbType to just Range, Binary-Or with the element type (e.g. Range of integer is EDBDbType.Range | EDBDbType.Integer)");
 
             ResetTypeInfo();
             _npgsqlDbType = value;
@@ -392,10 +409,21 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
                     "pg_catalog." + unqualifiedName).UnqualifiedDisplayName;
             }
 
+            var valueType = GetValueType(StaticValueType);
+            if (_dbType is { } dbType)
+            {
+                if (TryResolveDbTypeDataTypeName(dbType, valueType, out var dataTypeName))
+                    return dataTypeName;
+
+                var unqualifiedName = dbType.ToEDBDbType()?.ToUnqualifiedDataTypeName();
+                return unqualifiedName is null ? null : Internal.Postgres.DataTypeName.ValidatedName(
+                    "pg_catalog." + unqualifiedName).UnqualifiedDisplayName;
+            }
+
             // Infer from value but don't cache
-            if (Value is not null)
-                // We pass ValueType here for the generic derived type, where we should respect T and not the runtime type.
-                return GlobalTypeMapper.Instance.FindDataTypeName(GetValueType(StaticValueType)!, Value)?.DisplayName;
+            // We pass ValueType here for the generic derived type, where we should respect T and not the runtime type.
+            if (valueType is not null)
+                return GlobalTypeMapper.Instance.FindDataTypeName(valueType, Value)?.DisplayName;
 
             return null;
         }
@@ -453,7 +481,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
         set
         {
             if (value < -1)
-                throw new ArgumentException($"Invalid parameter Size value '{value}'. The value must be greater than or equal to 0.");
+                ThrowHelper.ThrowArgumentException($"Invalid parameter Size value '{value}'. The value must be greater than or equal to 0.");
 
             ResetBindingInfo();
             _size = value;
@@ -497,6 +525,40 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
 
     Type? GetValueType(Type staticValueType) => staticValueType != typeof(object) ? staticValueType : Value?.GetType();
 
+    bool TryResolveDbType(DataTypeName dataTypeName, out DbType dbType)
+    {
+        if (_dbTypeResolver?.GetDbType(dataTypeName) is { } result)
+        {
+            dbType = result;
+            return true;
+        }
+
+        dbType = default;
+        return false;
+    }
+
+    bool TryResolveDbTypeDataTypeName(DbType dbType, Type? type, [NotNullWhen(true)] out string? normalizedDataTypeName)
+    {
+        if (_dbTypeResolver?.GetDataTypeName(dbType, type) is { } result)
+        {
+            normalizedDataTypeName = Internal.Postgres.DataTypeName.NormalizeName(result);
+            return true;
+        }
+
+        normalizedDataTypeName = null;
+        return false;
+    }
+
+    internal void SetOutputValue(EDBDataReader reader, int ordinal)
+    {
+        if (GetType() == typeof(EDBParameter))
+            Value = reader.GetValue(ordinal);
+        else
+            SetOutputValueCore(reader, ordinal);
+    }
+
+    private protected virtual void SetOutputValueCore(EDBDataReader reader, int ordinal) { }
+
     internal bool ShouldResetObjectTypeInfo(object? value)
     {
         var currentType = TypeInfo?.Type;
@@ -526,18 +588,44 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
     }
 
     /// Attempt to resolve a type info based on available (postgres) type information on the parameter.
-    internal void ResolveTypeInfo(PgSerializerOptions options)
+    internal void ResolveTypeInfo(PgSerializerOptions options, IDbTypeResolver? dbTypeResolver)
     {
         var typeInfo = TypeInfo;
         var previouslyResolved = ReferenceEquals(typeInfo?.Options, options);
         if (!previouslyResolved)
         {
-            var dataTypeName =
-                _npgsqlDbType is { } npgsqlDbType
-                    ? npgsqlDbType.ToDataTypeName() ?? npgsqlDbType.ToUnqualifiedDataTypeNameOrThrow()
-                    : _dataTypeName is not null
-                        ? Internal.Postgres.DataTypeName.NormalizeName(_dataTypeName)
-                        : null;
+            var staticValueType = StaticValueType;
+            var valueType = GetValueType(staticValueType);
+
+            string? dataTypeName = null;
+            if (_dataTypeName is not null)
+            {
+                dataTypeName = Internal.Postgres.DataTypeName.NormalizeName(_dataTypeName);
+            }
+            else if (_npgsqlDbType is { } npgsqlDbType)
+            {
+                dataTypeName = npgsqlDbType.ToDataTypeName() ?? npgsqlDbType.ToUnqualifiedDataTypeNameOrThrow();
+            }
+            else if (_dbType is { } dbType)
+            {
+                if (dbTypeResolver is not null)
+                {
+                    _dbTypeResolver = dbTypeResolver;
+                    if (dbTypeResolver.GetDataTypeName(dbType, valueType) is { } result)
+                    {
+                        dataTypeName = Internal.Postgres.DataTypeName.NormalizeName(result);
+                    }
+                }
+
+                // Fall back to builtin mappings if there was no resolver, or it didn't produce a result.
+                if (dataTypeName is null)
+                {
+                    dataTypeName = dbType.ToEDBDbType()?.ToDataTypeName();
+                    // If DbType.Object was specified we will only throw (see ThrowNoTypeInfo) if valueType is also null.
+                    if (dataTypeName is null && dbType is not DbType.Object)
+                        ThrowDbTypeNotSupported();
+                }
+            }
 
             PgTypeId? pgTypeId = null;
             if (dataTypeName is not null)
@@ -551,7 +639,8 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
                 pgTypeId = options.ToCanonicalTypeId(pgType.GetRepresentationalType());
             }
 
-            var unspecifiedDBNull = false;
+            /* EDB: OLD 9.0.3.1 code
+			var unspecifiedDBNull = false;
             var valueType = StaticValueType;
 
             if (Direction != ParameterDirection.Output) // EnterpriseDB : if value for Outparam is provided with the wrong .Net type this will fail (ie: param is string and value is 1, see: test OutParamProcVarcharPostGres)
@@ -560,30 +649,34 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
                 {
                     valueType = Value?.GetType();
                     if (valueType is null && pgTypeId is null)
-                    {
-                        ThrowNoTypeInfo();
-                        return;
-                    }
-
-                    // We treat object typed DBNull values as default info.
-                    // Unless we don't have a pgTypeId either, at which point we'll use an 'unspecified' PgTypeInfo to help us write a NULL.
-                    if (valueType == typeof(DBNull))
-                    {
-                        if (pgTypeId is null)
-                        {
-                            unspecifiedDBNull = true;
-                            typeInfo = options.UnspecifiedDBNullTypeInfo;
-                        }
-                        else
-                            valueType = null;
-                    }
+            {
+                ThrowNoTypeInfo();
+                return;
+            }
+			*/
+                        
+            if (pgTypeId is null && valueType is null)
+            {
+                if (Direction != ParameterDirection.Output) // EnterpriseDB : if value for Outparam is provided with the wrong .Net type this will fail (ie: param is string and value is 1, see: test OutParamProcVarcharPostGres)
+                {
+                    ThrowNoTypeInfo();
+                    return;
                 }
+                valueType = StaticValueType;
             }
 
-            if (!unspecifiedDBNull)
-                typeInfo = AdoSerializerHelpers.GetTypeInfoForWriting(valueType, pgTypeId, options, _npgsqlDbType);
-
-            TypeInfo = typeInfo;
+            // We treat object typed DBNull values as default info (we don't supply a type).
+            // Unless we don't have a pgTypeId either, at which point we'll use an 'unspecified' PgTypeInfo to help us write a NULL.
+            if (valueType == typeof(DBNull) && staticValueType == typeof(object))
+            {
+                TypeInfo = typeInfo = pgTypeId is null
+                    ? options.UnspecifiedDBNullTypeInfo
+                    : AdoSerializerHelpers.GetTypeInfoForWriting(type: null, pgTypeId, options, _npgsqlDbType);
+            }
+            else
+            {
+                TypeInfo = typeInfo = AdoSerializerHelpers.GetTypeInfoForWriting(valueType, pgTypeId, options, _npgsqlDbType);
+            }
         }
 
         // This step isn't part of BindValue because we need to know the PgTypeId beforehand for things like SchemaOnly with null values.
@@ -601,12 +694,14 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
             => ThrowHelper.ThrowInvalidOperationException(
                 $"Parameter '{(!string.IsNullOrEmpty(ParameterName) ? ParameterName : $"${Collection?.IndexOf(this) + 1}")}' must have either its EDBDbType or its DataTypeName or its Value set.");
 
+        void ThrowDbTypeNotSupported()
+            => ThrowHelper.ThrowNotSupportedException(
+                $"The DbType '{_dbType}' isn't supported by EDB .NET Connector. There might be an EDB .NET Connector plugin with support for this DbType.");
+
         void ThrowNotSupported(string dataTypeName)
-        {
-            throw new NotSupportedException(_npgsqlDbType is not null
-                ? $"The EDBDbType '{_npgsqlDbType}' isn't present in your database. You may need to install an extension or upgrade to a newer version."
-                : $"The data type name '{dataTypeName}' isn't present in your database. You may need to install an extension or upgrade to a newer version.");
-        }
+            => ThrowHelper.ThrowNotSupportedException(
+                $"The data type name '{dataTypeName}'{(_npgsqlDbType is not null ? $", provided as EDBDbType '{_npgsqlDbType}'," : null)} could not be found in the types that were loaded by EDB .NET Connector. " +
+                $"Your database details or EDB .NET Connector type loading configuration may be incorrect. Alternatively your PostgreSQL installation might need to be upgraded, or an extension adding the missing data type might not have been installed.");
     }
 
     // Pull from Value so we also support object typed generic params.
@@ -622,17 +717,14 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
         if (TypeInfo is null)
             ThrowHelper.ThrowInvalidOperationException($"Missing type info, {nameof(ResolveTypeInfo)} needs to be called before {nameof(Bind)}.");
 
-        if (!TypeInfo.SupportsWriting)
-            ThrowHelper.ThrowNotSupportedException($"Cannot write values for parameters of type '{TypeInfo.Type}' and postgres type '{TypeInfo.Options.DatabaseInfo.GetDataTypeName(PgTypeId).DisplayName}'.");
-
         // We might call this twice, once during validation and once during WriteBind, only compute things once.
         if (WriteSize is null)
         {
             if (_size > 0)
                 HandleSizeTruncation();
 
-	        // EnterpriseDB add allowNullReference and isOutparameter condition
-	        BindCore(requiredFormat, allowNullReference: Direction != ParameterDirection.Input, isOutputParameter: Direction == ParameterDirection.Output);
+            // EnterpriseDB add allowNullReference and isOutparameter condition
+            BindCore(requiredFormat, allowNullReference: Direction != ParameterDirection.Input, isOutputParameter: Direction == ParameterDirection.Output);
         }
 
         format = Format;
@@ -753,6 +845,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
     /// <inheritdoc />
     public override void ResetDbType()
     {
+        _dbType = null;
         _npgsqlDbType = null;
         _dataTypeName = null;
         ResetTypeInfo();
@@ -1106,6 +1199,7 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
             _precision = _precision,
             _scale = _scale,
             _size = _size,
+            _dbType = _dbType,
             _npgsqlDbType = _npgsqlDbType,
             _dataTypeName = _dataTypeName,
             Direction = Direction,

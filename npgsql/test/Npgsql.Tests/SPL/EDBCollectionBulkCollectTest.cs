@@ -108,6 +108,7 @@ internal class EDBCollectionBulkCollectTest : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(conn);
+        conn?.Dispose();
     }
 
     private int Execute(string query)
@@ -186,11 +187,11 @@ internal class EDBCollectionBulkCollectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EMP_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(EMP_RESULT[i]));
             }
         }
         finally
@@ -245,11 +246,11 @@ internal class EDBCollectionBulkCollectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EMP_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(EMP_RESULT[i]));
             }
         }
         finally
@@ -307,11 +308,11 @@ internal class EDBCollectionBulkCollectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(EMP_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(EMP_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(EMP_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(EMP_RESULT[i]));
             }
         }
         finally
@@ -367,11 +368,11 @@ internal class EDBCollectionBulkCollectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(INCREASING_SALARY_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(INCREASING_SALARY_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(INCREASING_SALARY_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(INCREASING_SALARY_RESULT[i]));
             }
         }
         finally
@@ -428,11 +429,11 @@ internal class EDBCollectionBulkCollectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(INCREASING_SALARY_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(INCREASING_SALARY_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(INCREASING_SALARY_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(INCREASING_SALARY_RESULT[i]));
             }
         }
         finally
@@ -499,11 +500,11 @@ internal class EDBCollectionBulkCollectTest : EPASTestBase
                 cstmt.ExecuteNonQuery();
             }
             mre.WaitOne(5000);
-            Assert.AreEqual(DELETE_ROWS_RESULT.Length, notices.Count);
+            Assert.That(notices.Count, Is.EqualTo(DELETE_ROWS_RESULT.Length));
             for (var i = 0; i < notices.Count; i++)
             {
                 var notice = (PostgresNotice?)notices[i];
-                Assert.AreEqual(DELETE_ROWS_RESULT[i], notice.MessageText);
+                Assert.That(notice.MessageText, Is.EqualTo(DELETE_ROWS_RESULT[i]));
             }
         }
         finally

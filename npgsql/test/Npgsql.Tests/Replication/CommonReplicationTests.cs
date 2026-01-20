@@ -14,7 +14,6 @@ namespace EnterpriseDB.EDBClient.Tests.Replication;
 
 [TestFixture(typeof(LogicalReplicationConnection))]
 [TestFixture(typeof(PhysicalReplicationConnection))]
-[Platform(Exclude = "MacOsX", Reason = "Replication tests are flaky in CI on Mac")]
 [NonParallelizable]
 public class CommonReplicationTests<TConnection> : SafeReplicationTestBase<TConnection>
     where TConnection : ReplicationConnection, new()
@@ -436,7 +435,7 @@ public class CommonReplicationTests<TConnection> : SafeReplicationTestBase<TConn
                     // EDBLogicalReplicationConnection
                     // Begin Transaction, Insert, Commit Transaction
                     for (var i = 0; i < 3; i++)
-                        Assert.True(await messages.MoveNextAsync());
+                        Assert.That(await messages.MoveNextAsync());
                     return messages.Current.Lsn;
 
                 }

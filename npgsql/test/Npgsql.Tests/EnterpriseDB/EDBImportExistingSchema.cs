@@ -47,7 +47,7 @@ public class EDBImportExistingSchema : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read(), "No data returned from Select");
+            Assert.That(Reader.Read(), "No data returned from Select");
 
             Reader.Close();
             var DropTable = "Drop TABLE NewTable";
@@ -123,6 +123,7 @@ public class EDBImportExistingSchema : EPASTestBase
     public void Dispose()
     {
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     [Test]
@@ -152,7 +153,7 @@ public class EDBImportExistingSchema : EPASTestBase
 
             var Reader = Command.ExecuteReader();
 
-            Assert.IsTrue(Reader.Read(), "No data returned from Select");
+            Assert.That(Reader.Read(), "No data returned from Select");
             Reader.Close();
 
             var DropTable = "Drop TABLE NewTable";

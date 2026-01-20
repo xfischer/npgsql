@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore.TestModels.TransportationModel;
-using EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL.TestUtilities;
 
-namespace EnterpriseDB.EDBClient.EntityFrameworkCore.PostgreSQL;
+namespace Microsoft.EntityFrameworkCore;
 
 [MinimumPostgresVersion(12, 0)] // Test suite uses computed columns
-public class TableSplittingNpgsqlTest(ITestOutputHelper testOutputHelper) : TableSplittingTestBase(testOutputHelper)
+public class TableSplittingNpgsqlTest(NonSharedFixture fixture, ITestOutputHelper testOutputHelper)
+    : TableSplittingTestBase(fixture, testOutputHelper)
 {
     protected override ITestStoreFactory TestStoreFactory
         => NpgsqlTestStoreFactory.Instance;
@@ -14,12 +14,14 @@ public class TableSplittingNpgsqlTest(ITestOutputHelper testOutputHelper) : Tabl
         await base.ExecuteUpdate_works_for_table_sharing(async);
 
         AssertSql(
-"""
+            """
+@p='1'
+
 UPDATE "Vehicles" AS v
-SET "SeatingCapacity" = 1
+SET "SeatingCapacity" = @p
 """,
             //
-"""
+            """
 SELECT NOT EXISTS (
     SELECT 1
     FROM "Vehicles" AS v

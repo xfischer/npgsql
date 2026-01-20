@@ -722,7 +722,7 @@ FROM pg_constraint c
             normalizedVersion += $".{version.Build:00}";
 
         row["CompositeIdentifierSeparatorPattern"] = @"\.";
-        row["DataSourceProductName"] = "EDB";
+        row["DataSourceProductName"] = "edb-dotnet";
         row["DataSourceProductVersion"] = version.ToString();
         row["DataSourceProductVersionNormalized"] = normalizedVersion;
         row["GroupByBehavior"] = GroupByBehavior.Unrelated;
@@ -788,7 +788,7 @@ FROM pg_constraint c
         table.Columns.Add("NativeDataType", typeof(string));
         table.Columns.Add("ProviderDbType", typeof(int));
 
-        // EDB-specific
+        // Npgsql-specific
         table.Columns.Add("OID", typeof(uint));
 
 

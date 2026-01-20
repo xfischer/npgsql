@@ -40,7 +40,7 @@ public class EDBConnectionTests : TestBase
 
         var result = (string)command.ExecuteScalar()!;
         Console.WriteLine(result);
-        Assert.AreEqual("template1", result);
+        Assert.That(result, Is.EqualTo("template1"));
 
     }
 
@@ -48,6 +48,7 @@ public class EDBConnectionTests : TestBase
     public void Dispose()
     {
         TestUtil.closeDB(con);
+        con?.Dispose();
     }
 
     //Haroon
@@ -56,7 +57,7 @@ public class EDBConnectionTests : TestBase
     {
 
         var Command = new EDBCommand("", con);
-        Assert.IsNotNull(Command);
+        Assert.That(Command, Is.Not.Null);
         Command.Dispose();
 
         //Ask for Updateable ResultSets
@@ -71,13 +72,15 @@ public class EDBConnectionTests : TestBase
         // Should not say closed
         Console.WriteLine(Con.State.ToString());
 
-        Assert.AreEqual("OPEN", Con.State.ToString().ToUpper());
+        Assert.That(Con.State.ToString().ToUpper(), Is.EqualTo("OPEN"));
 
         TestUtil.closeDB(Con);
         Console.WriteLine(Con.State.ToString());
 
         // Should now say closed
-        Assert.AreEqual("CLOSED", Con.State.ToString().ToUpper());
+        Assert.That(Con.State.ToString().ToUpper(), Is.EqualTo("CLOSED"));
+
+        Con?.Dispose();
     }
 
     [Test]

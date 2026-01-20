@@ -2,8 +2,7 @@
 
     <PropertyGroup>
         <Authors>EnterpriseDB Team, Xavier Fischer, Zahid Khan, Moazzum Ali, Npgsql Contributors</Authors>
-        <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net6.0;net8.0</TargetFrameworks>
-        <TargetFramework Condition="'$(DeveloperBuild)' == 'True'">net8.0</TargetFramework>
+        <TargetFrameworks>net472;net48;net481;netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
 	<PackageTags>npgsql;epas;advanced server;edb;enterprisedb;postgresql;postgres;ado;ado.net;database;sql;opentelemetry;tracing;diagnostics;instrumentation</PackageTags>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
         <AssemblyName>EnterpriseDB.EDBClient.OpenTelemetry</AssemblyName>

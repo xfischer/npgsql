@@ -5,6 +5,7 @@ namespace EnterpriseDB.EDBClient;
 
 /// <summary>
 /// Provides Message Properties available.
+/// <see href="https://www.enterprisedb.com/docs/epas/latest/reference/oracle_compatibility_reference/epas_compat_bip_guide/03_built-in_packages/02_dbms_aq/01_enqueue/"/>
 /// </summary>
 public class EDBAQMessageProperties
 {
