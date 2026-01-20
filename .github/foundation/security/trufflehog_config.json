@@ -3,7 +3,11 @@
   "false_positives": [
     {
       "pattern": "edb",
-      "description": " exclusion patterhn for sqlserver://:edb"
+      "description": " exclusion pattern for sqlserver://:edb"
+    },
+    {
+      "pattern": "localhost",
+      "description": " exclusion pattern for localhost connection strings"
     }
   ]
 }
