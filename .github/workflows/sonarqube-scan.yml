@@ -114,23 +114,23 @@ jobs:
         if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         uses: ./foundation/actions/windows/install/edbas
         with:
-          edbas-version: 17
+          edbas-version: 18
           additional-options: --superpassword edb
 
       - name: Add KeyPair
         if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         shell: bash
         run: |
-          cp server.crt "/c/Program Files/edb/as17/data/server.crt"
-          cp server.key "/c/Program Files/edb/as17/data/server.key"
+          cp server.crt "/c/Program Files/edb/as18/data/server.crt"
+          cp server.key "/c/Program Files/edb/as18/data/server.key"
         working-directory: source/edb_test_db_scripts
 
       - name: Configure EPAS Server
         if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         shell: bash
         run: |
-          export PATH=$PATH:"/c/Program Files/edb/as17/bin"
-          export EPAS="/c/Program Files/edb/as17"
+          export PATH=$PATH:"/c/Program Files/edb/as18/bin"
+          export EPAS="/c/Program Files/edb/as18"
           cd "$EPAS"
           SOCKET_DIR=$(echo "$LOCALAPPDATA\Temp" | sed 's|\\|/|g')
           sed -i "s|max_connections = 100|max_connections = 500|" "$EPAS/data/postgresql.conf"
@@ -158,7 +158,7 @@ jobs:
         if: (github.event_name == 'workflow_dispatch' && inputs.run_coverage) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
         uses: ./foundation/actions/windows/install/postgis
         with:
-          edbas-version: 17
+          edbas-version: 18
           additional-options: --pgpassword edb --extract-only 1
 
       - name: Install DotNet Coverage tool

@@ -3,7 +3,7 @@
 
 set SCRIPTDIR=%~dp0
 
-set PSQL="C:\Program Files\edb\as16\bin\edb-psql"
+set PSQL="C:\Program Files\edb\as18\bin\edb-psql"
 
 set NPGSQL_HOST=127.0.0.1
 
