@@ -4,8 +4,8 @@ setlocal
 SET /P AREYOUSURE=Are you sure (Y/[N])?
 IF /I "%AREYOUSURE%" NEQ "Y" GOTO END
 
-SET version=9.0.4.1
-SET efversion=9.0.5.1
+SET version=10.0.1.1
+SET efversion=10.0.0.1
 SET output_dir=edb_dotnet_nugetpackages
 
 dotnet nuget push -s https://localhost:5001/v3/index.json -k NUGET-SERVER-API-KEY %output_dir%/EnterpriseDB.EDBClient.%version%.nupkg
