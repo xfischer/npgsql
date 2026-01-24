@@ -37,7 +37,7 @@ static class EDBActivitySource
         case CommandType.Text:
             // We don't have db.query.summary, db.operation.name or target (without parsing SQL),
             // so we fall back to db.system.name as per the specs.
-            spanName ??= "postgresql";
+            spanName ??= "edb_postgresql";
             break;
         default:
             throw new ArgumentOutOfRangeException(nameof(commandType), commandType, null);
@@ -50,7 +50,7 @@ static class EDBActivitySource
         activity.SetTag("db.query.text", commandText);
 
         if (prepared is true)
-            activity.SetTag("db.npgsql.prepared", true);
+            activity.SetTag("db.edb_dotnet.prepared", true);
 
         switch (commandType)
         {
@@ -82,8 +82,8 @@ static class EDBActivitySource
             return activity;
 
         // We set these basic tags on the activity so that they're populated even when the physical open fails.
-        activity.SetTag("db.system.name", "postgresql");
-        activity.SetTag("db.npgsql.data_source", connector.DataSource.Name);
+        activity.SetTag("db.system.name", "edb_postgresql");
+        activity.SetTag("db.edb_dotnet.data_source", connector.DataSource.Name);
 
         return activity;
     }
@@ -93,7 +93,7 @@ static class EDBActivitySource
         if (!activity.IsAllDataRequested)
             return;
 
-        activity.SetTag("db.system.name", "postgresql");
+        activity.SetTag("db.system.name", "edb_postgresql");
 
         // TODO: For now, we only set the database name, without adding the first schema in the search_path
         // as per the PG tracing specs (https://opentelemetry.io/docs/specs/semconv/database/postgresql/).
@@ -118,8 +118,8 @@ static class EDBActivitySource
         }
 
         // Npgsql-specific tags
-        activity.SetTag("db.npgsql.data_source", connector.DataSource.Name);
-        activity.SetTag("db.npgsql.connection_id", connector.Id);
+        activity.SetTag("db.edb_dotnet.data_source", connector.DataSource.Name);
+        activity.SetTag("db.edb_dotnet.connection_id", connector.Id);
     }
 
     internal static void ReceivedFirstResponse(Activity activity, EDBTracingOptions tracingOptions)
@@ -177,7 +177,7 @@ static class EDBActivitySource
     internal static void CopyStop(Activity activity, ulong? rows = null)
     {
         if (rows.HasValue)
-            activity.SetTag("db.npgsql.rows", rows.Value);
+            activity.SetTag("db.edb_dotnet.rows", rows.Value);
         activity.Dispose();
     }
 

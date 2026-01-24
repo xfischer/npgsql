@@ -42,7 +42,7 @@ public class MetricTests : TestBase
         using (Assert.EnterMultipleScope())
         {
             // TODO: Vary this for PG-like databases (e.g. CockroachDB)?
-            Assert.That(tags["db.system.name"], Is.EqualTo("postgresql"));
+            Assert.That(tags["db.system.name"], Is.EqualTo("edb_postgresql"));
 
             Assert.That(tags["server.address"], Is.EqualTo(dataSource.Settings.Host));
             Assert.That(tags["server.port"], Is.EqualTo(dataSource.Settings.Port));

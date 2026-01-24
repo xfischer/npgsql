@@ -78,7 +78,7 @@ sealed class MetricsReporter : IDisposable
 
         // From here, metrics are entirely Npgsql-specific and not covered by the OpenTelemetry spec.
         CommandsExecuting = Meter.CreateUpDownCounter<int>(
-            "db.client.operation.npgsql.executing",
+            "db.client.operation.edb_dotnet.executing",
             unit: "{command}",
             description: "The number of currently executing database commands.");
 
@@ -88,33 +88,33 @@ sealed class MetricsReporter : IDisposable
             description: "The number of database commands which have failed.");
 
         BytesWritten = Meter.CreateCounter<long>(
-            "db.client.operation.npgsql.bytes_written",
+            "db.client.operation.edb_dotnet.bytes_written",
             unit: "By",
             description: "The number of bytes written.");
 
         BytesRead = Meter.CreateCounter<long>(
-            "db.client.operation.npgsql.bytes_read",
+            "db.client.operation.edb_dotnet.bytes_read",
             unit: "By",
             description: "The number of bytes read.");
 
         PendingConnectionRequests = Meter.CreateUpDownCounter<int>(
-            "db.client.connection.npgsql.pending_requests",
+            "db.client.connection.edb_dotnet.pending_requests",
             unit: "{request}",
             description: "The number of pending requests for an open connection, cumulative for the entire pool.");
 
         ConnectionTimeouts = Meter.CreateCounter<int>(
-            "db.client.connection.npgsql.timeouts",
+            "db.client.connection.edb_dotnet.timeouts",
             unit: "{timeout}",
             description: "The number of connection timeouts that have occurred trying to obtain a connection from the pool.");
 
         ConnectionCreateTime = Meter.CreateHistogram<double>(
-            "db.client.connection.npgsql.create_time",
+            "db.client.connection.edb_dotnet.create_time",
             unit: "s",
             description: "The time it took to create a new connection.",
             advice: ShortHistogramAdvice);
 
         PreparedRatio = Meter.CreateObservableGauge(
-            "db.client.operation.npgsql.prepared_ratio",
+            "db.client.operation.edb_dotnet.prepared_ratio",
             GetPreparedCommandsRatio,
             description: "The ratio of prepared command executions.");
     }
@@ -127,7 +127,7 @@ sealed class MetricsReporter : IDisposable
         _durationMetricTags = new TagList
         {
             // TODO: Vary this for PG-like databases (e.g. CockroachDB)?
-            { "db.system.name", "postgresql" },
+            { "db.system.name", "edb_postgresql" },
             { "db.client.connection.pool.name", _dataSource.Name },
             { "server.address", _dataSource.Settings.Host },
             { "server.port", _dataSource.Settings.Port }

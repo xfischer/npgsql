@@ -57,17 +57,17 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
             var tags = activity.TagObjects.ToDictionary(t => t.Key, t => t.Value);
             Assert.That(tags, Has.Count.EqualTo(conn.Settings.Port == 5432 ? 5 : 6));
 
-            Assert.That(tags["db.system.name"], Is.EqualTo("postgresql"));
+            Assert.That(tags["db.system.name"], Is.EqualTo("edb_postgresql"));
             Assert.That(tags["db.namespace"], Is.EqualTo(conn.Settings.Database));
 
             Assert.That(tags, Does.Not.ContainKey("db.query.text"));
 
-            Assert.That(tags["db.npgsql.data_source"], Is.EqualTo(conn.ConnectionString));
+            Assert.That(tags["db.edb_dotnet.data_source"], Is.EqualTo(conn.ConnectionString));
 
             if (isMultiplexing)
-                Assert.That(tags, Does.ContainKey("db.npgsql.connection_id"));
+                Assert.That(tags, Does.ContainKey("db.edb_dotnet.connection_id"));
             else
-                Assert.That(tags["db.npgsql.connection_id"], Is.EqualTo(conn.ProcessID));
+                Assert.That(tags["db.edb_dotnet.connection_id"], Is.EqualTo(conn.ProcessID));
         }
     }
 
@@ -99,8 +99,8 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
         var activityTags = activity.TagObjects.ToDictionary(t => t.Key, t => t.Value);
         Assert.That(activityTags, Has.Count.EqualTo(3));
 
-        Assert.That(activityTags["db.system.name"], Is.EqualTo("postgresql"));
-        Assert.That(activityTags["db.npgsql.data_source"], Is.EqualTo(dataSource.ConnectionString));
+        Assert.That(activityTags["db.system.name"], Is.EqualTo("edb_postgresql"));
+        Assert.That(activityTags["db.edb_dotnet.data_source"], Is.EqualTo(dataSource.ConnectionString));
 
         Assert.That(activityTags["error.type"], Is.EqualTo("System.Net.Sockets.SocketException"));
     }
@@ -135,7 +135,7 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
 
         await ExecuteScalar(connection, async, batch, "SELECT 42");
 
-        var activity = GetSingleActivity(activities, "postgresql", "postgresql");
+        var activity = GetSingleActivity(activities, "edb_postgresql", "edb_postgresql");
 
         Assert.That(activity.Events.Count(), Is.EqualTo(1));
         var firstResponseEvent = activity.Events.First();
@@ -145,15 +145,15 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
         Assert.That(tags, Has.Count.EqualTo(connection.Settings.Port == 5432 ? 6 : 7));
 
         Assert.That(tags["db.query.text"], Is.EqualTo("SELECT 42"));
-        Assert.That(tags["db.system.name"], Is.EqualTo("postgresql"));
+        Assert.That(tags["db.system.name"], Is.EqualTo("edb_postgresql"));
         Assert.That(tags["db.namespace"], Is.EqualTo(connection.Settings.Database));
 
-        Assert.That(tags["db.npgsql.data_source"], Is.EqualTo("TestTracingDataSource"));
+        Assert.That(tags["db.edb_dotnet.data_source"], Is.EqualTo("TestTracingDataSource"));
 
         if (IsMultiplexing)
-            Assert.That(tags, Does.ContainKey("db.npgsql.connection_id"));
+            Assert.That(tags, Does.ContainKey("db.edb_dotnet.connection_id"));
         else
-            Assert.That(tags["db.npgsql.connection_id"], Is.EqualTo(connection.ProcessID));
+            Assert.That(tags["db.edb_dotnet.connection_id"], Is.EqualTo(connection.ProcessID));
     }
 
     [Test]
@@ -166,7 +166,7 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
 
         Assert.ThrowsAsync<PostgresException>(async () => await ExecuteScalar(connection, async, batch, "SELECT * FROM non_existing_table"));
 
-        var activity = GetSingleActivity(activities, "postgresql", "postgresql", ActivityStatusCode.Error, PostgresErrorCodes.UndefinedTable);
+        var activity = GetSingleActivity(activities, "edb_postgresql", "edb_postgresql", ActivityStatusCode.Error, PostgresErrorCodes.UndefinedTable);
 
         Assert.That(activity.Events.Count(), Is.EqualTo(1));
         var exceptionEvent = activity.Events.First();
@@ -183,18 +183,18 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
         Assert.That(activityTags, Has.Count.EqualTo(connection.Settings.Port == 5432 ? 8 : 9));
 
         Assert.That(activityTags["db.query.text"], Is.EqualTo("SELECT * FROM non_existing_table"));
-        Assert.That(activityTags["db.system.name"], Is.EqualTo("postgresql"));
+        Assert.That(activityTags["db.system.name"], Is.EqualTo("edb_postgresql"));
         Assert.That(activityTags["db.namespace"], Is.EqualTo(connection.Settings.Database));
 
         Assert.That(activityTags["db.response.status_code"], Is.EqualTo(PostgresErrorCodes.UndefinedTable));
         Assert.That(activityTags["error.type"], Is.EqualTo(PostgresErrorCodes.UndefinedTable));
 
-        Assert.That(activityTags["db.npgsql.data_source"], Is.EqualTo(connection.ConnectionString));
+        Assert.That(activityTags["db.edb_dotnet.data_source"], Is.EqualTo(connection.ConnectionString));
 
         if (IsMultiplexing)
-            Assert.That(activityTags, Does.ContainKey("db.npgsql.connection_id"));
+            Assert.That(activityTags, Does.ContainKey("db.edb_dotnet.connection_id"));
         else
-            Assert.That(activityTags["db.npgsql.connection_id"], Is.EqualTo(connection.ProcessID));
+            Assert.That(activityTags["db.edb_dotnet.connection_id"], Is.EqualTo(connection.ProcessID));
     }
 
     [Test]
@@ -212,15 +212,15 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
         using var activityListener = StartListener(out var activities);
 
         await ExecuteScalar(connection, async, batch, "SELECT 42", prepare: false);
-        var activity = GetSingleActivity(activities, "postgresql", "postgresql");
+        var activity = GetSingleActivity(activities, "edb_postgresql", "edb_postgresql");
         var tags = activity.TagObjects.ToDictionary(t => t.Key, t => t.Value);
-        Assert.That(tags, Does.Not.ContainKey("db.npgsql.prepared"));
+        Assert.That(tags, Does.Not.ContainKey("db.edb_dotnet.prepared"));
 
         activities.Clear();
         await ExecuteScalar(connection, async, batch, "SELECT 42", prepare: true);
-        activity = GetSingleActivity(activities, "postgresql", "postgresql");
+        activity = GetSingleActivity(activities, "edb_postgresql", "edb_postgresql");
         tags = activity.TagObjects.ToDictionary(t => t.Key, t => t.Value);
-        Assert.That(tags["db.npgsql.prepared"], Is.True);
+        Assert.That(tags["db.edb_dotnet.prepared"], Is.True);
     }
 
     [Test]
@@ -237,15 +237,15 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
         using var activityListener = StartListener(out var activities);
 
         await ExecuteScalar(connection, async, batch, "SELECT 42");
-        var activity = GetSingleActivity(activities, "postgresql", "postgresql");
+        var activity = GetSingleActivity(activities, "edb_postgresql", "edb_postgresql");
         var tags = activity.TagObjects.ToDictionary(t => t.Key, t => t.Value);
-        Assert.That(tags, Does.Not.ContainKey("db.npgsql.prepared"));
+        Assert.That(tags, Does.Not.ContainKey("db.edb_dotnet.prepared"));
 
         activities.Clear();
         await ExecuteScalar(connection, async, batch, "SELECT 42");
-        activity = GetSingleActivity(activities, "postgresql", "postgresql");
+        activity = GetSingleActivity(activities, "edb_postgresql", "edb_postgresql");
         tags = activity.TagObjects.ToDictionary(t => t.Key, t => t.Value);
-        Assert.That(tags["db.npgsql.prepared"], Is.True);
+        Assert.That(tags["db.edb_dotnet.prepared"], Is.True);
     }
 
     [Test]
@@ -327,16 +327,16 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
 
         Assert.That(tags["db.query.text"], Is.EqualTo(copyFromCommand));
         Assert.That(tags["db.operation.name"], Is.EqualTo("COPY FROM"));
-        Assert.That(tags["db.system.name"], Is.EqualTo("postgresql"));
+        Assert.That(tags["db.system.name"], Is.EqualTo("edb_postgresql"));
         Assert.That(tags["db.namespace"], Is.EqualTo(connection.Settings.Database));
 
-        Assert.That(tags["db.npgsql.data_source"], Is.EqualTo(connection.ConnectionString));
-        Assert.That(tags["db.npgsql.rows"], Is.EqualTo(1));
+        Assert.That(tags["db.edb_dotnet.data_source"], Is.EqualTo(connection.ConnectionString));
+        Assert.That(tags["db.edb_dotnet.rows"], Is.EqualTo(1));
 
         if (IsMultiplexing)
-            Assert.That(tags, Does.ContainKey("db.npgsql.connection_id"));
+            Assert.That(tags, Does.ContainKey("db.edb_dotnet.connection_id"));
         else
-            Assert.That(tags["db.npgsql.connection_id"], Is.EqualTo(connection.ProcessID));
+            Assert.That(tags["db.edb_dotnet.connection_id"], Is.EqualTo(connection.ProcessID));
     }
 
     [Test]
@@ -445,16 +445,16 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
 
         Assert.That(tags["db.query.text"], Is.EqualTo(copyToCommand));
         Assert.That(tags["db.operation.name"], Is.EqualTo("COPY TO"));
-        Assert.That(tags["db.system.name"], Is.EqualTo("postgresql"));
+        Assert.That(tags["db.system.name"], Is.EqualTo("edb_postgresql"));
         Assert.That(tags["db.namespace"], Is.EqualTo(connection.Settings.Database));
 
-        Assert.That(tags["db.npgsql.data_source"], Is.EqualTo(connection.ConnectionString));
-        Assert.That(tags["db.npgsql.rows"], Is.EqualTo(1));
+        Assert.That(tags["db.edb_dotnet.data_source"], Is.EqualTo(connection.ConnectionString));
+        Assert.That(tags["db.edb_dotnet.rows"], Is.EqualTo(1));
 
         if (IsMultiplexing)
-            Assert.That(tags, Does.ContainKey("db.npgsql.connection_id"));
+            Assert.That(tags, Does.ContainKey("db.edb_dotnet.connection_id"));
         else
-            Assert.That(tags["db.npgsql.connection_id"], Is.EqualTo(connection.ProcessID));
+            Assert.That(tags["db.edb_dotnet.connection_id"], Is.EqualTo(connection.ProcessID));
     }
 
     [Test]
@@ -553,17 +553,17 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
 
         Assert.That(tags["db.query.text"], Is.EqualTo(copyToCommand));
         Assert.That(tags["db.operation.name"], Is.EqualTo("COPY TO"));
-        Assert.That(tags["db.system.name"], Is.EqualTo("postgresql"));
+        Assert.That(tags["db.system.name"], Is.EqualTo("edb_postgresql"));
         Assert.That(tags["db.namespace"], Is.EqualTo(connection.Settings.Database));
 
-        Assert.That(tags["db.npgsql.data_source"], Is.EqualTo(connection.ConnectionString));
+        Assert.That(tags["db.edb_dotnet.data_source"], Is.EqualTo(connection.ConnectionString));
 
         if (IsMultiplexing)
-            Assert.That(tags, Does.ContainKey("db.npgsql.connection_id"));
+            Assert.That(tags, Does.ContainKey("db.edb_dotnet.connection_id"));
         else
-            Assert.That(tags["db.npgsql.connection_id"], Is.EqualTo(connection.ProcessID));
+            Assert.That(tags["db.edb_dotnet.connection_id"], Is.EqualTo(connection.ProcessID));
 
-        Assert.That(tags, Does.Not.ContainKey("db.npgsql.rows"));
+        Assert.That(tags, Does.Not.ContainKey("db.edb_dotnet.rows"));
     }
 
     [Test]
@@ -690,17 +690,17 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
 
         Assert.That(tags["db.query.text"], Is.EqualTo(copyFromCommand));
         Assert.That(tags["db.operation.name"], Is.EqualTo("COPY FROM"));
-        Assert.That(tags["db.system.name"], Is.EqualTo("postgresql"));
+        Assert.That(tags["db.system.name"], Is.EqualTo("edb_postgresql"));
         Assert.That(tags["db.namespace"], Is.EqualTo(connection.Settings.Database));
 
-        Assert.That(tags["db.npgsql.data_source"], Is.EqualTo(connection.ConnectionString));
+        Assert.That(tags["db.edb_dotnet.data_source"], Is.EqualTo(connection.ConnectionString));
 
         if (IsMultiplexing)
-            Assert.That(tags, Does.ContainKey("db.npgsql.connection_id"));
+            Assert.That(tags, Does.ContainKey("db.edb_dotnet.connection_id"));
         else
-            Assert.That(tags["db.npgsql.connection_id"], Is.EqualTo(connection.ProcessID));
+            Assert.That(tags["db.edb_dotnet.connection_id"], Is.EqualTo(connection.ProcessID));
 
-        Assert.That(tags, Does.Not.ContainKey("db.npgsql.rows"));
+        Assert.That(tags, Does.Not.ContainKey("db.edb_dotnet.rows"));
     }
 
     [Test]
@@ -751,17 +751,17 @@ public class TracingTests(MultiplexingMode multiplexingMode, bool async) : Multi
 
         Assert.That(tags["db.query.text"], Is.EqualTo(copyFromCommand));
         Assert.That(tags["db.operation.name"], Is.EqualTo("COPY TO"));
-        Assert.That(tags["db.system.name"], Is.EqualTo("postgresql"));
+        Assert.That(tags["db.system.name"], Is.EqualTo("edb_postgresql"));
         Assert.That(tags["db.namespace"], Is.EqualTo(connection.Settings.Database));
 
-        Assert.That(tags["db.npgsql.data_source"], Is.EqualTo(connection.ConnectionString));
+        Assert.That(tags["db.edb_dotnet.data_source"], Is.EqualTo(connection.ConnectionString));
 
         if (IsMultiplexing)
-            Assert.That(tags, Does.ContainKey("db.npgsql.connection_id"));
+            Assert.That(tags, Does.ContainKey("db.edb_dotnet.connection_id"));
         else
-            Assert.That(tags["db.npgsql.connection_id"], Is.EqualTo(connection.ProcessID));
+            Assert.That(tags["db.edb_dotnet.connection_id"], Is.EqualTo(connection.ProcessID));
 
-        Assert.That(tags, Does.Not.ContainKey("db.npgsql.rows"));
+        Assert.That(tags, Does.Not.ContainKey("db.edb_dotnet.rows"));
     }
 
     // Text COPY is implemented over EDBRawCopyStream internally, without any additional tracing-related logic.

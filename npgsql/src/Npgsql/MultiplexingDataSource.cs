@@ -251,7 +251,7 @@ sealed class MultiplexingDataSource : PoolingDataSource
 
             if (command.CurrentActivity is not null && fullyPrepared)
             {
-                command.CurrentActivity.SetTag("db.npgsql.prepared", true);
+                command.CurrentActivity.SetTag("db.edb_dotnet.prepared", true);
             }
 
             var written = connector.CommandsInFlightWriter!.TryWrite(command);
