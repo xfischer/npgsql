@@ -3,6 +3,7 @@
     <VersionPrefix>10.0.1.1</VersionPrefix>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <AnalysisLevel>latest</AnalysisLevel>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
@@ -22,7 +23,7 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	  
 
-    <NoWarn>$(NoWarn);NETSDK1138</NoWarn> <!-- The target framework is out of support  -->
+    <NoWarn>$(NoWarn);NETSDK1138;CS0618</NoWarn> <!-- The target framework is out of support  -->
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
@@ -39,6 +40,11 @@
     <Nullable>disable</Nullable>
     <NoWarn>$(NoWarn);CS8632;CS8600</NoWarn>
   </PropertyGroup>
+
+<!-- EDB: In netstandard2.0 and .NET Framework, Api analyzers triggers false warnings -->
+<PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net472' OR '$(TargetFramework)' == 'net48' OR '$(TargetFramework)' == 'net481'">
+	<NoWarn>$(NoWarn);CS8632;CS8600;RS0017;RS0016;RS0041;RS0036</NoWarn>
+</PropertyGroup>
 
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)edb-dotnet.png" Pack="true" PackagePath="" />

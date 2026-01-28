@@ -85,7 +85,9 @@ namespace EnterpriseDB.EDBClient
 #endif
                     if (typeInfo.Type == typeof(PhysicalAddress)) return default(PhysicalAddress);
 
+#pragma warning disable IL2072 // Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
                     nativeValue = Activator.CreateInstance(typeInfo.Type);
+#pragma warning restore IL2072 // Target parameter argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
                 }
             }
             else

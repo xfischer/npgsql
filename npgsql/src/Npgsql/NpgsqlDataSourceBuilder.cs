@@ -99,6 +99,8 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
         _internalBuilder.EnableArrays();
 
         // EnterpriseDB : revert breaking change introduced in V8 for native AOT (EC-3060)
+#pragma warning disable IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
+#pragma warning disable IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
         _internalBuilder.EnableDynamicJson();
         _internalBuilder.EnableUnmappedTypes();
         _internalBuilder.EnableRecordsAsTuples();
@@ -110,6 +112,8 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
         _internalBuilder.AddTypeInfoResolverFactory(new EDBAQConverterFactory());
         _internalBuilder.MapComposite<EDBAQEnqueueOptions>("dbms_aq.enqueue_options_t");
         _internalBuilder.MapComposite<EDBAQDequeueOptions>("dbms_aq.dequeue_options_t");
+#pragma warning restore IL2026 // Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code
+#pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 
         // EnterpriseDB: Revert breaking change in v10 with date/time mapped by DateOnly/TimeOnly
         // Issue: https://github.com/npgsql/npgsql/issues/6349
@@ -216,6 +220,10 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
         return this;
     }
 
+    /// <summary>
+    /// In .NET Core, disables time mapping to TimeSpan and enables mapping to TimeOnly
+    /// </summary>
+    /// <returns></returns>
     public EDBDataSourceBuilder DisableLegacyDateAndTime()
     {
         _internalBuilder.DisableLegacyDateAndTime();

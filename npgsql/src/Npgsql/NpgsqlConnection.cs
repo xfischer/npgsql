@@ -1127,6 +1127,9 @@ public sealed class EDBConnection : DbConnection, ICloneable, IComponent
     public IReadOnlyDictionary<string, string> PostgresParameters
         => CheckOpenAndRunInTemporaryScope(c => c.PostgresParameters);
 
+    /// <summary>
+    /// Reports whether the connected PostgreSQL server supports the Redwood SQL dialect. This is true only for EDB Postgres Advanced Server in redwood mode.
+    /// </summary>
     [Browsable(false)]
     public bool SupportsRedwoodDialect
         => CheckOpenAndRunInTemporaryScope(c => c.DatabaseInfo.SupportsRedwoodDialect); 

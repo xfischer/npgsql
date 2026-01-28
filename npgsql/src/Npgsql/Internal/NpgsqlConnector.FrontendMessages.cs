@@ -124,7 +124,7 @@ partial class EDBConnector
      * EnterpriseDB Team: ParseOut Message 
     */
     // EDBMERGE: cancellationToken added, add on caller sites
-    internal async Task WriteParseOut(string sql, byte[] asciiName, EDBParameterCollection parameters, bool async, CancellationToken cancellationToken = default)
+    internal async Task WriteParseOut(string sql, byte[] asciiName, EDBParameterCollection? parameters, bool async, CancellationToken cancellationToken = default)
     {
         var localParameters = parameters ?? new();
 

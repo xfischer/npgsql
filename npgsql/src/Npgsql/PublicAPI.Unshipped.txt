@@ -1,5 +1,62 @@
 ﻿#nullable enable
 abstract EnterpriseDB.EDBClient.EDBDataSource.Clear() -> void
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.ConsumerName.get -> string?
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.ConsumerName.set -> void
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.Correlation.get -> string?
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.Correlation.set -> void
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.DeqCondition.get -> string?
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.DeqCondition.set -> void
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.Msgid.get -> byte[]?
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.Msgid.set -> void
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.Transformation.get -> string?
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.Transformation.set -> void
+EnterpriseDB.EDBClient.EDBAQDequeueOptions.Visibility.get -> int?
+EnterpriseDB.EDBClient.EDBAQEnqueueOptions.RelativeMsgid.get -> byte[]?
+EnterpriseDB.EDBClient.EDBAQEnqueueOptions.RelativeMsgid.set -> void
+EnterpriseDB.EDBClient.EDBAQEnqueueOptions.Transformation.get -> string?
+EnterpriseDB.EDBClient.EDBAQEnqueueOptions.Transformation.set -> void
+EnterpriseDB.EDBClient.EDBAQMessage.MessageId.get -> string?
+EnterpriseDB.EDBClient.EDBAQMessage.MessageId.set -> void
+EnterpriseDB.EDBClient.EDBAQMessage.Payload.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessage.Payload.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.Attempts.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.Attempts.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.Correlation.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.Correlation.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.EDBAQMessageProperties() -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.EnqueueTime.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.EnqueueTime.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.ExceptionQueue.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.ExceptionQueue.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.Expiration.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.Expiration.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.OriginalMsgid.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.OriginalMsgid.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.RecipientList.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.RecipientList.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.State.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.State.set -> void
+EnterpriseDB.EDBClient.EDBAQMessageProperties.TransactionGroup.get -> object?
+EnterpriseDB.EDBClient.EDBAQMessageProperties.TransactionGroup.set -> void
+EnterpriseDB.EDBClient.EDBAQQueue.Clone() -> EnterpriseDB.EDBClient.EDBAQQueue!
+EnterpriseDB.EDBClient.EDBAQQueue.Connection.get -> EnterpriseDB.EDBClient.EDBConnection!
+EnterpriseDB.EDBClient.EDBAQQueue.Connection.set -> void
+EnterpriseDB.EDBClient.EDBAQQueue.Dequeue() -> EnterpriseDB.EDBClient.EDBAQMessage!
+EnterpriseDB.EDBClient.EDBAQQueue.DequeueOptions.get -> EnterpriseDB.EDBClient.EDBAQDequeueOptions!
+EnterpriseDB.EDBClient.EDBAQQueue.DequeueOptions.set -> void
+EnterpriseDB.EDBClient.EDBAQQueue.EDBAQQueue(string! name, EnterpriseDB.EDBClient.EDBConnection! con) -> void
+EnterpriseDB.EDBClient.EDBAQQueue.Enqueue(EnterpriseDB.EDBClient.EDBAQMessage! msg) -> void
+EnterpriseDB.EDBClient.EDBAQQueue.EnqueueOptions.get -> EnterpriseDB.EDBClient.EDBAQEnqueueOptions!
+EnterpriseDB.EDBClient.EDBAQQueue.EnqueueOptions.set -> void
+EnterpriseDB.EDBClient.EDBAQQueue.Listen(int waitTime) -> string?
+EnterpriseDB.EDBClient.EDBAQQueue.MessageProperties.get -> EnterpriseDB.EDBClient.EDBAQMessageProperties!
+EnterpriseDB.EDBClient.EDBAQQueue.MessageProperties.set -> void
+EnterpriseDB.EDBClient.EDBAQQueue.Name.get -> string!
+EnterpriseDB.EDBClient.EDBAQQueue.Name.set -> void
+EnterpriseDB.EDBClient.EDBAQQueue.UdtTypeName.get -> string?
+EnterpriseDB.EDBClient.EDBAQQueue.UdtTypeName.set -> void
+EnterpriseDB.EDBClient.EDBDataReader.GetColumnSchemaAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.ObjectModel.ReadOnlyCollection<System.Data.Common.DbColumn!>!>!
+EnterpriseDB.EDBClient.EDBDataSourceBuilder.DisableLegacyDateAndTime() -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
 EnterpriseDB.EDBClient.EDBDataSourceBuilder.EnableLegacyDateAndTime() -> EnterpriseDB.EDBClient.EDBDataSourceBuilder!
 EnterpriseDB.EDBClient.GssEncryptionMode
 EnterpriseDB.EDBClient.GssEncryptionMode.Disable = 0 -> EnterpriseDB.EDBClient.GssEncryptionMode
@@ -140,3 +197,4 @@ EDBTypes.EDBTid.Deconstruct(out uint blockNumber, out ushort offsetNumber) -> vo
 *REMOVED*EnterpriseDB.EDBClient.EDBConnection.BeginTextImport(string! copyFromCommand) -> System.IO.TextWriter!
 *REMOVED*EnterpriseDB.EDBClient.EDBConnection.BeginTextImportAsync(string! copyFromCommand, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.IO.TextWriter!>!
 *REMOVED*EnterpriseDB.EDBClient.EDBDataReader.GetColumnSchemaAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.ObjectModel.ReadOnlyCollection<EnterpriseDB.EDBClient.Schema.EDBDbColumn!>!>!
+virtual EnterpriseDB.EDBClient.EDBAQQueue.Dispose(bool disposing) -> void

@@ -26,7 +26,7 @@ static partial class LogMessages
 
 
     [Conditional("EDB_DIAGNOSTICS")]
-    internal static void TryEDBTrace(this ILogger logger, string message)
+    internal static void TryEDBTrace(this ILogger? logger, string message)
     {
         if (logger is null || logger is NullLogger)
         {

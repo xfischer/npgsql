@@ -1281,7 +1281,7 @@ GROUP BY pg_proc.proargnames, pg_proc.proargtypes, pg_proc.proallargtypes, pg_pr
 
                 if (pStatement != null)
 				{
-					pStatement?.RefreshLastUsed();
+					pStatement.RefreshLastUsed();
                     connector.PreparedStatementManager.SetLastUsed(pStatement, DateTime.UtcNow.Ticks); //EnterpriseDB Team
 				}
             }

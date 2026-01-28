@@ -2744,7 +2744,8 @@ public sealed class EDBDataReader : DbDataReader, IDbColumnSchemaGenerator
     #region EDB Specific CALL OutTuple / Return value handling
 
 
-    private Dictionary<string, EDBParameter> paramsByName;
+    private Dictionary<string, EDBParameter>? paramsByName;
+
     internal void MutateToInMemoryReader(EDBCommand command)
     {
         LogMessages.TryEDBTrace(_commandLogger, "MutateToInMemoryReader");

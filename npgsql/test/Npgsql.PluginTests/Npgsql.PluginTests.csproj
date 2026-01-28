@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
-  
+	<PropertyGroup>
+		<NoWarn>$(NoWarn);CS1685</NoWarn> <!-- EDB: RuntimeHelpers is defined in other assembly (.NET Framework support)  -->
+	</PropertyGroup>
   <ItemGroup>
     <PackageReference Include="NetTopologySuite" />
     <PackageReference Include="NodaTime" />

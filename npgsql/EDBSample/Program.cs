@@ -27,7 +27,7 @@ namespace EDBSample
 
             try
             {
-                _logger.LogDebug("---- Starting");
+                _logger?.LogDebug("---- Starting");
 
                 await Sample();
 
@@ -46,11 +46,11 @@ namespace EDBSample
                 //await Sample_BadReaderState();
 
                 //await EC_2716_ExecuteReaderAsync();
-                _logger.LogDebug("---- end");
+                _logger?.LogDebug("---- end");
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Error");
+                _logger?.LogError(e, "Error");
             }
 
             Console.WriteLine("Press any key to exit...");
@@ -115,9 +115,9 @@ namespace EDBSample
                     callable_command.Parameters.Add(new EDBParameter("p_deptno", EDBTypes.EDBDbType.Numeric, 10, "p_deptno", ParameterDirection.Input, false, 2, 2, System.Data.DataRowVersion.Current, 20));
                     callable_command.Parameters.Add(new EDBParameter("p_empno", EDBTypes.EDBDbType.Numeric, 10, "p_empno", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, 7369));
                     callable_command.Parameters.Add(new EDBParameter("p_ename", EDBTypes.EDBDbType.Varchar, 10, "p_ename", ParameterDirection.InputOutput, false, 2, 2, System.Data.DataRowVersion.Current, "SMITH"));
-                    callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                    callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
-                    callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null));
+                    callable_command.Parameters.Add(new EDBParameter("p_job", EDBTypes.EDBDbType.Varchar, 10, "p_job", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                    callable_command.Parameters.Add(new EDBParameter("p_hiredate", EDBTypes.EDBDbType.Date, 200, "p_hiredate", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
+                    callable_command.Parameters.Add(new EDBParameter("p_sal", EDBTypes.EDBDbType.Numeric, 200, "p_sal", ParameterDirection.Output, false, 2, 2, System.Data.DataRowVersion.Current, null!));
                     await callable_command.PrepareAsync();
 
                     callable_command.Parameters[0].Value = 20;
@@ -389,16 +389,16 @@ namespace EDBSample
             //    catch(OperationCanceledException ex)
             //    {
             //        // ok
-            //       _logger.LogDebug("OK (got OperationCanceledException)");
+            //       _logger?.LogDebug("OK (got OperationCanceledException)");
             //    }
             //    catch(Exception ex)
             //    {
             //        // problem
-            //        _logger.LogError("Bad (got other exception)");
+            //        _logger?.LogError("Bad (got other exception)");
             //    }
             //    await using var command = new EDBCommand("SELECT 1", conn);
             //    var result = await command.ExecuteScalarAsync();
-            //    _logger.LogDebug("Result should be 1 and is {result}", result);
+            //    _logger?.LogDebug("Result should be 1 and is {result}", result);
             //}
 
             using (var conn = await dataSource.OpenConnectionAsync())
@@ -408,7 +408,7 @@ namespace EDBSample
                 var cts = new CancellationTokenSource(1000);
                 cts.Token.Register(() =>
                 {
-                    _logger.LogDebug("CancellationTokenSource fired");
+                    _logger?.LogDebug("CancellationTokenSource fired");
                 });
                 try
                 {
@@ -417,16 +417,16 @@ namespace EDBSample
                 catch (OperationCanceledException)
                 {
                     // ok
-                    _logger.LogDebug("OK (got OperationCanceledException)");
+                    _logger?.LogDebug("OK (got OperationCanceledException)");
                 }
                 catch (Exception)
                 {
                     // problem
-                    _logger.LogError("Bad (got other exception)");
+                    _logger?.LogError("Bad (got other exception)");
                 }
                 await using var command2 = new EDBCommand("SELECT 1", conn);
                 var result = await command2.ExecuteScalarAsync();
-                _logger.LogDebug("Result should be 1 and is {result}", result);
+                _logger?.LogDebug("Result should be 1 and is {result}", result);
             }
         }
 
@@ -452,26 +452,26 @@ namespace EDBSample
                 // ok
                 if (ex.InnerException is TimeoutException)
                 {
-                    _logger.LogDebug("OK (got EDBException with inner TimeoutException)");
+                    _logger?.LogDebug("OK (got EDBException with inner TimeoutException)");
                 }
                 else
                 {
-                    _logger.LogError("Bad (got other exception)");
+                    _logger?.LogError("Bad (got other exception)");
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // problem
-                _logger.LogError("Bad (got other exception)");
+                _logger?.LogError("Bad (got other exception)");
             }
 
             if (conn.FullState == ConnectionState.Open)
             {
-                _logger.LogDebug("OK ConnectionState is open");
+                _logger?.LogDebug("OK ConnectionState is open");
             }
             else
             {
-                _logger.LogError($"BAD ConnectionState is {conn.FullState}");
+                _logger?.LogError($"BAD ConnectionState is {conn.FullState}");
             }
         }
         protected static EDBCommand CreateSleepCommand(EDBConnection conn, int seconds = 1000)

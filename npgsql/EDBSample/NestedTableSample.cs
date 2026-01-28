@@ -13,15 +13,18 @@ namespace EDBSample
     internal static class NestedTableSample
     {
 
+#pragma warning disable CS0649 //field is never assigned
+
         // Composite type, will be mapped to the nested table type
         // This will work if field types are convertible from database types
         public class Employee
         {
             [PgName("empno")]
-            public decimal Number;
+            public decimal Number = 0;
             [PgName("ename")]
             public string? Name;
         }
+#pragma warning restore CS0649
 
         public static void Sample_NestedTableTypes(string ConnectionString)
         {
@@ -50,7 +53,7 @@ namespace EDBSample
                         cstmt.Prepare();
                         cstmt.ExecuteNonQuery();
 
-                        List<object>? employees = tableOfParam.Value as List<object>;
+                        var employees = tableOfParam.Value as List<object>;
                         if (employees == null)
                         {
                             Console.WriteLine($"No employee found");

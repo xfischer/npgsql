@@ -80,7 +80,9 @@ public class EDBAQMessageProperties
     {
         var sb = new StringBuilder();
         sb.Append('(');
+#pragma warning disable IL2075 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
         var props = GetType().GetProperties();
+#pragma warning restore IL2075 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
         foreach (var prp in props)
         {
             var value = prp.GetValue(this, null);
@@ -107,7 +109,9 @@ public class EDBAQMessageProperties
         value = value.Replace(@"(", string.Empty).Replace(@")", string.Empty);
         var obj = new EDBAQMessageProperties();
         var arr = value.Split(',');
+#pragma warning disable IL2075 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
         var props = GetType().GetProperties();
+#pragma warning restore IL2075 // 'this' argument does not satisfy 'DynamicallyAccessedMembersAttribute' in call to target method. The return value of the source method does not have matching annotations.
         for (var i = 0; i < arr.Length; i++)
         {
             if (arr[i] != null && arr[i] != "")

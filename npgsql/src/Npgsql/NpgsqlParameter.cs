@@ -42,7 +42,9 @@ public class EDBParameter : DbParameter, IDbDataParameter, ICloneable
     internal const string PositionalName = "";
 
     IDbTypeResolver? _dbTypeResolver;
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     internal protected PgTypeInfo? TypeInfo { get; private set; } // EnterpriseDB (private => internal)
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
     internal PgTypeId PgTypeId { get; private set; }
     private protected PgConverter? Converter { get; private set; }
