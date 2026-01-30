@@ -2,7 +2,6 @@
   <PropertyGroup>
     <VersionPrefix>10.0.1.1</VersionPrefix>
     <LangVersion>latest</LangVersion>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
     <AnalysisLevel>latest</AnalysisLevel>

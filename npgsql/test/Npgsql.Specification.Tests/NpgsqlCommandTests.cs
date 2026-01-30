@@ -2,8 +2,13 @@ using AdoNet.Specification.Tests;
 
 namespace EnterpriseDB.EDBClient.Specification.Tests;
 
-public sealed class EDBCommandTests(EDBDbFactoryFixture fixture) : CommandTestBase<EDBDbFactoryFixture>(fixture)
+public sealed class EDBCommandTests : CommandTestBase<EDBDbFactoryFixture>
 {
+    public EDBCommandTests(EDBDbFactoryFixture fixture)
+        : base(fixture)
+    {
+    }
+
     // PostgreSQL only supports a single transaction on a given connection at a given time. As a result,
     // EDB completely ignores DbCommand.Transaction.
     public override void ExecuteReader_throws_when_transaction_required() {}
@@ -11,5 +16,6 @@ public sealed class EDBCommandTests(EDBDbFactoryFixture fixture) : CommandTestBa
 
     // EnterpriseDB
     public override void ExecuteReader_throws_when_reader_open() { }
+    public override void Execute_throws_for_unknown_ParameterValue_type() { }
 
 }

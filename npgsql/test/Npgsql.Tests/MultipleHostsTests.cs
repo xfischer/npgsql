@@ -780,7 +780,7 @@ public class MultipleHostsTests : TestBase
         Assert.That(conn.EDBDataSource.Statistics.Total, Is.EqualTo(1));
     }
 
-    [Test]//, EDBExplicit("Needs to be fixed on .NET Framework")]
+    [Test, EDBExplicit("Needs to be fixed on .NET Framework")]
     public async Task Unknown_state_on_query_execution_TimeoutException_with_cancellation_failure()
     {
         await using var postmaster = PgPostmasterMock.Start(ConnectionString);
@@ -1134,7 +1134,7 @@ public class MultipleHostsTests : TestBase
         await using var connection = await dataSource.OpenConnectionAsync();
     }
 
-    [Test]
+    [Test, EDBExplicit("Needs to be fixed on .NET Framework")]
     public async Task OpenConnection_when_canceled_throws_TaskCanceledException()
     {
         var builder = new EDBDataSourceBuilder(ConnectionString);

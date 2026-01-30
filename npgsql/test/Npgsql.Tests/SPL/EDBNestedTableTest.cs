@@ -1277,7 +1277,15 @@ internal class EDBNestedTableTest : EPASTestBase
         ,"'04:05:06.789'::time without time zone"
         };
 
-        await DomainTypeNestedTableTest_RawStrings<TimeSpan>("time without time zone", testArrayStrDeclaration, testArray);
+#if NET8_0_OR_GREATER
+        await DomainTypeNestedTableTest_RawStrings<TimeSpan>(pgTypeName: "time without time zone",
+                                                             values: testArrayStrDeclaration,
+                                                             expectedResults: testArray);
+#else
+        await DomainTypeNestedTableTest_RawStrings<TimeSpan>(pgTypeName: "time without time zone",
+                                                             values: testArrayStrDeclaration,
+                                                             expectedResults: testArray);
+#endif
     }
 
     [Test]
@@ -1361,7 +1369,7 @@ internal class EDBNestedTableTest : EPASTestBase
     }
 
 
-    [Test]
+    [Test, Ignore("Timetz not supported, use NodaTime")]
     public async Task DomainTypeNestedTableTest_TimeTz()
     {
         var testArray = new DateTimeOffset[] { DateTimeOffset.Now.RemoveSecondsFraction()

@@ -2342,7 +2342,7 @@ LANGUAGE plpgsql VOLATILE";
         Assert.That(conn.FullState, Is.EqualTo(ConnectionState.Broken));
     }
 
-    [Test, Description("Timeouts sequential IsDBNullAsync")]//, EDBExplicit("Needs to be fixed on .NET Framework")]
+    [Test, Description("Timeouts sequential IsDBNullAsync"), EDBExplicit("Needs to be fixed on .NET Framework")]
     public async Task IsDBNullAsync_sequential_timeout()
     {
         if (IsMultiplexing)

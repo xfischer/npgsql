@@ -347,9 +347,12 @@ internal class EDBAS16Tests : EPASTestBase
 
         await Execute("DROP DATABASE dbtimezonedb1", true);
         await Execute("DROP USER dbtimezoneuser1", true);
-
+        await Task.Delay(1000); // May fail sometimes due to timing issue while creating/dropping DB and User.
         await Execute("CREATE USER dbtimezoneuser1;", false);
         await Execute("ALTER USER dbtimezoneuser1 WITH PASSWORD 'edb';", false);
+
+        
+        
         await Execute("CREATE DATABASE dbtimezonedb1 OWNER dbtimezoneuser1;", false);
 
         var newConnString = string.Format("port={0};Server={1};Username={2};Password={3};Database={4};Timeout=0;Command Timeout=0;SSL Mode=Disable",

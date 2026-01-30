@@ -44,8 +44,11 @@ public class DateTimeTests : TestBase
     public async Task Daterange_as_EDBRange_of_DateOnly()
     {
         // EnterpriseDB : disable UnmappedTypes or test purposes
-        await using var dataSource = base.CreateDataSource(b => b.DisableLegacyDateAndTime());
+        await using var dataSource = base.CreateDataSource();
         await using var conn = await dataSource.OpenConnectionAsync();
+        if (TestUtil.IsEPASRedwood(conn) ?? false)
+            Assert.Ignore("EPAS dates are always full datetime, no DateOnly support.");
+
         await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         await AssertType(
@@ -56,10 +59,16 @@ public class DateTimeTests : TestBase
             EDBDbType.DateRange,
             skipArrayCheck: true); // EDBRange<T>[] is mapped to multirange by default, not array; test separately
     }
-			
-	[Test]
-    public Task Daterange_array_as_EDBRange_of_DateOnly_array()
-        => AssertType(
+
+    [Test]
+    public async Task Daterange_array_as_EDBRange_of_DateOnly_array()
+    {
+        await using var dataSource = base.CreateDataSource();
+        await using var conn = await dataSource.OpenConnectionAsync();
+        if (TestUtil.IsEPASRedwood(conn) ?? false)
+            Assert.Ignore("EPAS dates are always full datetime, no DateOnly support.");
+
+        await AssertType(
             new[]
             {
                 new EDBRange<DateOnly>(new(2002, 3, 4), true, new(2002, 3, 6), false),
@@ -69,6 +78,7 @@ public class DateTimeTests : TestBase
             "daterange[]",
             EDBDbType.DateRange | EDBDbType.Array,
             isDefaultForWriting: false);
+    }
 #endif
 
     [Test]
@@ -84,10 +94,14 @@ public class DateTimeTests : TestBase
 [Test]
     public async Task Datemultirange_as_array_of_EDBRange_of_DateOnly()
     {
+        
         // EnterpriseDB : disable UnmappedTypes or test purposes
         await using var dataSource = base.CreateDataSource(b => b.DisableUnmappedTypes().DisableRecordsAsTuples().DisableDynamicJson());
         await using var conn = await dataSource.OpenConnectionAsync();
-		await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
+        if (TestUtil.IsEPASRedwood(conn) ?? false)
+            Assert.Ignore("EPAS dates are always full datetime, no DateOnly support.");
+
+        await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
 
         MinimumPgVersion(conn, "14.0", "Multirange types were introduced in PostgreSQL 14");
 
@@ -137,6 +151,7 @@ public class DateTimeTests : TestBase
     {
         // EnterpriseDB : disable UnmappedTypes or test purposes
         await using var dataSource = base.CreateDataSource(b => b.DisableLegacyDateAndTime());
+        //await using var dataSource = base.CreateDataSource();
         await using var conn = await dataSource.OpenConnectionAsync();
         await conn.ExecuteNonQueryAsync("SET datestyle TO ISO"); // EnterpriseDB
         await AssertType(dataSource,

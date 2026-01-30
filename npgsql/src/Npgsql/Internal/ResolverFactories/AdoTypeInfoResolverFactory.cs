@@ -245,9 +245,6 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 static (options, mapping, _) => mapping.CreateInfo(options, new Int4Converter<int>()));
 
 #if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
-            mappings.AddStructType<DateOnly>(DataTypeNames.Date,
-                static (options, mapping, _) => mapping.CreateInfo(options, new DateOnlyDateConverter(options.EnableDateTimeInfinityConversions)));
-
             // EnterpriseDB
             mappings.AddStructType<DateOnly>(DataTypeNames.Timestamp,
                 static (options, mapping, _) =>
@@ -268,24 +265,16 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
                 static (options, mapping, _) => mapping.CreateInfo(options, new EDBIntervalConverter()));
 
             // Time
-            // NET10 code
-            //#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
-            //            mappings.AddStructType<TimeOnly>(DataTypeNames.Time,
-            //                static (options, mapping, _) => mapping.CreateInfo(options, new TimeOnlyTimeConverter()), isDefault: true);
-            //            mappings.AddStructType<TimeSpan>(DataTypeNames.Time,
-            //                static (options, mapping, _) => mapping.CreateInfo(options, new TimeSpanTimeConverter()));
-            //#else
-            //			mappings.AddStructType<TimeSpan>(DataTypeNames.Time,
-            //                static (options, mapping, _) => mapping.CreateInfo(options, new TimeSpanTimeConverter()), isDefault: true);
-            //#endif
+#if NET8_0_OR_GREATER
+            // EnterpriseDB: Time->TimeOnly is not the default, Time->TimeSpan is
+            mappings.AddStructType<TimeOnly>(DataTypeNames.Time,
+                static (options, mapping, _) => mapping.CreateInfo(options, new TimeOnlyTimeConverter())/*, isDefault: true*/);
+#endif
+
             mappings.AddStructType<TimeSpan>(DataTypeNames.Time,
-                            static (options, mapping, _) => mapping.CreateInfo(options, new TimeSpanTimeConverter()), isDefault: true);
+                static (options, mapping, _) => mapping.CreateInfo(options, new TimeSpanTimeConverter()), isDefault: true);
             mappings.AddStructType<long>(DataTypeNames.Time,
                 static (options, mapping, _) => mapping.CreateInfo(options, new Int8Converter<long>()));
-#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
-            mappings.AddStructType<TimeOnly>(DataTypeNames.Time,
-                static (options, mapping, _) => mapping.CreateInfo(options, new TimeOnlyTimeConverter()));
-#endif
 
             // TimeTz
             mappings.AddStructType<DateTimeOffset>(DataTypeNames.TimeTz,
@@ -483,14 +472,10 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             mappings.AddStructArrayType<long>(DataTypeNames.TimestampTz);
 
             // Date
+            // EDB: Date are always datetime in EPAS Redwood
+            //mappings.AddStructArrayType<DateOnly>(DataTypeNames.Date);
 			mappings.AddStructArrayType<DateTime>(DataTypeNames.Date);
             mappings.AddStructArrayType<int>(DataTypeNames.Date);
-#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
-            mappings.AddStructArrayType<DateOnly>(DataTypeNames.Date);
-
-            // EnterpriseDB
-            mappings.AddStructArrayType<DateOnly>(DataTypeNames.Timestamp);
-#endif
 
             // Interval
             mappings.AddStructArrayType<TimeSpan>(DataTypeNames.Interval);
@@ -499,9 +484,9 @@ sealed partial class AdoTypeInfoResolverFactory : PgTypeInfoResolverFactory
             // Time
             mappings.AddStructArrayType<TimeSpan>(DataTypeNames.Time);
             mappings.AddStructArrayType<long>(DataTypeNames.Time);
-    #if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
+#if NET8_0_OR_GREATER // EnterpriseDB (NETFRAMEWORK)
             mappings.AddStructArrayType<TimeOnly>(DataTypeNames.Time);
-    #endif
+#endif
 
             // TimeTz
             mappings.AddStructArrayType<DateTimeOffset>(DataTypeNames.TimeTz);

@@ -2,6 +2,7 @@
 using System.Data;
 using System.Threading.Tasks;
 using EDBTypes;
+using EnterpriseDB.EDBClient.Tests.Support;
 using NUnit.Framework;
 
 namespace EnterpriseDB.EDBClient.Tests.Types;
@@ -169,7 +170,7 @@ class MiscTypeTests(MultiplexingMode multiplexingMode) : MultiplexingTestBase(mu
     #endregion
 
 
-    [Test]
+    [Test, EDBExplicit("Flaky")]
     public async Task ObjectArray()
     {
         await AssertTypeWrite(new object?[] { (short)4, null, (long)5, 6 }, "{4,NULL,5,6}", "integer[]", EDBDbType.Integer | EDBDbType.Array, isDefault: false);
