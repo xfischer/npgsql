@@ -9,7 +9,7 @@ namespace EDBBenchmark
 {
     static class BenchmarkEnvironment
     {
-        public const string ConnectionString = "Server=localhost;port=5446;User ID=enterprisedb;Password=edb;Database=test;Maximum Pool Size=200";
+        public const string ConnectionString = "Server=localhost;port=5447;User ID=enterprisedb;Password=edb;Database=test;Maximum Pool Size=200";
 
         internal static NpgsqlConnection GetConnection() => new(ConnectionString);
 

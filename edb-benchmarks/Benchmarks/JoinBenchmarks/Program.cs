@@ -23,6 +23,7 @@ internal class Program
             "BenchmarkDotNet.Artifacts.BenchmarkVersion8" => "8.0.5.2",
             "BenchmarkDotNet.Artifacts.BenchmarkVersion9" => "9.0.2.1",
             "BenchmarkDotNet.Artifacts.BenchmarkVersion4" => "4.0.10.2",
+            "BenchmarkDotNet.Artifacts.BenchmarkVersion10" => "10.0.1.1",
             "BenchmarkDotNet.Artifacts.BenchmarkNpgsql" => "Npgsql8",
             "BenchmarkDotNet.Artifacts.BenchmarkNetStandard" => "netstandard20",
             _ => "Unknown"
@@ -127,119 +128,6 @@ internal class Program
     }
 
     private static string CleanString(string str) => str.Replace(",", "");
-
-
-
-    //private static void JoinOneFilePerHeader(string path)
-    //{
-    //    Dictionary<string, StreamWriter> fileByHeader = new();
-
-    //    foreach (var file in Directory.EnumerateFiles(path, FilePattern, SearchOption.AllDirectories))
-    //    {
-    //        var currentConnector = GetConnectorFromPath(file);
-    //        bool firstLine = true;
-
-    //        Console.WriteLine($"Processing file {file}");
-
-    //        string currentHeaderKey = null;
-    //        using var inputFile = new StreamReader(file, encoding: Encoding.UTF8, false, new FileStreamOptions() { Access = FileAccess.Read, Mode = FileMode.Open, Share = FileShare.Read });
-    //        do
-    //        {
-    //            StreamWriter outStream;
-    //            if (firstLine)
-    //            {
-    //                currentHeaderKey = inputFile.ReadLine();
-    //                if (!fileByHeader.TryGetValue(currentHeaderKey, out outStream))
-    //                {
-    //                    string mergeFilePath = Path.Combine(path, $"{DateTime.Now.ToString("yyyyMMdd_HHmmss")}-mergedreport-{fileByHeader.Count}.csv");
-    //                    outStream = new StreamWriter(mergeFilePath, append: false, Encoding.UTF8);
-    //                    fileByHeader[currentHeaderKey] = outStream;
-    //                    outStream.Write("Connector" + CsvSeparator);
-    //                    outStream.WriteLine(currentHeaderKey);
-    //                }
-
-    //                firstLine = false;
-    //            }
-    //            else
-    //            {
-    //                outStream = fileByHeader[currentHeaderKey];
-    //                outStream.Write($"{currentConnector},");
-
-    //                outStream.WriteLine(inputFile.ReadLine());
-    //            }
-
-    //        } while (!inputFile.EndOfStream);
-    //    }
-
-    //    foreach (var file in fileByHeader.Values)
-    //    {
-    //        file.Flush();
-    //        file.Close();
-    //        file.Dispose();
-    //    }
-    //}
-
-    //private static void JoinWithSameHeader(string path)
-    //{
-    //    string mergeFilePath = Path.Combine(path, $"{DateTime.Now.ToString("yyyyMMdd_HHmmss")}-mergedreport.csv");
-    //    using (var mergeFileStream = new StreamWriter(mergeFilePath, append: false, Encoding.UTF8))
-    //    {
-    //        bool firstFile = true;
-    //        foreach (var file in Directory.EnumerateFiles(path, FilePattern, SearchOption.AllDirectories))
-    //        {
-    //            bool firstLine = true;
-    //            var currentConnector = GetConnectorFromPath(file);
-
-    //            Console.WriteLine($"Processing file {file}");
-
-    //            var indexes = new List<int>();
-    //            using var inputFile = new StreamReader(file, encoding: Encoding.UTF8, false, new FileStreamOptions() { Access = FileAccess.Read, Mode = FileMode.Open, Share = FileShare.Read });
-    //            do
-    //            {
-    //                List<string> headerColumns;
-    //                if (firstLine)
-    //                {
-    //                    var rawHeader = inputFile.ReadLine();
-    //                    headerColumns = rawHeader!.Split(CsvSeparator).ToList();
-    //                    for (int i = 0; i < columnsToKeep!.Length; i++)
-    //                    {
-    //                        int indexResult = headerColumns.IndexOf(columnsToKeep[i]);
-    //                        if (indexResult > -1) indexes.Add(indexResult);
-    //                    }
-
-    //                    if (firstFile)
-    //                    {
-    //                        mergeFileStream.Write("Connector" + CsvSeparator);
-    //                        mergeFileStream.WriteLine(string.Join(CsvSeparator, columnsToKeep));
-    //                        firstFile = false;
-    //                    }
-    //                    firstLine = false;
-    //                }
-    //                else
-    //                {
-    //                    mergeFileStream.Write($"{currentConnector},");
-
-    //                    var values = ParseCsvLine(inputFile.ReadLine()!).ToList();
-    //                    foreach (var index in indexes)
-    //                    {
-    //                        if (index == indexes[^1])
-    //                        {
-    //                            mergeFileStream.WriteLine(values[index]);
-    //                        }
-    //                        else
-    //                        {
-    //                            mergeFileStream.Write($"{values[index]},");
-    //                        }
-    //                    }
-    //                }
-
-    //            } while (!inputFile.EndOfStream);
-    //        }
-    //    }
-
-    //    Console.WriteLine($"Merge file written: {mergeFilePath}");
-
-    //}
 
     private static IEnumerable<string> ParseCsvLine(string line, char separator = CsvSeparator)
     {

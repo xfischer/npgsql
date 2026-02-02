@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="BenchmarkNetStandard/BenchmarkNetStandard.csproj" />
+  <Project Path="BenchmarkNpgsql/BenchmarkNpgsql.csproj" />
+  <Project Path="BenchmarkVersion10/BenchmarkVersion10.csproj" />
+  <Project Path="BenchmarkVersion4/BenchmarkVersion4.csproj" />
+  <Project Path="BenchmarkVersion7/BenchmarkVersion7.csproj" />
+  <Project Path="BenchmarkVersion8/BenchmarkVersion8.csproj" />
+  <Project Path="BenchmarkVersion9/BenchmarkVersion9.csproj" />
+  <Project Path="JoinBenchmarks/JoinBenchmarks.csproj" />
+  <Project Path="NpgsqlEDBBenchmark/NpgsqlEDBBenchmark.csproj" />
+</Solution>

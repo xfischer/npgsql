@@ -116,6 +116,7 @@ public sealed class EDBDataSourceBuilder : IEDBTypeMapper
 #pragma warning restore IL3050 // Calling members annotated with 'RequiresDynamicCodeAttribute' may break functionality when AOT compiling.
 
         // EnterpriseDB: Revert breaking change in v10 with date/time mapped by DateOnly/TimeOnly
+        // If we remove this, text mapping is chosen, investigate further. (see test TypeVariableOutputTest)
         // Issue: https://github.com/npgsql/npgsql/issues/6349
         // See: https://www.npgsql.org/doc/release-notes/10.0.html#date-and-time-are-now-mapped-to-dateonly-and-timeonly
         _internalBuilder.AddTypeInfoResolverFactory(new LegacyDateAndTimeResolverFactory());
