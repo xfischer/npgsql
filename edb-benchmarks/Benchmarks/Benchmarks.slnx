@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="BenchmarkNetStandard/BenchmarkNetStandard.csproj" />
+  <Project Path="BenchmarkNetStandard/BenchmarkNetStandard.csproj" Id="b88072a9-c3d3-46e8-8c79-ee5b8ee46676" />
   <Project Path="BenchmarkNpgsql/BenchmarkNpgsql.csproj" />
   <Project Path="BenchmarkVersion10/BenchmarkVersion10.csproj" />
   <Project Path="BenchmarkVersion4/BenchmarkVersion4.csproj" />
