@@ -208,6 +208,12 @@ jobs:
           platform-arch: ${{ inputs.architecture }}
           installer-xml: $PWD/packaging-config/installer/installer.xml
           installer-name: edb-dotnet
+        env:
+          SM_HOST: ${{ vars.SM_HOST }}
+          SM_API_KEY: ${{ secrets.SM_API_KEY }}
+          SM_CLIENT_CERT_FILE: D:\\Certificate_pkcs12.p12
+          SM_CLIENT_CERT_PASSWORD: ${{ secrets.SM_CLIENT_CERT_PASSWORD }}
+          SM_CLIENT_CERT_FILE_B64: ${{ secrets.SM_CLIENT_CERT_FILE_B64 }}
 
       - name: enable tmate debugging
         uses: mxschmitt/action-tmate@v3
